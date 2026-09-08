@@ -2,12 +2,34 @@
   "site": {
     "categories": [
       {
+        "id": "pc_parts",
+        "name": "Комплектующие ПК",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSI2NSIgeT0iNDIiIHdpZHRoPSIxNTAiIGhlaWdodD0iMTQ1IiByeD0iMTgiLz48cmVjdCB4PSI5MSIgeT0iNzAiIHdpZHRoPSI2MiIgaGVpZ2h0PSI2MiIgcng9IjEwIi8+PHBhdGggZD0iTTE3MSA3MmgyM00xNzEgOTRoMjNNMTcxIDExNmgyM005MSAxNTNoMTAzIi8+PC9nPjxwYXRoIGQ9Ik01NCAyMDdoMTcyIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuNyIvPjwvc3ZnPg==",
+        "updated": "04.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "group",
+        "parentId": ""
+      },
+      {
+        "id": "peripherals",
+        "name": "Периферия",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSI0MyIgeT0iNzMiIHdpZHRoPSIxNDAiIGhlaWdodD0iNzYiIHJ4PSIxMiIvPjxwYXRoIGQ9Ik02MCA5NWgxMDZNNjAgMTE2aDEwNk03MCAxMzdoODYiLz48cGF0aCBkPSJNMjEwIDc2YzIzIDAgMzMgMjAgMzMgNDNzLTEwIDQzLTMzIDQzLTMzLTIwLTMzLTQzIDEwLTQzIDMzLTQzWiIvPjxwYXRoIGQ9Ik0yMTAgNzZ2MzQiLz48L2c+PHBhdGggZD0iTTU0IDIwN2gxNzIiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9Ii43Ii8+PC9zdmc+",
+        "updated": "04.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "group",
+        "parentId": ""
+      },
+      {
         "id": "laptops",
         "name": "Ноутбуки",
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI0MiIgeT0iMzgiIHdpZHRoPSIxOTYiIGhlaWdodD0iMTE4IiByeD0iMTAiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMjIgMTc0aDIzNmwtMTggMjJINDB6IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTY4IDY0aDE0NCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiLz48L3N2Zz4=",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/19Z5lbXSNcmqWDaHZKZ_xKJ9EkbyubhEhS1KkjAs-BEc/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": ""
       },
       {
         "id": "monitors",
@@ -15,7 +37,9 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIzNCIgeT0iMzgiIHdpZHRoPSIyMTIiIGhlaWdodD0iMTI2IiByeD0iMTEiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMTQwIDE2NHYzMU05MiAxOThoOTYiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNjMgNjhoMTU0IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIvPjwvc3ZnPg==",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/1Wn_VTQoslTI8b10LWR-c5qsvJue1C_1prSGUnnRRLHo/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": ""
       },
       {
         "id": "wheels",
@@ -23,7 +47,49 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48Y2lyY2xlIGN4PSIxNDAiIGN5PSIxMTYiIHI9Ijc0IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iMTE2IiByPSIyNSIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik03MiA4OWw2OCAyNyA2OC0yN00xNDAgMTE2djY3IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTkxIDYyYTczIDczIDAgMCAxIDk4IDAiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI3Ii8+PC9zdmc+",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/18wCCMSPlrqbNDouxAWime65w70h-gonzGQt5R99CAJI/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": ""
+      },
+      {
+        "id": "consoles",
+        "name": "Игровые приставки",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNzIgODZjLTI0IDctMzcgNDItMzEgNzIgNCAyMCAxNyAyNyAzMSAxMWwyMi0yNWg5MmwyMiAyNWMxNCAxNiAyNyA5IDMxLTExIDYtMzAtNy02NS0zMS03Mi0xNi01LTM2IDUtNDggMTdIMTIwYy0xMi0xMi0zMi0yMi00OC0xN1oiLz48cGF0aCBkPSJNODIgMTExdjMyTTY2IDEyN2gzMk0xODggMTE5aDFNMjA3IDEzN2gxIi8+PC9nPjxwYXRoIGQ9Ik01NCAyMDdoMTcyIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuNyIvPjwvc3ZnPg==",
+        "updated": "03.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": ""
+      },
+      {
+        "id": "printing3d",
+        "name": "3D-принтеры",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNjkgNDloMTQydjE0M0g2OXoiLz48cGF0aCBkPSJNOTIgNjloOTZNMTQwIDY5djM2TTEyMSAxMDVoMzhsLTggMTloLTIyek0xMDAgMTY2aDgwIi8+PHBhdGggZD0iTTExMiAxNjZ2LTMxaDU2djMxIi8+PC9nPjxwYXRoIGQ9Ik01NCAyMDdoMTcyIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuNyIvPjwvc3ZnPg==",
+        "updated": "04.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": ""
+      },
+      {
+        "id": "apple",
+        "name": "Техника Apple",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSI0NSIgeT0iNTQiIHdpZHRoPSI4MiIgaGVpZ2h0PSIxMjYiIHJ4PSIxNCIvPjxjaXJjbGUgY3g9Ijg2IiBjeT0iMTYxIiByPSI0Ii8+PHJlY3QgeD0iMTQ1IiB5PSI3MCIgd2lkdGg9IjkyIiBoZWlnaHQ9Ijc1IiByeD0iOSIvPjxwYXRoIGQ9Ik0xMzIgMTY2aDExOGwtMTIgMTZoLTk0eiIvPjwvZz48cGF0aCBkPSJNNTQgMjA3aDE3MiIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iLjciLz48L3N2Zz4=",
+        "updated": "03.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": ""
+      },
+      {
+        "id": "smartphones",
+        "name": "Смартфоны",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSI4MiIgeT0iMzQiIHdpZHRoPSIxMTYiIGhlaWdodD0iMTY2IiByeD0iMjIiLz48cGF0aCBkPSJNMTE5IDUwaDQyIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iMTgxIiByPSI1Ii8+PHBhdGggZD0iTTEwMyA3M2g3NHY3NmgtNzR6Ii8+PC9nPjxwYXRoIGQ9Ik01NCAyMDdoMTcyIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuNyIvPjwvc3ZnPg==",
+        "updated": "03.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": ""
       },
       {
         "id": "gpus",
@@ -31,7 +97,9 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIyOCIgeT0iNjMiIHdpZHRoPSIyMjQiIGhlaWdodD0iMTA2IiByeD0iMTIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSI5MyIgY3k9IjExNiIgcj0iMzQiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIxODEiIGN5PSIxMTYiIHI9IjM0IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTI1MiA4OWgxNU0yNTIgMTQzaDE1TTUyIDE2OXYxOGg5MiIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik00OCA4MmgxNzgiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1Ii8+PC9zdmc+",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/17w5cONKLfyJrYL6cOpUPPOfYspr5aPyNCvLmBx3uc_c/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "pc_parts"
       },
       {
         "id": "ram",
@@ -39,7 +107,9 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIzMCIgeT0iNzUiIHdpZHRoPSIyMjAiIGhlaWdodD0iODIiIHJ4PSI5IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iNTUiIHk9Ijk0IiB3aWR0aD0iMzYiIGhlaWdodD0iMzIiIHJ4PSI0IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTA4IiB5PSI5NCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjMyIiByeD0iNCIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxyZWN0IHg9IjE2MSIgeT0iOTQiIHdpZHRoPSIzNiIgaGVpZ2h0PSIzMiIgcng9IjQiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNTIgMTU3djE4TTc2IDE1N3YxOE0xMDAgMTU3djE4TTEyNCAxNTd2MThNMTQ4IDE1N3YxOE0xNzIgMTU3djE4TTE5NiAxNTd2MThNMjIwIDE1N3YxOCIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik00OSA4MmgxODIiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1Ii8+PC9zdmc+",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/1WvBoee_1cEOjbB_j9VAu-09Rz4KwRQ0oDe0S_rDOFog/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "pc_parts"
       },
       {
         "id": "cpus",
@@ -47,7 +117,9 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI2OCIgeT0iNDMiIHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiByeD0iMTUiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSI5NiIgeT0iNzEiIHdpZHRoPSI4OCIgaGVpZ2h0PSI4OCIgcng9IjkiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNODggMjZ2MTdNMTE4IDI2djE3TTE0OCAyNnYxN00xNzggMjZ2MTdNODggMTg3djE4TTExOCAxODd2MThNMTQ4IDE4N3YxOE0xNzggMTg3djE4TTUxIDY0aDE3TTUxIDk1aDE3TTUxIDEyNmgxN001MSAxNTdoMTdNMjEyIDY0aDE3TTIxMiA5NWgxN00yMTIgMTI2aDE3TTIxMiAxNTdoMTciIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMTA1IDgwaDcwIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIvPjwvc3ZnPg==",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/1kdHFjp6PD3bLN6o6s6Yo15BR2xQHrAeTDBSl9W-Awl0/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "pc_parts"
       },
       {
         "id": "motherboards",
@@ -55,7 +127,9 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI1NCIgeT0iMjciIHdpZHRoPSIxNzIiIGhlaWdodD0iMTgwIiByeD0iMTIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSI4MCIgeT0iNTMiIHdpZHRoPSI3MCIgaGVpZ2h0PSI3MCIgcng9IjgiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMTY2IDU0aDM1TTE2NiA3MmgzNU0xNjYgOTBoMzVNMTY2IDEwOGgzNU04MCAxNDVoMTIxTTgwIDE2N2gxMjFNODAgMTg5aDYyIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTY0IDM3aDE1MiIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiLz48L3N2Zz4=",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/1tCE4y-BCPEukTkOEytacxCS0lvx9XHRV3_HjP868z5s/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "pc_parts"
       },
       {
         "id": "ssd",
@@ -63,7 +137,9 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIzNSIgeT0iODIiIHdpZHRoPSIyMTAiIGhlaWdodD0iNjgiIHJ4PSIxMiIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjU5IiBjeT0iMTE2IiByPSI3IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iODgiIHk9Ijk4IiB3aWR0aD0iNTQiIGhlaWdodD0iMzUiIHJ4PSI2IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTU1IiB5PSI5OCIgd2lkdGg9IjU0IiBoZWlnaHQ9IjM1IiByeD0iNiIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0yNDUgMTAwaDE5TTI0NSAxMTRoMTlNMjQ1IDEyOGgxOSIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik03NiA4OGgxNTAiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1Ii8+PC9zdmc+",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/1J-2mocVrQlhJwEhVeek2rty-rLfjHPlbRa64F4GVGV0/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "pc_parts"
       },
       {
         "id": "psu",
@@ -71,7 +147,9 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI1MSIgeT0iNDIiIHdpZHRoPSIxNzgiIGhlaWdodD0iMTUyIiByeD0iMTMiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIxNDAiIGN5PSIxMTgiIHI9IjUyIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iMTE4IiByPSIxMCIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xNDAgNjZ2MTA0TTg4IDExOGgxMDRNMTA0IDgybDcyIDcyTTE3NiA4MmwtNzIgNzIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNjQgNTJoMTUyIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIvPjwvc3ZnPg==",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/1tU7Yo2HBbwdjue5y4Gkyca3K1efLKCx7K0u77-ZygB4/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "pc_parts"
       },
       {
         "id": "cooling",
@@ -79,7 +157,49 @@
         "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIyNyIgeT0iNDkiIHdpZHRoPSIyMjYiIGhlaWdodD0iMTM5IiByeD0iMTIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSI4OCIgY3k9IjExOCIgcj0iNDMiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIxOTIiIGN5PSIxMTgiIHI9IjQzIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTg4IDgydjcyTTUyIDExOGg3Mk02MyA5M2w1MCA1ME0xMTMgOTNsLTUwIDUwTTE5MiA4MnY3Mk0xNTYgMTE4aDcyTTE2NyA5M2w1MCA1ME0yMTcgOTNsLTUwIDUwIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTQ4IDYwaDE4NCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiLz48L3N2Zz4=",
         "updated": "28.08.2026",
         "sheet": "https://docs.google.com/spreadsheets/d/1fQ_v_q58myRyjH3rNk_C12DIr3wL6-qhMQBSkvcUy6s/edit?usp=drivesdk",
-        "visible": true
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "pc_parts"
+      },
+      {
+        "id": "keyboards",
+        "name": "Клавиатуры",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzOCIgeT0iNzMiIHdpZHRoPSIyMDQiIGhlaWdodD0iMTAzIiByeD0iMTQiLz48cGF0aCBkPSJNNTggOTZoMTY0TTU4IDEyMWgxNjRNNzIgMTQ2aDEzNiIvPjwvZz48cGF0aCBkPSJNNTQgMjA3aDE3MiIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iLjciLz48L3N2Zz4=",
+        "updated": "04.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "peripherals"
+      },
+      {
+        "id": "mice",
+        "name": "Мыши",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTQwIDQ1Yy0zNiAwLTU5IDI5LTU5IDcwdjIyYzAgNDEgMjMgNzAgNTkgNzBzNTktMjkgNTktNzB2LTIyYzAtNDEtMjMtNzAtNTktNzBaIi8+PHBhdGggZD0iTTE0MCA0NXY1NU0xMjMgODJoMzQiLz48L2c+PHBhdGggZD0iTTU0IDIwN2gxNzIiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9Ii43Ii8+PC9zdmc+",
+        "updated": "04.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "peripherals"
+      },
+      {
+        "id": "microphones",
+        "name": "Микрофоны",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIxMTEiIHk9IjM4IiB3aWR0aD0iNTgiIGhlaWdodD0iMTAwIiByeD0iMjkiLz48cGF0aCBkPSJNODcgMTEyYzAgMzIgMjEgNTEgNTMgNTFzNTMtMTkgNTMtNTFNMTQwIDE2M3YzMU0xMTEgMTk0aDU4Ii8+PC9nPjxwYXRoIGQ9Ik01NCAyMDdoMTcyIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuNyIvPjwvc3ZnPg==",
+        "updated": "04.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "peripherals"
+      },
+      {
+        "id": "headphones",
+        "name": "Наушники",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMCIgeTE9IjMwIiB4Mj0iMjUwIiB5Mj0iMjAwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzc3NTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTggMjVoNjVsMTcgMTVoNzJsMTctMTVoNzMiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzUiLz48ZyBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNjUgMTI5di0xN2MwLTQ3IDMwLTc4IDc1LTc4czc1IDMxIDc1IDc4djE3Ii8+PHJlY3QgeD0iNTAiIHk9IjExOSIgd2lkdGg9IjQyIiBoZWlnaHQ9IjY4IiByeD0iMTciLz48cmVjdCB4PSIxODgiIHk9IjExOSIgd2lkdGg9IjQyIiBoZWlnaHQ9IjY4IiByeD0iMTciLz48L2c+PHBhdGggZD0iTTU0IDIwN2gxNzIiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9Ii43Ii8+PC9zdmc+",
+        "updated": "04.09.2026",
+        "sheet": "",
+        "visible": true,
+        "kind": "catalog",
+        "parentId": "peripherals"
       }
     ],
     "content": {
@@ -490,6 +610,2617 @@
         "NZXT Kraken 360 RGB Black",
         24499,
         239
+      ]
+    ],
+    "consoles": [
+      [
+        "Игровая приставка Sony PlayStation 5 Slim Digital Edition 825 ГБ, белая, без дисковода",
+        36499,
+        145
+      ],
+      [
+        "Игровая приставка Sony PlayStation 5 Slim Digital Edition 1 ТБ, белая, без дисковода",
+        39499,
+        118
+      ],
+      [
+        "Игровая приставка Sony PlayStation 5 Slim 1 ТБ, с дисководом Ultra HD Blu-ray, 1 ревизия (CFI-20xx), белая",
+        41499,
+        88
+      ],
+      [
+        "Игровая приставка Sony PlayStation 5 Slim 1 ТБ, с дисководом Ultra HD Blu-ray, 2 ревизия (CFI-21xx), белая",
+        40499,
+        56
+      ],
+      [
+        "Игровая приставка Sony PlayStation 5 Pro Digital Edition 2 ТБ, 1 ревизия, белая, без дисковода",
+        67499,
+        32
+      ],
+      [
+        "Игровая приставка Sony PlayStation 5 Pro Digital Edition 2 ТБ, 2 ревизия (CFI-71xx), белая, без дисковода",
+        69499,
+        40
+      ],
+      [
+        "Игровая приставка Sony PlayStation 5 Pro 2 ТБ, 2 ревизия (CFI-71xx), дисковод Ultra HD Blu-ray + 2 геймпада DualSense, белая",
+        77499,
+        9
+      ],
+      [
+        "Игровая консоль Microsoft Xbox Series X [1000 ГБ, с дисководом, Wi‑Fi 5 (802.11ac), HDMI 2.1, до 4K UltraHD, 3840×2160]",
+        60499,
+        76
+      ],
+      [
+        "Игровая консоль Microsoft Xbox Series X Digital Edition [1000 ГБ, Wi‑Fi 5 (802.11ac), HDMI 2.1, до 4K UltraHD, 3840×2160]",
+        54499,
+        54
+      ],
+      [
+        "Игровая консоль Microsoft Xbox Series S [512 ГБ, Wi‑Fi 5 (802.11ac), HDMI 2.1, до 2K QuadHD, 2560×1440]",
+        34499,
+        126
+      ],
+      [
+        "Игровая приставка Microsoft Xbox Series S 1 ТБ, белая, Digital Edition, без дисковода",
+        41499,
+        91
+      ],
+      [
+        "Система виртуальной реальности Meta Quest 3 белый [4128×2208, 120 Гц, 110°, встроенная память 512 ГБ, контроллеры, 515 г]",
+        58499,
+        78
+      ],
+      [
+        "Система виртуальной реальности Meta Quest 3S белый [3664×1832, 120 Гц, 96°, встроенная память 128 ГБ, контроллеры, 514 г]",
+        29499,
+        114
+      ],
+      [
+        "Система виртуальной реальности Pico 4 Ultra белый [дисплеи 2.56\" ×2, 4320×2160, 90 Гц, 105°, встроенная память 256 ГБ, контроллеры, 580 г]",
+        46499,
+        34
+      ],
+      [
+        "Система виртуальной реальности Meta Quest 3S белый [3664×1832, 120 Гц, 96°, встроенная память 256 ГБ, контроллеры, 514 г]",
+        47499,
+        72
+      ],
+      [
+        "Система виртуальной реальности PIMAX CRYSTAL LIGHT черный [5760×2880, 120 Гц, 130°, контроллеры, 930 г]",
+        79499,
+        8
+      ],
+      [
+        "Система виртуальной реальности Apple Vision Pro серый [дисплеи 1.41\" ×2, 7320×3142, 100 Гц, 120°, встроенная память 512 ГБ, 650 г]",
+        329499,
+        10
+      ],
+      [
+        "Система виртуальной реальности Apple Vision Pro серый [дисплеи 1.41\" ×2, 7320×3142, 100 Гц, 120°, встроенная память 256 ГБ, 650 г]",
+        330499,
+        14
+      ],
+      [
+        "Система виртуальной реальности Apple Vision Pro M5 серый [дисплеи 1.41\" ×2, 7320×3142, 120 Гц, 120°, встроенная память 512 ГБ, 800 г]",
+        324499,
+        8
+      ],
+      [
+        "Система виртуальной реальности Apple Vision Pro M5 серый [дисплеи 1.41\" ×2, 7320×3142, 120 Гц, 120°, встроенная память 256 ГБ, 800 г]",
+        316499,
+        11
+      ],
+      [
+        "Система виртуальной реальности HTC VIVE Pro 2 черный [4896×2448, 120 Гц, 120°, контроллеры, базовые станции, 350 г] — Full Kit",
+        118499,
+        6
+      ],
+      [
+        "Система виртуальной реальности Apple Vision Pro M5 серый [дисплеи 1.41\" ×2, 7320×3142, 120 Гц, 120°, встроенная память 1024 ГБ, 800 г]",
+        364499,
+        5
+      ],
+      [
+        "Система виртуальной реальности VR Pico 4 Ultra SG белый [дисплеи 2.56\" ×2, 4320×2160, 90 Гц, 105°, встроенная память 256 ГБ, контроллеры, 580 г]",
+        46499,
+        12
+      ],
+      [
+        "Система виртуальной реальности HTC VIVE XR Elite серый [3840×1920, 90 Гц, 110°, встроенная память 128 ГБ, контроллеры, 625 г]",
+        120499,
+        7
+      ],
+      [
+        "Игровая консоль Nintendo Switch OLED белый [64 ГБ, экран 7\", OLED, 1280×720, Bluetooth 4.1, Wi‑Fi 5 (802.11ac)]",
+        17499,
+        132
+      ],
+      [
+        "Игровая консоль Nintendo Switch 2 [256 ГБ, экран 7.9\", IPS, 1920×1080, Wi‑Fi 6 (802.11ax)]",
+        31499,
+        118
+      ],
+      [
+        "Портативная игровая консоль Nintendo Switch Lite серый [32 ГБ, экран 5.5\", IPS, 1280×720, Bluetooth 4.1, Wi‑Fi 802.11 a/b/g/n/ac]",
+        16499,
+        156
+      ],
+      [
+        "Игровая консоль Nintendo Switch 2 + Mario Kart World [256 ГБ, экран 7.9\", IPS, 1920×1080, Wi‑Fi 6 (802.11ax)]",
+        55499,
+        84
+      ],
+      [
+        "Игровая консоль Nintendo Switch черный [32 ГБ, экран 6.2\", IPS, 1280×720, Bluetooth 4.1, Wi‑Fi 5 (802.11ac)]",
+        27499,
+        72
+      ],
+      [
+        "Игровая консоль Nintendo Switch OLED – Splatoon 3 Edition черный [64 ГБ, экран 7\", OLED, 1280×720, Bluetooth 4.1, Wi‑Fi 5 (802.11ac)]",
+        37499,
+        14
+      ],
+      [
+        "Игровая консоль Nintendo Switch OLED – Mario Red Edition красный [64 ГБ, экран 7\", OLED, 1280×720, Bluetooth 4.1, Wi‑Fi 5 (802.11ac)]",
+        25499,
+        12
+      ],
+      [
+        "Игровая консоль Nintendo Switch OLED – The Legend of Zelda: Tears of the Kingdom Edition черный [64 ГБ, экран 7\", OLED, 1280×720, Bluetooth 4.1, Wi‑Fi 5 (802.11ac)]",
+        45499,
+        9
+      ],
+      [
+        "Игровая консоль Nintendo Switch OLED – Pokemon Scarlet and Violet Edition черный [64 ГБ, экран 7\", OLED, 1280×720, Bluetooth 4.1, Wi‑Fi 5 (802.11ac)]",
+        45499,
+        11
+      ],
+      [
+        "Геймпад Sony DualSense для PlayStation 5 (PS5), белый",
+        5499,
+        320
+      ],
+      [
+        "Геймпад Sony DualSense Edge для PlayStation 5 (PS5), белый",
+        11499,
+        88
+      ],
+      [
+        "Геймпад Microsoft Xbox Wireless Controller для Xbox Series X|S и ПК, белый",
+        6499,
+        246
+      ],
+      [
+        "Геймпад Microsoft Xbox Elite Wireless Controller Series 2, черный",
+        10499,
+        62
+      ],
+      [
+        "Геймпад Nintendo Switch Pro Controller, черный",
+        4499,
+        138
+      ],
+      [
+        "Геймпад Nintendo Switch 2 Pro Controller, черный",
+        9499,
+        124
+      ]
+    ],
+    "printing3d": [
+      [
+        "3D-принтер Bambu Lab A1 Mini EU",
+        20499,
+        190
+      ],
+      [
+        "3D-принтер Bambu Lab A1 Mini Combo EU",
+        28499,
+        160
+      ],
+      [
+        "3D-принтер Bambu Lab A1 EU",
+        23499,
+        180
+      ],
+      [
+        "3D-принтер Bambu Lab A1 Combo EU",
+        33499,
+        170
+      ],
+      [
+        "3D-принтер Bambu Lab P1S EU",
+        30499,
+        145
+      ],
+      [
+        "3D-принтер Bambu Lab P1S Combo EU",
+        48499,
+        135
+      ],
+      [
+        "3D-принтер Bambu Lab P2S EU",
+        47499,
+        110
+      ],
+      [
+        "3D-принтер Bambu Lab P2S Combo EU",
+        58499,
+        105
+      ],
+      [
+        "3D-принтер Bambu Lab H2S Combo EU",
+        98499,
+        35
+      ],
+      [
+        "3D-принтер Bambu Lab H2D Combo EU",
+        132499,
+        22
+      ],
+      [
+        "3D-принтер Bambu Lab A2L",
+        27499,
+        78
+      ],
+      [
+        "3D-принтер Bambu Lab A2L Combo с AMS Lite",
+        35499,
+        68
+      ],
+      [
+        "3D-принтер Bambu Lab X2D (EU-версия)",
+        53499,
+        58
+      ],
+      [
+        "3D-принтер Bambu Lab X2D Combo с AMS (EU-версия)",
+        70499,
+        52
+      ],
+      [
+        "3D-принтер Bambu Lab H2D (EU-версия)",
+        120499,
+        24
+      ],
+      [
+        "3D-принтер Bambu Lab H2D Pro (EU-версия)",
+        227499,
+        8
+      ],
+      [
+        "3D-принтер Bambu Lab H2D Laser Full Combo 10 Вт (EU-версия)",
+        174499,
+        12
+      ],
+      [
+        "3D-принтер Bambu Lab H2D Laser Full Combo 40 Вт (EU-версия)",
+        210499,
+        8
+      ],
+      [
+        "3D-принтер Bambu Lab H2S Laser Full Combo (EU-версия)",
+        129499,
+        15
+      ],
+      [
+        "3D-принтер Bambu Lab H2C Combo AMS (EU-версия)",
+        185499,
+        10
+      ],
+      [
+        "3D-принтер Bambu Lab H2C Laser Full Combo 10 Вт",
+        210499,
+        7
+      ],
+      [
+        "3D-принтер Bambu Lab H2C Laser Full Combo 40 Вт",
+        240499,
+        5
+      ],
+      [
+        "3D-принтер CREALITY K1C",
+        42499,
+        105
+      ],
+      [
+        "3D-принтер CREALITY K1 Max",
+        48499,
+        85
+      ],
+      [
+        "3D-принтер CREALITY K2",
+        33499,
+        75
+      ],
+      [
+        "3D-принтер CREALITY K2 Combo",
+        50499,
+        82
+      ],
+      [
+        "3D-принтер CREALITY K2 Pro Combo",
+        69499,
+        48
+      ],
+      [
+        "3D-принтер CREALITY K2 Plus Combo",
+        96499,
+        28
+      ],
+      [
+        "3D-принтер CREALITY SPARKX i7 Color Combo",
+        43499,
+        45
+      ],
+      [
+        "3D-принтер CREALITY HALOT-R6",
+        8499,
+        115
+      ],
+      [
+        "3D-принтер Creality K2 Plus",
+        63499,
+        48
+      ],
+      [
+        "3D-принтер Creality K2 Pro",
+        48499,
+        55
+      ],
+      [
+        "3D-принтер Creality3D K1 SE",
+        24499,
+        82
+      ],
+      [
+        "3D-принтер Creality Ender-3 V3 KE",
+        17499,
+        115
+      ],
+      [
+        "3D-принтер Creality3D Ender-3 V3 Plus (набор для сборки)",
+        29499,
+        72
+      ],
+      [
+        "3D-принтер Creality3D Ender-3 V3 (набор для сборки)",
+        23499,
+        96
+      ],
+      [
+        "3D-принтер Creality HALOT-MAGE S 14K",
+        28499,
+        62
+      ],
+      [
+        "3D-принтер Anycubic Kobra S1",
+        25499,
+        125
+      ],
+      [
+        "3D-принтер Anycubic Kobra S1 Combo",
+        30499,
+        145
+      ],
+      [
+        "3D-принтер Anycubic Kobra 3",
+        17499,
+        115
+      ],
+      [
+        "3D-принтер Anycubic Kobra 3 Combo",
+        24499,
+        110
+      ],
+      [
+        "3D-принтер Anycubic Kobra X",
+        20499,
+        82
+      ],
+      [
+        "3D-принтер Anycubic Photon Mono 4",
+        16499,
+        130
+      ],
+      [
+        "3D-принтер Anycubic Photon Mono 4 Ultra",
+        24499,
+        95
+      ],
+      [
+        "3D-принтер Anycubic Photon Mono M7 Pro",
+        38499,
+        55
+      ],
+      [
+        "3D-принтер Anycubic Photon Mono M7 Max",
+        72499,
+        28
+      ],
+      [
+        "3D-принтер Anycubic Kobra 3 Max",
+        36499,
+        64
+      ],
+      [
+        "3D-принтер Elegoo Saturn 4 Ultra 16K",
+        47499,
+        70
+      ],
+      [
+        "3D-принтер Elegoo Mars 5 Ultra",
+        48499,
+        85
+      ],
+      [
+        "3D-принтер Elegoo Neptune 4 Plus",
+        23499,
+        62
+      ],
+      [
+        "3D-принтер Elegoo Neptune 4 Max",
+        27499,
+        48
+      ],
+      [
+        "3D-принтер Elegoo Centauri Carbon",
+        28499,
+        68
+      ],
+      [
+        "3D-принтер Elegoo Jupiter 2",
+        53499,
+        42
+      ],
+      [
+        "3D-принтер Elegoo OrangeStorm Giga",
+        192499,
+        7
+      ],
+      [
+        "3D-принтер Flashforge Adventurer 5M",
+        16499,
+        92
+      ],
+      [
+        "3D-принтер Flashforge Adventurer 5M Pro",
+        31499,
+        85
+      ],
+      [
+        "3D-принтер Flashforge AD5X",
+        21499,
+        78
+      ],
+      [
+        "3D-принтер QIDI Q2",
+        33499,
+        68
+      ],
+      [
+        "3D-принтер Phrozen Sonic Mighty Revo 14K",
+        72499,
+        28
+      ],
+      [
+        "3D-принтер Phrozen Sonic Mega 8K V2",
+        197499,
+        8
+      ],
+      [
+        "3D-принтер Bizon",
+        3113499,
+        12
+      ],
+      [
+        "3D-сканер CREALITY CR-Scan Ferret Pro",
+        24499,
+        42
+      ],
+      [
+        "3D-сканер CREALITY CR-Scan Otter",
+        50499,
+        28
+      ],
+      [
+        "3D-сканер CREALITY CR-Scan Raptor",
+        65499,
+        30
+      ],
+      [
+        "3D-сканер Creality Sermoon S1",
+        152499,
+        10
+      ],
+      [
+        "3D-сканер Creality Sermoon P1",
+        207499,
+        8
+      ],
+      [
+        "3D-сканер Scanform L5",
+        174499,
+        18
+      ],
+      [
+        "3D-сканер RangeVision Spectrum II",
+        294499,
+        9
+      ],
+      [
+        "3D-сканер Creality CR-Scan Raptor Pro",
+        113499,
+        22
+      ],
+      [
+        "3D-сканер Creality Sermoon X1",
+        359499,
+        5
+      ],
+      [
+        "3D-сканер Creality Pika",
+        44499,
+        28
+      ],
+      [
+        "3D-сканер Shining 3D EinScan Rigil",
+        296499,
+        8
+      ],
+      [
+        "3D-сканер Shining 3D EinStar",
+        49499,
+        30
+      ],
+      [
+        "3D-сканер Calibry",
+        330499,
+        6
+      ],
+      [
+        "3D-сканер RangeVision Neopoint",
+        69499,
+        18
+      ],
+      [
+        "3D-сканер Creality RaptorX",
+        167499,
+        12
+      ],
+      [
+        "3D-сканер Volume Technologies VT MINI V2",
+        528499,
+        4
+      ]
+    ],
+    "apple": [
+      [
+        "Телефон Apple iPhone 17 256Gb eSIM (White)",
+        43499,
+        250
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb eSIM (Lavender)",
+        43499,
+        237
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb eSIM (Mist Blue)",
+        43499,
+        224
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb eSIM (Sage)",
+        44499,
+        211
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb eSIM (Black)",
+        44499,
+        198
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb nano SIM + eSIM (Mist Blue)",
+        44499,
+        215
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb nano SIM + eSIM (White)",
+        45499,
+        204
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb nano SIM + eSIM (Sage)",
+        45499,
+        193
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb nano SIM + eSIM (Lavender)",
+        45499,
+        182
+      ],
+      [
+        "Телефон Apple iPhone 17 256Gb nano SIM + eSIM (Black)",
+        47499,
+        171
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb eSIM (White)",
+        51499,
+        145
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb eSIM (Mist Blue)",
+        51499,
+        137
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb eSIM (Black)",
+        51499,
+        129
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb eSIM (Sage)",
+        52499,
+        121
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb eSIM (Lavender)",
+        52499,
+        113
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb nano SIM + eSIM (Mist Blue)",
+        53499,
+        118
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb nano SIM + eSIM (White)",
+        54499,
+        112
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb nano SIM + eSIM (Black)",
+        54499,
+        106
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb nano SIM + eSIM (Sage)",
+        55499,
+        100
+      ],
+      [
+        "Телефон Apple iPhone 17 512Gb nano SIM + eSIM (Lavender)",
+        56499,
+        94
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro 256Gb eSIM (Cosmic Orange)",
+        60499,
+        170
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro 256Gb eSIM (Deep Blue)",
+        61499,
+        161
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 256Gb eSIM (Cosmic Orange)",
+        66499,
+        180
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 256Gb eSIM (Deep Blue)",
+        67499,
+        170
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 256Gb eSIM (Silver)",
+        68499,
+        160
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 256Gb nano SIM + eSIM (Cosmic Orange)",
+        73499,
+        145
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 256Gb nano SIM + eSIM (Silver)",
+        73499,
+        137
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 256Gb nano SIM + eSIM (Deep Blue)",
+        73499,
+        129
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 512Gb eSIM (Cosmic Orange)",
+        74499,
+        108
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 512Gb eSIM (Deep Blue)",
+        76499,
+        102
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 512Gb eSIM (Silver)",
+        82499,
+        96
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 512Gb nano SIM + eSIM (Cosmic Orange)",
+        83499,
+        88
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 512Gb nano SIM + eSIM (Deep Blue)",
+        84499,
+        84
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 512Gb nano SIM + eSIM (Silver)",
+        86499,
+        80
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 1Tb eSIM (Cosmic Orange)",
+        83499,
+        55
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 1Tb eSIM (Deep Blue)",
+        83499,
+        52
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 1Tb eSIM (Silver)",
+        92499,
+        49
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 1Tb nano SIM + eSIM (Cosmic Orange)",
+        93499,
+        43
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 1Tb nano SIM + eSIM (Deep Blue)",
+        94499,
+        41
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 1Tb nano SIM + eSIM (Silver)",
+        96499,
+        39
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 2Tb eSIM (Deep Blue)",
+        97499,
+        21
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 2Tb eSIM (Cosmic Orange)",
+        97499,
+        19
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 2Tb eSIM (Silver)",
+        98499,
+        17
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 2Tb nano SIM + eSIM (Cosmic Orange)",
+        115499,
+        14
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 2Tb nano SIM + eSIM (Silver)",
+        116499,
+        12
+      ],
+      [
+        "Телефон Apple iPhone 17 Pro Max 2Tb nano SIM + eSIM (Deep Blue)",
+        116499,
+        10
+      ],
+      [
+        "Телефон Apple iPhone Air 256Gb eSIM (Sky Blue)",
+        46499,
+        135
+      ],
+      [
+        "Телефон Apple iPhone Air 256Gb eSIM (Light Gold)",
+        46499,
+        128
+      ],
+      [
+        "Телефон Apple iPhone Air 256Gb eSIM (Cloud White)",
+        48499,
+        121
+      ],
+      [
+        "Телефон Apple iPhone Air 256Gb eSIM (Space Black)",
+        49499,
+        114
+      ],
+      [
+        "Телефон Apple iPhone Air 512Gb eSIM (Sky Blue)",
+        54499,
+        78
+      ],
+      [
+        "Телефон Apple iPhone Air 512Gb eSIM (Light Gold)",
+        55499,
+        74
+      ],
+      [
+        "Телефон Apple iPhone Air 512Gb eSIM (Space Black)",
+        56499,
+        70
+      ],
+      [
+        "Телефон Apple iPhone Air 512Gb eSIM (Cloud White)",
+        56499,
+        66
+      ],
+      [
+        "Телефон Apple iPhone Air 1Tb eSIM (Sky Blue)",
+        63499,
+        34
+      ],
+      [
+        "Телефон Apple iPhone Air 1Tb eSIM (Space Black)",
+        66499,
+        32
+      ],
+      [
+        "Телефон Apple iPhone Air 1Tb eSIM (Cloud White)",
+        66499,
+        30
+      ],
+      [
+        "Телефон Apple iPhone Air 1Tb eSIM (Light Gold)",
+        66499,
+        28
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb eSIM (Black)",
+        32499,
+        235
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb eSIM (Pink)",
+        33499,
+        222
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb eSIM (Teal)",
+        33499,
+        209
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb eSIM (Ultramarine)",
+        33499,
+        196
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb eSIM (White)",
+        34499,
+        183
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb nano SIM + eSIM (Black)",
+        36499,
+        205
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb nano SIM + eSIM (Pink)",
+        36499,
+        194
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb nano SIM + eSIM (Teal)",
+        36499,
+        183
+      ],
+      [
+        "Телефон Apple iPhone 16 128Gb nano SIM + eSIM (White)",
+        36499,
+        172
+      ],
+      [
+        "Телефон Apple iPhone 16 256Gb eSIM (Pink)",
+        38499,
+        145
+      ],
+      [
+        "Телефон Apple iPhone 16 256Gb eSIM (Teal)",
+        38499,
+        137
+      ],
+      [
+        "Телефон Apple iPhone 16 256Gb nano SIM + eSIM (Pink)",
+        39499,
+        155
+      ],
+      [
+        "Телефон Apple iPhone 16 256Gb nano SIM + eSIM (Teal)",
+        39499,
+        147
+      ],
+      [
+        "Телефон Apple iPhone 16 256Gb nano SIM + eSIM (Ultramarine)",
+        40499,
+        139
+      ],
+      [
+        "Телефон Apple iPhone 16 256Gb nano SIM + eSIM (Black)",
+        40499,
+        131
+      ],
+      [
+        "Телефон Apple iPhone 16 256Gb nano SIM + eSIM (White)",
+        41499,
+        123
+      ],
+      [
+        "Телефон Apple iPhone 16 Pro 256Gb eSIM (White Titanium)",
+        61499,
+        82
+      ],
+      [
+        "Телефон Apple iPhone 16 Pro Max 256Gb eSIM (Desert Titanium)",
+        56499,
+        96
+      ],
+      [
+        "Телефон Apple iPhone 16 Pro Max 256Gb eSIM (Black Titanium)",
+        60499,
+        91
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb eSIM (Black)",
+        27499,
+        215
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb eSIM (Pink)",
+        29499,
+        204
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb eSIM (Green)",
+        29499,
+        193
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb eSIM (Blue)",
+        29499,
+        182
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb nano SIM + eSIM (Green)",
+        29499,
+        190
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb nano SIM + eSIM (Blue)",
+        30499,
+        180
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb nano SIM + eSIM (Pink)",
+        31499,
+        170
+      ],
+      [
+        "Телефон Apple iPhone 15 128Gb nano SIM + eSIM (Black)",
+        31499,
+        160
+      ],
+      [
+        "Телефон Apple iPhone 15 256Gb nano SIM + eSIM (Blue)",
+        34499,
+        125
+      ],
+      [
+        "Телефон Apple iPhone 15 256Gb nano SIM + eSIM (Black)",
+        35499,
+        119
+      ],
+      [
+        "Телефон Apple iPhone 15 256Gb nano SIM + eSIM (Pink)",
+        35499,
+        113
+      ],
+      [
+        "Телефон Apple iPhone 15 256Gb nano SIM + eSIM (Yellow)",
+        36499,
+        107
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb eSIM (Yellow)",
+        36499,
+        76
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb eSIM (Pink)",
+        37499,
+        72
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb eSIM (Green)",
+        37499,
+        68
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb eSIM (Blue)",
+        37499,
+        64
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb eSIM (Black)",
+        37499,
+        60
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb nano SIM + eSIM (Blue)",
+        40499,
+        52
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb nano SIM + eSIM (Black)",
+        43499,
+        50
+      ],
+      [
+        "Телефон Apple iPhone 15 512Gb nano SIM + eSIM (Pink)",
+        44499,
+        48
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 128Gb (Green)",
+        32499,
+        128
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 128Gb (Blue)",
+        33499,
+        121
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 128Gb (Yellow)",
+        33499,
+        114
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 128Gb (Pink)",
+        33499,
+        107
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 128Gb (Black)",
+        35499,
+        100
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 256Gb (Yellow)",
+        34499,
+        82
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 256Gb (Pink)",
+        36499,
+        78
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 256Gb (Green)",
+        36499,
+        74
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 256Gb (Black)",
+        41499,
+        70
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 512Gb (Yellow)",
+        36499,
+        48
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 512Gb (Green)",
+        38499,
+        46
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 512Gb (Pink)",
+        40499,
+        44
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 512Gb (Blue)",
+        40499,
+        42
+      ],
+      [
+        "Телефон Apple iPhone 15 Plus 512Gb (Black)",
+        43499,
+        40
+      ],
+      [
+        "Телефон Apple iPhone 14 128Gb (Midnight)",
+        27499,
+        175
+      ],
+      [
+        "Телефон Apple iPhone 14 128Gb (Starlight)",
+        28499,
+        166
+      ],
+      [
+        "Телефон Apple iPhone 14 128Gb (Blue)",
+        28499,
+        157
+      ],
+      [
+        "Телефон Apple iPhone 13 128Gb (Black)",
+        25499,
+        195
+      ],
+      [
+        "Телефон Apple iPhone 13 128Gb (White)",
+        26499,
+        185
+      ],
+      [
+        "Телефон Apple iPhone 13 128Gb (Blue)",
+        26499,
+        175
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 128Gb Wi‑Fi (Голубой)",
+        39499,
+        132
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 128Gb Wi‑Fi (Фиолетовый)",
+        39499,
+        125
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 128Gb Wi‑Fi (Серый космос)",
+        39499,
+        118
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 128Gb Wi‑Fi + Cellular (Фиолетовый)",
+        41499,
+        84
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 128Gb Wi‑Fi + Cellular (Серый космос)",
+        42499,
+        80
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 128Gb Wi‑Fi + Cellular (Голубой)",
+        43499,
+        76
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi (Фиолетовый)",
+        50499,
+        105
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi (Сияющая звезда)",
+        50499,
+        100
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi (Серый космос)",
+        50499,
+        95
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi (Голубой)",
+        50499,
+        90
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi + Cellular (Фиолетовый)",
+        63499,
+        68
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi + Cellular (Сияющая звезда)",
+        63499,
+        65
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi + Cellular (Голубой)",
+        63499,
+        62
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 256Gb Wi‑Fi + Cellular (Серый космос)",
+        64499,
+        59
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 512Gb Wi‑Fi (Фиолетовый)",
+        66499,
+        51
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 512Gb Wi‑Fi (Сияющая звезда)",
+        66499,
+        49
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 512Gb Wi‑Fi (Серый космос)",
+        66499,
+        47
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 512Gb Wi‑Fi (Голубой)",
+        66499,
+        45
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 512Gb Wi‑Fi + Cellular (Голубой)",
+        73499,
+        34
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 512Gb Wi‑Fi + Cellular (Фиолетовый)",
+        74499,
+        32
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 512Gb Wi‑Fi + Cellular (Сияющая звезда)",
+        74499,
+        30
+      ],
+      [
+        "Планшет Apple iPad Air 13 M3 1Tb Wi‑Fi (Серый космос)",
+        69499,
+        23
+      ],
+      [
+        "Планшет Apple iPad 11 (2025) Wi‑Fi 256Gb (Серебристый)",
+        26499,
+        145
+      ],
+      [
+        "Планшет Apple iPad Pro 13 M4 (2024) 256Gb Wi‑Fi (Черный космос)",
+        63499,
+        58
+      ],
+      [
+        "Планшет Apple iPad Pro 13 M4 (2024) 256Gb Wi‑Fi (Серебристый)",
+        68499,
+        55
+      ],
+      [
+        "Планшет Apple iPad Pro 13 M5 (2025) 256Gb Wi‑Fi (Space Black)",
+        63499,
+        62
+      ],
+      [
+        "Ноутбук Apple MacBook Air 13.6\" (M4, 16Gb, 512Gb SSD) Темно-синий (MW133)",
+        56499,
+        102
+      ],
+      [
+        "Ноутбук Apple MacBook Air 13.6\" (M4, 16Gb, 512Gb SSD) Старлайт (MW103)",
+        58499,
+        97
+      ],
+      [
+        "Ноутбук Apple MacBook Air 13.6\" (M4, 24Gb, 512Gb SSD) Серебристый (MC654)",
+        70499,
+        92
+      ],
+      [
+        "Ноутбук Apple MacBook Air 13.6\" (M2, 16Gb, 256Gb SSD) Темно-синий (MC7X4)",
+        40499,
+        118
+      ],
+      [
+        "Ноутбук Apple MacBook Pro 14\" (M5, 16Gb, 512Gb SSD) Черный космос (MDE04)",
+        85499,
+        68
+      ],
+      [
+        "Ноутбук Apple MacBook Pro 14\" (M5, 16Gb, 512Gb SSD) Серебристый (MDE44)",
+        85499,
+        65
+      ],
+      [
+        "Ноутбук Apple MacBook Pro 14\" (M5, 16Gb, 1Tb SSD) Черный космос (MDE14)",
+        87499,
+        62
+      ],
+      [
+        "Ноутбук Apple MacBook Pro 14\" (M5, 16Gb, 1Tb SSD) Серебристый (MDE54)",
+        89499,
+        59
+      ],
+      [
+        "Ноутбук Apple MacBook Pro 14\" (M5, 24Gb, 1Tb SSD) Черный космос (MDE34)",
+        110499,
+        56
+      ],
+      [
+        "Ноутбук Apple MacBook Pro 14\" (M5, 24Gb, 1Tb SSD) Серебристый (MDE64)",
+        114499,
+        71
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Space Grey Aluminum Case, Sport Band Black S/M",
+        17499,
+        185
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Rose Gold Aluminum Case, Sport Band Light Blush M/L",
+        18499,
+        175
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Jet Black Aluminum Case, Sport Band Black S/M",
+        18499,
+        165
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Jet Black Aluminum Case, Sport Band Black M/L",
+        18499,
+        155
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Rose Gold Aluminum Case, Sport Band Light Blush S/M",
+        18499,
+        145
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Silver Aluminum Case, Sport Band Purple Fog M/L",
+        18499,
+        188
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Silver Aluminum Case, Sport Band Purple Fog S/M",
+        18499,
+        178
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Space Grey Aluminum Case, Sport Band Black S/M",
+        19499,
+        168
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Space Grey Aluminum Case, Sport Band Black M/L",
+        19499,
+        158
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Silver Aluminum Case, Sport Band Purple Fog S/M",
+        19499,
+        148
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Rose Gold Aluminum Case, Sport Band Light Blush M/L",
+        19499,
+        185
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Rose Gold Aluminum Case, Sport Band Light Blush S/M",
+        19499,
+        175
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 42mm Space Grey Aluminum Case, Sport Band Black M/L",
+        19499,
+        165
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Silver Aluminum Case, Sport Band Purple Fog M/L",
+        19499,
+        155
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Jet Black Aluminum Case, Sport Band Black S/M",
+        19499,
+        145
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS 46mm Jet Black Aluminum Case, Sport Band Black M/L",
+        19499,
+        188
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS + Cellular 46mm Gold Titanium Case, Milanese Loop Gold S/M",
+        46499,
+        42
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS + Cellular 46mm Slate Titanium Case, Milanese Loop Slate M/L",
+        47499,
+        40
+      ],
+      [
+        "Смарт-часы Apple Watch Series 11 GPS + Cellular 46mm Natural Titanium Case, Milanese Loop Natural S/M",
+        47499,
+        38
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Trail Loop Black/Charcoal S/M",
+        38499,
+        74
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Trail Loop Black/Charcoal M/L",
+        38499,
+        70
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Alpine Loop Black L",
+        39499,
+        66
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Alpine Loop Black M",
+        39499,
+        62
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Alpine Loop Black S",
+        39499,
+        58
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Ocean Band Black",
+        39499,
+        77
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Alpine Loop Black L",
+        39499,
+        73
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Alpine Loop Light Blue M",
+        40499,
+        69
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Trail Loop Blue/Bright Blue S/M",
+        41499,
+        65
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Trail Loop Blue/Bright Blue M/L",
+        41499,
+        61
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Alpine Loop Light Blue M",
+        41499,
+        74
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Ocean Band Neon Green",
+        42499,
+        70
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Ocean Band Anchor Blue",
+        44499,
+        66
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Milanese Loop Black Titanium M",
+        45499,
+        34
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Milanese Loop Black Titanium S",
+        48499,
+        32
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Milanese Loop Natural Titanium S",
+        50499,
+        30
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Milanese Loop Natural Titanium M",
+        50499,
+        28
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Natural Titanium Case, Milanese Loop Natural Titanium L",
+        50499,
+        26
+      ],
+      [
+        "Смарт-часы Apple Watch Ultra 3 GPS + Cellular 49mm Black Titanium Case, Milanese Loop Black Titanium L",
+        50499,
+        37
+      ],
+      [
+        "Настольный компьютер Apple Mac mini M4 10C CPU/10C GPU, 16Gb RAM, 512Gb SSD, серебристый (MU9E3)",
+        69499,
+        72
+      ],
+      [
+        "Настольный компьютер Apple Mac mini M4 10C CPU/10C GPU, 24Gb RAM, 512Gb SSD, серебристый (MCYT4)",
+        77499,
+        68
+      ],
+      [
+        "Настольный компьютер Apple Mac mini M4 Pro 12C CPU/16C GPU, 24Gb RAM, 512Gb SSD, серебристый",
+        92499,
+        38
+      ],
+      [
+        "Моноблок Apple iMac 24\" Retina 4.5K M4 8C CPU/8C GPU, 16Gb RAM, 256Gb SSD",
+        108499,
+        26
+      ],
+      [
+        "Моноблок Apple iMac 24\" Retina 4.5K M4 10C CPU/10C GPU, 16Gb RAM, 512Gb SSD",
+        138499,
+        24
+      ]
+    ],
+    "smartphones": [
+      [
+        "Телефон Samsung Galaxy A56 8/128Gb (Olive)",
+        15499,
+        210
+      ],
+      [
+        "Телефон Samsung Galaxy A56 8/128Gb (Lightgray)",
+        15499,
+        196
+      ],
+      [
+        "Телефон Samsung Galaxy A56 8/128Gb (Graphite)",
+        15499,
+        182
+      ],
+      [
+        "Телефон Samsung Galaxy A56 8/128Gb (Pink)",
+        15499,
+        168
+      ],
+      [
+        "Телефон Samsung Galaxy A56 8/256Gb (Lightgray)",
+        16499,
+        175
+      ],
+      [
+        "Телефон Samsung Galaxy A56 8/256Gb (Pink)",
+        17499,
+        164
+      ],
+      [
+        "Телефон Samsung Galaxy A56 8/256Gb (Olive)",
+        17499,
+        153
+      ],
+      [
+        "Телефон Samsung Galaxy A56 8/256Gb (Graphite)",
+        17499,
+        142
+      ],
+      [
+        "Телефон Samsung Galaxy A56 12/256Gb (Olive)",
+        18499,
+        105
+      ],
+      [
+        "Телефон Samsung Galaxy A56 12/256Gb (Lightgray)",
+        18499,
+        98
+      ],
+      [
+        "Телефон Samsung Galaxy A56 12/256Gb (Graphite)",
+        18499,
+        91
+      ],
+      [
+        "Телефон Samsung Galaxy A36 8/128Gb (Lime)",
+        12499,
+        185
+      ],
+      [
+        "Телефон Samsung Galaxy A36 8/256Gb (Lavender)",
+        14499,
+        173
+      ],
+      [
+        "Телефон Samsung Galaxy A26 6/128Gb (Peach Pink)",
+        9499,
+        230
+      ],
+      [
+        "Телефон Samsung Galaxy A26 6/128Gb (Black)",
+        9499,
+        215
+      ],
+      [
+        "Телефон Samsung Galaxy A26 6/128Gb (White)",
+        9499,
+        200
+      ],
+      [
+        "Телефон Samsung Galaxy A26 8/256Gb (Mint)",
+        12499,
+        185
+      ],
+      [
+        "Телефон Samsung Galaxy A26 8/256Gb (Peach Pink)",
+        12499,
+        170
+      ],
+      [
+        "Телефон Samsung Galaxy A17 8/256Gb (Light Blue)",
+        10499,
+        205
+      ],
+      [
+        "Телефон Samsung Galaxy A17 8/256Gb (Grey)",
+        10499,
+        192
+      ],
+      [
+        "Телефон Samsung Galaxy A17 8/256Gb (Black)",
+        10499,
+        179
+      ],
+      [
+        "Телефон Samsung Galaxy A07 6/128Gb (Light Violet)",
+        6499,
+        245
+      ],
+      [
+        "Телефон Samsung Galaxy A07 6/128Gb (Green)",
+        6499,
+        229
+      ],
+      [
+        "Телефон Samsung Galaxy S24 8/256Gb (Violet)",
+        27499,
+        105
+      ],
+      [
+        "Телефон Samsung Galaxy S24 8/256Gb (Gray)",
+        27499,
+        98
+      ],
+      [
+        "Телефон Samsung Galaxy S24 8/256Gb (Yellow)",
+        27499,
+        91
+      ],
+      [
+        "Телефон Samsung Galaxy S24 8/256Gb (Black)",
+        28499,
+        84
+      ],
+      [
+        "Телефон Samsung Galaxy S25 12/256Gb (IcyBlue)",
+        37499,
+        118
+      ],
+      [
+        "Телефон Samsung Galaxy S25 12/256Gb (Silver Shadow)",
+        37499,
+        111
+      ],
+      [
+        "Телефон Samsung Galaxy S25 12/256Gb (Mint)",
+        37499,
+        104
+      ],
+      [
+        "Телефон Samsung Galaxy S25 12/256Gb (Blueblack)",
+        38499,
+        97
+      ],
+      [
+        "Телефон Samsung Galaxy S25 12/256Gb (Navy)",
+        38499,
+        90
+      ],
+      [
+        "Телефон Samsung Galaxy S25+ 12/256Gb (Navy)",
+        41499,
+        72
+      ],
+      [
+        "Телефон Samsung Galaxy S25+ 12/256Gb (Silver Shadow)",
+        41499,
+        68
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/256Gb (Titanium Jetblack)",
+        51499,
+        96
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/256Gb (Titanium Whitesilver)",
+        51499,
+        90
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/256Gb (Titanium Black)",
+        51499,
+        84
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/256Gb (Titanium Silverblue)",
+        51499,
+        78
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/256Gb (Titanium Gray)",
+        51499,
+        72
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/256Gb (Titanium Pinkgold)",
+        53499,
+        100
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/512Gb (Titanium Black)",
+        57499,
+        67
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/512Gb (Titanium Silverblue)",
+        59499,
+        63
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/512Gb (Titanium Gray)",
+        59499,
+        59
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/512Gb (Titanium Whitesilver)",
+        59499,
+        55
+      ],
+      [
+        "Телефон Samsung Galaxy S25 Ultra 12/512Gb (Titanium Pinkgold)",
+        59499,
+        51
+      ],
+      [
+        "Телефон Samsung Galaxy S25 FE 5G 8/256Gb (Icyblue)",
+        29499,
+        112
+      ],
+      [
+        "Телефон Samsung Galaxy S25 FE 5G 8/256Gb (Jetblack)",
+        29499,
+        105
+      ],
+      [
+        "Телефон Samsung Galaxy S25 FE 5G 8/256Gb (Navy)",
+        29499,
+        98
+      ],
+      [
+        "Телефон Samsung Galaxy S25 FE 5G 8/256Gb (White)",
+        29499,
+        91
+      ],
+      [
+        "Телефон Samsung Galaxy S25 FE 5G 8/512Gb (Jetblack)",
+        33499,
+        84
+      ],
+      [
+        "Телефон Samsung Galaxy Z Flip7 12/256Gb (Blue Shadow)",
+        43499,
+        55
+      ],
+      [
+        "Телефон Samsung Galaxy Z Flip7 12/256Gb (Coralred)",
+        45499,
+        52
+      ],
+      [
+        "Телефон Samsung Galaxy Z Flip7 12/512Gb (Blue Shadow)",
+        47499,
+        49
+      ],
+      [
+        "Телефон Samsung Galaxy Z Flip7 12/512Gb (Jetblack)",
+        48499,
+        46
+      ],
+      [
+        "Телефон Samsung Galaxy Z Fold7 12/256Gb (Jetblack)",
+        81499,
+        28
+      ],
+      [
+        "Телефон Samsung Galaxy Z Fold7 12/512Gb (Silver Shadow)",
+        88499,
+        25
+      ],
+      [
+        "Телефон Samsung Galaxy Z Fold7 12/512Gb (Mint)",
+        88499,
+        22
+      ],
+      [
+        "Телефон Samsung Galaxy Z Fold7 12/512Gb (Blue Shadow)",
+        88499,
+        19
+      ],
+      [
+        "Телефон Samsung Galaxy Z Fold7 16/1Tb (Jetblack)",
+        105499,
+        16
+      ],
+      [
+        "Телефон Xiaomi 15 12/256Gb (Белый)",
+        32499,
+        95
+      ],
+      [
+        "Телефон Xiaomi 15 12/256Gb (Черный)",
+        33499,
+        89
+      ],
+      [
+        "Телефон Xiaomi 15 12/512Gb (Белый)",
+        36499,
+        83
+      ],
+      [
+        "Телефон Xiaomi 15 Ultra 16/512Gb (Black)",
+        58499,
+        48
+      ],
+      [
+        "Телефон Xiaomi 15 Ultra 16/512Gb (White)",
+        58499,
+        45
+      ],
+      [
+        "Телефон Xiaomi 15T 12/256Gb (Gray)",
+        24499,
+        125
+      ],
+      [
+        "Телефон Xiaomi 15T 12/256Gb (Gold)",
+        24499,
+        117
+      ],
+      [
+        "Телефон Xiaomi 15T 12/256Gb (Black)",
+        24499,
+        109
+      ],
+      [
+        "Телефон Xiaomi Redmi Note 15 Pro 5G 12/512Gb (Mist Purple)",
+        21499,
+        110
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 4/128Gb (Moonlight Blue)",
+        4499,
+        280
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 4/128Gb (Midnight Black)",
+        5499,
+        262
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 4/128Gb (Twilight Orange)",
+        5499,
+        244
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 4/256Gb (Mint Green)",
+        5499,
+        245
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 4/256Gb (Midnight Black)",
+        5499,
+        229
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 4/256Gb (Moonlight Blue)",
+        5499,
+        213
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 4/256Gb (Twilight Orange)",
+        6499,
+        197
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 8/256Gb (Moonlight Blue)",
+        6499,
+        215
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 8/256Gb (Midnight Black)",
+        6499,
+        201
+      ],
+      [
+        "Телефон Xiaomi Redmi 15C 8/256Gb (Mint Green)",
+        7499,
+        187
+      ],
+      [
+        "Телефон Xiaomi Redmi 15 6/128Gb (Midnight Black)",
+        7499,
+        230
+      ],
+      [
+        "Телефон Xiaomi Redmi 15 6/128Gb (Sandy Purple)",
+        7499,
+        215
+      ],
+      [
+        "Телефон Xiaomi Redmi 15 6/128Gb (Titan Gray)",
+        7499,
+        200
+      ],
+      [
+        "Телефон Xiaomi Redmi 15 8/256Gb (Titan Gray)",
+        8499,
+        190
+      ],
+      [
+        "Телефон Xiaomi Redmi 15 8/256Gb (Midnight Black)",
+        8499,
+        178
+      ],
+      [
+        "Телефон Poco C85 6/128Gb (Green)",
+        5499,
+        280
+      ],
+      [
+        "Телефон Poco C85 6/128Gb (Purple)",
+        6499,
+        262
+      ],
+      [
+        "Телефон Poco C85 6/128Gb (Black)",
+        6499,
+        244
+      ],
+      [
+        "Телефон Poco C85 8/256Gb (Green)",
+        7499,
+        240
+      ],
+      [
+        "Телефон Poco C85 8/256Gb (Black)",
+        7499,
+        224
+      ],
+      [
+        "Телефон Poco C85 8/256Gb (Purple)",
+        7499,
+        208
+      ],
+      [
+        "Телефон Poco M7 6/128Gb (Silver)",
+        7499,
+        215
+      ],
+      [
+        "Телефон Poco M7 6/128Gb (Blue)",
+        7499,
+        201
+      ],
+      [
+        "Телефон Poco M7 6/128Gb (Black)",
+        7499,
+        187
+      ],
+      [
+        "Телефон Poco M7 8/256Gb (Silver)",
+        8499,
+        173
+      ],
+      [
+        "Телефон Poco M7 8/256Gb (Blue)",
+        8499,
+        159
+      ],
+      [
+        "Телефон Poco M8 8/256Gb (Black)",
+        11499,
+        175
+      ],
+      [
+        "Телефон Poco M8 8/256Gb (Silver)",
+        12499,
+        164
+      ],
+      [
+        "Телефон Poco M8 8/256Gb (Green)",
+        12499,
+        153
+      ],
+      [
+        "Телефон Poco M8 8/512Gb (Green)",
+        13499,
+        125
+      ],
+      [
+        "Телефон Poco M8 8/512Gb (Black)",
+        13499,
+        117
+      ],
+      [
+        "Телефон Poco M8 8/512Gb (Silver)",
+        13499,
+        109
+      ],
+      [
+        "Телефон Poco M8 Pro 5G 8/256Gb (Black)",
+        14499,
+        105
+      ],
+      [
+        "Телефон Poco X7 8/256Gb (Green)",
+        12499,
+        145
+      ],
+      [
+        "Телефон Poco X7 8/256Gb (Silver)",
+        12499,
+        136
+      ],
+      [
+        "Телефон Poco X7 Pro 8/256Gb (Black)",
+        16499,
+        155
+      ],
+      [
+        "Телефон Poco X7 Pro 8/256Gb (Yellow)",
+        16499,
+        145
+      ],
+      [
+        "Телефон Poco X7 Pro 8/256Gb (Green)",
+        16499,
+        135
+      ],
+      [
+        "Телефон Poco X7 Pro 12/256Gb (Green)",
+        16499,
+        125
+      ],
+      [
+        "Телефон Poco F7 Pro 12/512Gb (Blue)",
+        25499,
+        82
+      ],
+      [
+        "Телефон Poco F7 Pro 12/512Gb (Silver)",
+        25499,
+        77
+      ],
+      [
+        "Телефон Poco F7 Ultra 16/512Gb (Yellow)",
+        34499,
+        42
+      ],
+      [
+        "Телефон Huawei Nova 14 12/256Gb (White)",
+        16499,
+        150
+      ],
+      [
+        "Телефон Huawei Nova 14 12/256Gb (Crystal Blue)",
+        16499,
+        140
+      ],
+      [
+        "Телефон Huawei Nova 14 12/512Gb (White)",
+        17499,
+        112
+      ],
+      [
+        "Телефон Huawei Nova 14 12/512Gb (Crystal Blue)",
+        17499,
+        105
+      ],
+      [
+        "Телефон Huawei Nova 14 12/512Gb (Black)",
+        17499,
+        98
+      ],
+      [
+        "Телефон Huawei Nova 14 Pro 12/512Gb (Pink)",
+        21499,
+        88
+      ],
+      [
+        "Телефон Huawei Nova 14 Pro 12/512Gb (White)",
+        21499,
+        83
+      ],
+      [
+        "Телефон Huawei Nova 14 Pro 12/512Gb (Cristal Blue)",
+        21499,
+        78
+      ],
+      [
+        "Телефон Huawei Nova 14 Pro 12/512Gb (Black)",
+        21499,
+        73
+      ],
+      [
+        "Телефон Huawei Pura 80 12/256Gb (Frosted Black)",
+        30499,
+        78
+      ],
+      [
+        "Телефон Huawei Pura 80 12/256Gb (Frosted White)",
+        30499,
+        73
+      ],
+      [
+        "Телефон Huawei Pura 80 12/256Gb (Frosted Gold)",
+        30499,
+        68
+      ],
+      [
+        "Телефон Huawei Pura 80 Pro 12/512Gb (Black)",
+        43499,
+        62
+      ],
+      [
+        "Телефон Huawei Pura 80 Pro 12/512Gb (White)",
+        43499,
+        58
+      ],
+      [
+        "Телефон Huawei Pura 80 Pro 12/512Gb (Red)",
+        43499,
+        54
+      ],
+      [
+        "Телефон Huawei Pura 80 Ultra 16/512Gb (Prestige Gold)",
+        60499,
+        34
+      ],
+      [
+        "Телефон Huawei Pura 80 Ultra 16/512Gb (Golden Black)",
+        60499,
+        31
+      ],
+      [
+        "Телефон Huawei Mate 70 Pro 12/512Gb (Green)",
+        41499,
+        40
+      ],
+      [
+        "Телефон Huawei Mate 70 Pro 12/512Gb (Black)",
+        41499,
+        37
+      ],
+      [
+        "Телефон Huawei Mate X6 12/512Gb (Red)",
+        67499,
+        22
+      ],
+      [
+        "Телефон Huawei Mate X6 12/512Gb (Grey)",
+        67499,
+        19
+      ],
+      [
+        "Телефон Huawei Mate X6 12/512Gb (Black)",
+        67499,
+        16
+      ]
+    ],
+    "keyboards": [
+      [
+        "Клавиатура 8BitDo Retro Mechanical Keyboard N Edition, механическая",
+        8499,
+        108
+      ],
+      [
+        "Клавиатура беспроводная Logitech MX Keys S, черная, ножничная, полноразмерная",
+        5499,
+        100
+      ],
+      [
+        "Клавиатура проводная + беспроводная AJAZZ AK820 Pro, черная, механическая, 75%",
+        4499,
+        165
+      ],
+      [
+        "Клавиатура проводная + беспроводная AULA AU75, механическая, 75%",
+        4499,
+        89
+      ],
+      [
+        "Клавиатура проводная + беспроводная AULA F108 PRO, черная, механическая, полноразмерная",
+        6499,
+        55
+      ],
+      [
+        "Клавиатура проводная + беспроводная AULA F75 MAX, черная, механическая, 75%",
+        3499,
+        63
+      ],
+      [
+        "Клавиатура проводная + беспроводная AULA F75, белая, механическая, 75%",
+        4499,
+        185
+      ],
+      [
+        "Клавиатура проводная ARDOR GAMING Blade PRO, голубая, механическая, TKL",
+        3499,
+        199
+      ],
+      [
+        "Клавиатура проводная ARDOR GAMING Dreamy, черная, механическая, TKL",
+        5499,
+        55
+      ],
+      [
+        "Клавиатура проводная ARDOR GAMING Otohime, черная, механическая, TKL",
+        5499,
+        64
+      ],
+      [
+        "Клавиатура проводная ARDOR GAMING Viper, черная, магнитная, 75%",
+        4499,
+        109
+      ],
+      [
+        "Клавиатура проводная Dark Project KD83A, белая, магнитная, 75%",
+        5499,
+        114
+      ],
+      [
+        "Клавиатура проводная Dark Project KD87A, черная, механическая, TKL",
+        4499,
+        97
+      ],
+      [
+        "Клавиатура проводная IO by Red Square Type 84 Magnetic (io291), белая, магнитная, TKL",
+        3499,
+        89
+      ],
+      [
+        "Клавиатура проводная Red Square Keyrox TKL Equinox (RSQ-20035), механическая",
+        5499,
+        160
+      ],
+      [
+        "Клавиатура проводная + беспроводная AJAZZ AK820 Pro, фиолетовая, механическая, 75%",
+        3499,
+        160
+      ],
+      [
+        "Клавиатура проводная + беспроводная AULA F75 Cedar Green, белая, механическая, 75%",
+        3499,
+        165
+      ],
+      [
+        "Клавиатура проводная + беспроводная AULA F75, черная, механическая, 75%",
+        3499,
+        185
+      ],
+      [
+        "Клавиатура проводная ARDOR GAMING Blade, белая, механическая, полноразмерная",
+        3499,
+        185
+      ],
+      [
+        "Клавиатура проводная ARDOR GAMING Blade, черная, механическая, полноразмерная",
+        4499,
+        205
+      ],
+      [
+        "Клавиатура проводная Dark Project KD83A, синяя, механическая, 75%",
+        4499,
+        112
+      ],
+      [
+        "Клавиатура проводная IO by Red Square Type 84 Magnetic, черная, магнитная, TKL",
+        3499,
+        88
+      ]
+    ],
+    "mice": [
+      [
+        "Мышь беспроводная Attack Shark R5 Ultra, черная, PAW3950",
+        3499,
+        179
+      ],
+      [
+        "Мышь беспроводная Logitech G PRO X SUPERLIGHT 2, черная, 44000 dpi",
+        8499,
+        135
+      ],
+      [
+        "Мышь беспроводная Logitech G502 X Plus, черная, LIGHTSPEED",
+        7499,
+        66
+      ],
+      [
+        "Мышь беспроводная Logitech G703 LIGHTSPEED, черная",
+        3499,
+        115
+      ],
+      [
+        "Мышь беспроводная Logitech MX Master 3S, графитовая",
+        5499,
+        100
+      ],
+      [
+        "Мышь беспроводная Razer Basilisk V3 X HyperSpeed, черная",
+        4499,
+        165
+      ],
+      [
+        "Мышь беспроводная/проводная AJAZZ AJ159 APEX с док-станцией, белая",
+        3499,
+        123
+      ],
+      [
+        "Мышь беспроводная/проводная ARDOR GAMING Ulta, черная, 26000 dpi",
+        3499,
+        156
+      ],
+      [
+        "Мышь беспроводная/проводная LAMZU Inca, белая, 30000 dpi",
+        8499,
+        88
+      ],
+      [
+        "Мышь беспроводная/проводная LAMZU Maya X, черная, 30000 dpi",
+        10499,
+        160
+      ],
+      [
+        "Мышь беспроводная/проводная LAMZU Maya, черная",
+        7499,
+        132
+      ],
+      [
+        "Мышь беспроводная/проводная AJAZZ AJ159 APEX, черная, 42000 dpi, с док-станцией",
+        3499,
+        108
+      ],
+      [
+        "Мышь беспроводная/проводная LAMZU Maya, красная, 26000 dpi",
+        7499,
+        122
+      ],
+      [
+        "Мышь проводная Logitech Gaming Mouse G403 HERO, черная, 25600 dpi",
+        4499,
+        105
+      ]
+    ],
+    "microphones": [
+      [
+        "Микрофон Fifine A6, черный, USB",
+        3499,
+        140
+      ],
+      [
+        "Микрофон Fifine A8, черный, USB-C",
+        3499,
+        235
+      ],
+      [
+        "Микрофон Fifine AM8, черный, USB-C/XLR",
+        3499,
+        274
+      ],
+      [
+        "Микрофон Fifine K658, черный",
+        5499,
+        100
+      ],
+      [
+        "Микрофон Fifine K680, черный, USB",
+        3499,
+        232
+      ],
+      [
+        "Микрофон Fifine T688, черный, USB-C/XLR",
+        7499,
+        66
+      ],
+      [
+        "Микрофон Fifine Tank3, черный, USB-C/XLR",
+        5499,
+        76
+      ],
+      [
+        "Микрофон HyperX SoloCast, черный, USB",
+        4499,
+        63
+      ],
+      [
+        "Микрофон Maono DM30 RGB, черный, USB-C",
+        4499,
+        142
+      ],
+      [
+        "Микрофон Maono PD200X, черный, USB-C/XLR",
+        4499,
+        115
+      ],
+      [
+        "Микрофонный комплект Fifine A8T с пантографом, черный",
+        4499,
+        235
+      ],
+      [
+        "Микрофонный комплект Fifine AM8T с пантографом, черный, USB-C/XLR",
+        4499,
+        271
+      ],
+      [
+        "Микрофонный комплект Maono PD200XS с пантографом, USB-C/XLR",
+        4499,
+        106
+      ],
+      [
+        "Набор беспроводных микрофонов JBL PartyBox Wireless Mic, серый",
+        7499,
+        53
+      ],
+      [
+        "Микрофон Fifine AM8, белый, USB-C/XLR",
+        3499,
+        235
+      ],
+      [
+        "Микрофонный комплект Fifine AM8T, белый, с пантографом, USB-C/XLR",
+        3499,
+        220
+      ],
+      [
+        "Микрофонный комплект Fifine AM8T, розовый, с пантографом, USB-C/XLR",
+        3499,
+        205
+      ],
+      [
+        "Микрофонный комплект Fifine AM9T, черный, с пантографом, USB-C/XLR",
+        3499,
+        128
+      ],
+      [
+        "Микрофонный комплект Fifine T688, белый, с пантографом, USB-C/XLR",
+        4499,
+        78
+      ]
+    ],
+    "headphones": [
+      [
+        "Беспроводные игровые наушники HyperX Cloud III Wireless, черные",
+        11499,
+        45
+      ],
+      [
+        "Беспроводные игровые наушники Logitech G PRO X 2 LIGHTSPEED, черные",
+        10499,
+        65
+      ],
+      [
+        "Беспроводные игровые наушники Logitech G733 LIGHTSPEED, черные",
+        10499,
+        97
+      ],
+      [
+        "Беспроводные игровые наушники Razer Barracuda X, черные",
+        5499,
+        196
+      ],
+      [
+        "Беспроводные игровые наушники SteelSeries Arctis Nova 5, черные",
+        10499,
+        51
+      ],
+      [
+        "Беспроводные наушники Logitech G435 LIGHTSPEED, черный/неоновый желтый",
+        3499,
+        232
+      ],
+      [
+        "Беспроводные/проводные игровые наушники ARDOR GAMING Edge Wireless, черные",
+        3499,
+        159
+      ],
+      [
+        "Беспроводные/проводные игровые наушники ARDOR GAMING Vault, черные",
+        3499,
+        232
+      ],
+      [
+        "Беспроводные/проводные наушники JBL Tune 720BT, фиолетовые",
+        3499,
+        176
+      ],
+      [
+        "Беспроводные/проводные наушники Marshall Major V, черные",
+        5499,
+        186
+      ],
+      [
+        "Проводные игровые наушники Fifine H9, черные",
+        4499,
+        162
+      ],
+      [
+        "Проводные игровые наушники HyperX Cloud Alpha, черно-красные",
+        6499,
+        126
+      ],
+      [
+        "Проводные игровые наушники HyperX Cloud II, черно-красные",
+        4499,
+        117
+      ],
+      [
+        "Проводные игровые наушники Razer BlackShark V2 X, черные",
+        5499,
+        211
+      ],
+      [
+        "Беспроводные игровые наушники SteelSeries Arctis Nova 5, белые",
+        8499,
+        48
+      ],
+      [
+        "Беспроводные наушники Logitech G435 LIGHTSPEED, белые",
+        3499,
+        225
+      ],
+      [
+        "Беспроводные/проводные игровые наушники Razer Barracuda X (2022), белые",
+        5499,
+        165
+      ],
+      [
+        "Беспроводные/проводные наушники JBL Tune 720BT, белые",
+        3499,
+        160
+      ],
+      [
+        "Беспроводные/проводные наушники JBL Tune 720BT, черные",
+        3499,
+        175
+      ],
+      [
+        "Беспроводные/проводные наушники Sony WH-1000XM6, черные",
+        21499,
+        52
       ]
     ]
   }

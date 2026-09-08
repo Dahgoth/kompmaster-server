@@ -46,9 +46,37 @@ async function getProductsGrouped(){const {rows}=await query('SELECT id,category
 async function seedDatabase(){
   await initSchema();
   const s=cleanSiteState(seed.site);
-  await query(`INSERT INTO site_state(id,categories,content,menu_settings,payment_settings,media) VALUES(1,$1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING`,[JSON.stringify(s.categories),JSON.stringify(s.content),JSON.stringify(s.menuSettings),JSON.stringify(s.paymentSettings),JSON.stringify(s.media)]);
+  const existing=await query('SELECT categories FROM site_state WHERE id=1');
+  let newlyAddedCategoryIds=[];
+  if(!existing.rows[0]){
+    await query(`INSERT INTO site_state(id,categories,content,menu_settings,payment_settings,media) VALUES(1,$1,$2,$3,$4,$5)`,[JSON.stringify(s.categories),JSON.stringify(s.content),JSON.stringify(s.menuSettings),JSON.stringify(s.paymentSettings),JSON.stringify(s.media)]);
+    newlyAddedCategoryIds=s.categories.map(x=>x.id);
+  }else{
+    const current=Array.isArray(existing.rows[0].categories)?existing.rows[0].categories:[];
+    const byId=new Map(current.map(x=>[String(x.id),x]));
+    const merged=[];
+    for(const d of s.categories){
+      const x=byId.get(d.id);
+      if(!x){merged.push(d);newlyAddedCategoryIds.push(d.id);continue;}
+      // Keep administrator content and uploaded artwork, but introduce v2 hierarchy fields when they did not exist before.
+      merged.push({...d,...x,kind:(x.kind==='group'||x.kind==='catalog')?x.kind:(d.kind||'catalog'),parentId:x.parentId!==undefined?String(x.parentId||''):String(d.parentId||'')});
+      byId.delete(d.id);
+    }
+    for(const x of byId.values())merged.push(x);
+    await query('UPDATE site_state SET categories=$1,updated_at=NOW() WHERE id=1',[JSON.stringify(merged)]);
+  }
   const {rows:[pc]}=await query('SELECT COUNT(*)::int n FROM products');
-  if(!pc[0].n){for(const [cat,items] of Object.entries(seed.products)){for(let i=0;i<items.length;i++){const [name,price,qty]=items[i];const id=`${cat}_${i+1}`;await query('INSERT INTO products(id,category_id,name,price,quantity,sort_order,source) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING',[id,cat,name,price,qty,i,'seed']);}}}
+  if(!pc[0].n){newlyAddedCategoryIds=Object.keys(seed.products);} // fresh database
+  const newSet=new Set(newlyAddedCategoryIds);
+  for(const [cat,items] of Object.entries(seed.products)){
+    if(!newSet.has(cat))continue;
+    const {rows:[cc]}=await query('SELECT COUNT(*)::int n FROM products WHERE category_id=$1',[cat]);
+    if(cc.n)continue;
+    for(let i=0;i<items.length;i++){
+      const [name,price,qty]=items[i];const id=`${cat}_${i+1}`;
+      await query('INSERT INTO products(id,category_id,name,price,quantity,sort_order,source) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING',[id,cat,name,price,qty,i,'seed_v2']);
+    }
+  }
   const email=normalizeLogin(process.env.ADMIN_EMAIL||'');const pass=String(process.env.ADMIN_PASSWORD||'');
   if(email&&pass && !pass.startsWith('CHANGE_ME')){const {rows}=await query('SELECT id FROM admin_users WHERE email=$1',[email]);if(!rows[0]){await query('INSERT INTO admin_users(id,email,password_hash) VALUES($1,$2,$3)',[crypto.randomUUID(),email,await bcrypt.hash(pass,12)]);console.log('Создан администратор',email);}}
   else if(process.env.NODE_ENV==='production'){console.warn('ВНИМАНИЕ: ADMIN_PASSWORD не задан. Вход в админку невозможен до настройки .env и перезапуска.');}

@@ -1,0 +1,41 @@
+COMPMASTERONE — ГОТОВЫЙ АРХИВ ДЛЯ УСТАНОВКИ
+
+Это актуальная серверная сборка сайта на базе Beta v12 FIXED / Server v2 FIXED.
+
+Что уже внутри:
+- frontend сайта;
+- Node.js backend;
+- PostgreSQL;
+- Caddy + HTTPS;
+- база пользователей и заказов;
+- категории и новые прайсы;
+- ручной режим оплаты через менеджера;
+- админка и настройки будущих платёжных интеграций;
+- загрузка файлов;
+- Google Sheets / SMTP заготовки;
+- автоматическая логика статусов;
+- Docker Compose.
+
+Перед запуском:
+1. Распаковать СОДЕРЖИМОЕ архива, например, в /opt/compmaster
+2. cp .env.example .env
+3. В .env обязательно задать:
+   DOMAIN
+   JWT_SECRET
+   POSTGRES_PASSWORD
+   DATABASE_URL (с тем же паролем)
+   ADMIN_EMAIL
+   ADMIN_PASSWORD
+4. Направить A-запись домена на IP VPS.
+5. Открыть 80/443.
+6. Запустить:
+   docker compose up -d --build
+7. Проверить:
+   docker compose ps
+   curl https://ВАШ-ДОМЕН/api/health
+
+ВАЖНО:
+- не удалять Docker volumes pgdata и uploads при обновлениях;
+- .env не публиковать;
+- перед обновлением делать backup PostgreSQL и uploads;
+- инструкции подробнее: DEPLOY.md и UPDATE.md.
