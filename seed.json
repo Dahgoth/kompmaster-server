@@ -1,0 +1,496 @@
+{
+  "site": {
+    "categories": [
+      {
+        "id": "laptops",
+        "name": "Ноутбуки",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI0MiIgeT0iMzgiIHdpZHRoPSIxOTYiIGhlaWdodD0iMTE4IiByeD0iMTAiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMjIgMTc0aDIzNmwtMTggMjJINDB6IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTY4IDY0aDE0NCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiLz48L3N2Zz4=",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/19Z5lbXSNcmqWDaHZKZ_xKJ9EkbyubhEhS1KkjAs-BEc/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "monitors",
+        "name": "Мониторы",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIzNCIgeT0iMzgiIHdpZHRoPSIyMTIiIGhlaWdodD0iMTI2IiByeD0iMTEiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMTQwIDE2NHYzMU05MiAxOThoOTYiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNjMgNjhoMTU0IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIvPjwvc3ZnPg==",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/1Wn_VTQoslTI8b10LWR-c5qsvJue1C_1prSGUnnRRLHo/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "wheels",
+        "name": "Игровые рули",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48Y2lyY2xlIGN4PSIxNDAiIGN5PSIxMTYiIHI9Ijc0IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iMTE2IiByPSIyNSIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik03MiA4OWw2OCAyNyA2OC0yN00xNDAgMTE2djY3IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTkxIDYyYTczIDczIDAgMCAxIDk4IDAiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI3Ii8+PC9zdmc+",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/18wCCMSPlrqbNDouxAWime65w70h-gonzGQt5R99CAJI/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "gpus",
+        "name": "Видеокарты",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIyOCIgeT0iNjMiIHdpZHRoPSIyMjQiIGhlaWdodD0iMTA2IiByeD0iMTIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSI5MyIgY3k9IjExNiIgcj0iMzQiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIxODEiIGN5PSIxMTYiIHI9IjM0IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTI1MiA4OWgxNU0yNTIgMTQzaDE1TTUyIDE2OXYxOGg5MiIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik00OCA4MmgxNzgiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1Ii8+PC9zdmc+",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/17w5cONKLfyJrYL6cOpUPPOfYspr5aPyNCvLmBx3uc_c/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "ram",
+        "name": "Оперативная память",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIzMCIgeT0iNzUiIHdpZHRoPSIyMjAiIGhlaWdodD0iODIiIHJ4PSI5IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iNTUiIHk9Ijk0IiB3aWR0aD0iMzYiIGhlaWdodD0iMzIiIHJ4PSI0IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTA4IiB5PSI5NCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjMyIiByeD0iNCIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxyZWN0IHg9IjE2MSIgeT0iOTQiIHdpZHRoPSIzNiIgaGVpZ2h0PSIzMiIgcng9IjQiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNTIgMTU3djE4TTc2IDE1N3YxOE0xMDAgMTU3djE4TTEyNCAxNTd2MThNMTQ4IDE1N3YxOE0xNzIgMTU3djE4TTE5NiAxNTd2MThNMjIwIDE1N3YxOCIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik00OSA4MmgxODIiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1Ii8+PC9zdmc+",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/1WvBoee_1cEOjbB_j9VAu-09Rz4KwRQ0oDe0S_rDOFog/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "cpus",
+        "name": "Процессоры",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI2OCIgeT0iNDMiIHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiByeD0iMTUiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSI5NiIgeT0iNzEiIHdpZHRoPSI4OCIgaGVpZ2h0PSI4OCIgcng9IjkiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNODggMjZ2MTdNMTE4IDI2djE3TTE0OCAyNnYxN00xNzggMjZ2MTdNODggMTg3djE4TTExOCAxODd2MThNMTQ4IDE4N3YxOE0xNzggMTg3djE4TTUxIDY0aDE3TTUxIDk1aDE3TTUxIDEyNmgxN001MSAxNTdoMTdNMjEyIDY0aDE3TTIxMiA5NWgxN00yMTIgMTI2aDE3TTIxMiAxNTdoMTciIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMTA1IDgwaDcwIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIvPjwvc3ZnPg==",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/1kdHFjp6PD3bLN6o6s6Yo15BR2xQHrAeTDBSl9W-Awl0/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "motherboards",
+        "name": "Материнские платы",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI1NCIgeT0iMjciIHdpZHRoPSIxNzIiIGhlaWdodD0iMTgwIiByeD0iMTIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSI4MCIgeT0iNTMiIHdpZHRoPSI3MCIgaGVpZ2h0PSI3MCIgcng9IjgiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNMTY2IDU0aDM1TTE2NiA3MmgzNU0xNjYgOTBoMzVNMTY2IDEwOGgzNU04MCAxNDVoMTIxTTgwIDE2N2gxMjFNODAgMTg5aDYyIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTY0IDM3aDE1MiIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiLz48L3N2Zz4=",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/1tCE4y-BCPEukTkOEytacxCS0lvx9XHRV3_HjP868z5s/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "ssd",
+        "name": "Накопители M.2",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIzNSIgeT0iODIiIHdpZHRoPSIyMTAiIGhlaWdodD0iNjgiIHJ4PSIxMiIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjU5IiBjeT0iMTE2IiByPSI3IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iODgiIHk9Ijk4IiB3aWR0aD0iNTQiIGhlaWdodD0iMzUiIHJ4PSI2IiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTU1IiB5PSI5OCIgd2lkdGg9IjU0IiBoZWlnaHQ9IjM1IiByeD0iNiIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0yNDUgMTAwaDE5TTI0NSAxMTRoMTlNMjQ1IDEyOGgxOSIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik03NiA4OGgxNTAiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI1Ii8+PC9zdmc+",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/1J-2mocVrQlhJwEhVeek2rty-rLfjHPlbRa64F4GVGV0/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "psu",
+        "name": "Блоки питания",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSI1MSIgeT0iNDIiIHdpZHRoPSIxNzgiIGhlaWdodD0iMTUyIiByeD0iMTMiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIxNDAiIGN5PSIxMTgiIHI9IjUyIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iMTE4IiByPSIxMCIgc3Ryb2tlPSIjMTcxNzFiIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xNDAgNjZ2MTA0TTg4IDExOGgxMDRNMTA0IDgybDcyIDcyTTE3NiA4MmwtNzIgNzIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNjQgNTJoMTUyIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIvPjwvc3ZnPg==",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/1tU7Yo2HBbwdjue5y4Gkyca3K1efLKCx7K0u77-ZygB4/edit?usp=drivesdk",
+        "visible": true
+      },
+      {
+        "id": "cooling",
+        "name": "Охлаждение",
+        "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyODAgMjMwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIyMCIgeTE9IjIwIiB4Mj0iMjYwIiB5Mj0iMjEwIj48c3RvcCBzdG9wLWNvbG9yPSIjZmYxOGE5Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZkNTVmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE2YzllOCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMjMwIiByeD0iMjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjAgMjJoNzZsMTcgMTdoNzJsMTgtMTdoNTciIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuMzQiLz48cmVjdCB4PSIyNyIgeT0iNDkiIHdpZHRoPSIyMjYiIGhlaWdodD0iMTM5IiByeD0iMTIiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSI4OCIgY3k9IjExOCIgcj0iNDMiIHN0cm9rZT0iIzE3MTcxYiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIxOTIiIGN5PSIxMTgiIHI9IjQzIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTg4IDgydjcyTTUyIDExOGg3Mk02MyA5M2w1MCA1ME0xMTMgOTNsLTUwIDUwTTE5MiA4MnY3Mk0xNTYgMTE4aDcyTTE2NyA5M2w1MCA1ME0yMTcgOTNsLTUwIDUwIiBzdHJva2U9IiMxNzE3MWIiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTQ4IDYwaDE4NCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjUiLz48L3N2Zz4=",
+        "updated": "28.08.2026",
+        "sheet": "https://docs.google.com/spreadsheets/d/1fQ_v_q58myRyjH3rNk_C12DIr3wL6-qhMQBSkvcUy6s/edit?usp=drivesdk",
+        "visible": true
+      }
+    ],
+    "content": {
+      "about1": "Поставляем под заказ восстановленную электронику из США по ценам ниже рынка, розница и ОПТ. Техника восстановлена с использованием оригинальных комплектующих.",
+      "guarantee": "На товары предоставляем гарантию от 12 до 36 месяцев.",
+      "delivery": "Срок доставки заказа в Россию — в среднем 6–8 недель.",
+      "bannerLink": "https://t.me/compmasterone/3144",
+      "phone": ""
+    },
+    "menuSettings": {
+      "labels": {
+        "about": "О нас",
+        "faq": "Часто задаваемые вопросы",
+        "warranty": "Гарантия",
+        "contacts": "Контакты"
+      },
+      "visible": {
+        "about": true,
+        "faq": true,
+        "contacts": true
+      },
+      "menuOrder": [
+        "about",
+        "faq",
+        "contacts"
+      ],
+      "customItems": [],
+      "warrantyCardVisible": true,
+      "aboutText": "Поставляем под заказ восстановленную электронику из США по ценам ниже рынка, розница и ОПТ. Техника восстановлена с использованием оригинальных комплектующих.",
+      "aboutProcess": "Вы выбираете товар на сайте, добавляете его в корзину и оформляете заказ. После оплаты заказ формируется, затем получает статус «В пути». После поступления товара в Россию мы меняем статус и организуем самовывоз или выбранную доставку.",
+      "aboutBusiness": "Для покупки от организации или безналичного счёта можно написать менеджеру через Telegram.",
+      "warrantyShort1": "Гарантия на весь товар 1 год.",
+      "warrantyShort2": "Гарантия на 3 года стоит дополнительно 10% от стоимости товара.",
+      "warrantyFull": "Гарантийный срок на товар составляет 12 месяцев с даты передачи товара Покупателю, а при доставке товара – с даты его фактической доставки Покупателю, если более продолжительный гарантийный срок не установлен изготовителем или законодательством Российской Федерации.\n\nГарантийное обслуживание товара осуществляется Продавцом с учётом гарантийных условий, требований к эксплуатации и гарантийных исключений, установленных изготовителем соответствующего товара. По своему содержанию условия гарантии Продавца применяются на условиях, аналогичных гарантийным условиям изготовителя соответствующего товара, в части определения производственных недостатков, правил эксплуатации и обстоятельств, не относящихся к гарантийным случаям. При этом условия гарантии Продавца не могут ограничивать права Покупателя, предоставленные ему законодательством Российской Федерации.\n\nГарантия распространяется на недостатки и неисправности товара, возникшие по причинам, существовавшим до момента передачи товара Покупателю, а также на производственные дефекты, проявившиеся в течение гарантийного срока при соблюдении Покупателем правил эксплуатации товара.\n\nК гарантийным случаям, в частности, относятся неисправности, вызванные производственными дефектами электронных компонентов, печатных плат, микросхем, контроллеров, систем питания, разъёмов и иных элементов товара; дефектами материалов или сборки; нарушением пайки или соединений, возникшим по причинам производственного характера; отказом отдельных компонентов товара при его нормальной эксплуатации; невозможностью включения или стабильной работы товара вследствие внутреннего производственного дефекта; появлением артефактов, ошибок, сбоев, перегрева или иных нарушений работы, если их причиной является производственный недостаток товара, а не нарушение условий эксплуатации; а также иными недостатками, которые возникли не вследствие действий Покупателя, третьих лиц или внешних обстоятельств.\n\nГарантия также распространяется на случаи, когда товар при соблюдении установленных изготовителем условий эксплуатации перестаёт выполнять заявленные изготовителем основные функции и по результатам проверки качества установлено наличие недостатка производственного характера.\n\nПри обнаружении неисправности в течение гарантийного срока Покупатель передаёт товар Продавцу для проверки качества и определения характера неисправности, причины её возникновения и наличия гарантийного случая.\n\nВ случае признания случая гарантийным Продавец осуществляет либо организует безвозмездный ремонт товара.\n\nЕсли по результатам диагностики установлено, что выявленный недостаток невозможно устранить путём ремонта, товар не подлежит ремонту либо проведение ремонта невозможно или нецелесообразно по техническим причинам, Продавец осуществляет замену товара на такой же товар. При невозможности предоставить такой же товар по согласованию с Покупателем может быть предоставлен аналогичный товар с соответствующим перерасчётом стоимости.\n\nЕсли ремонт или замена товара невозможны, а также в иных случаях, когда Покупатель вправе требовать возврата денежных средств в соответствии с законодательством Российской Федерации, Продавец осуществляет возврат уплаченной за соответствующий товар денежной суммы.\n\nРемонт, замена товара, возврат денежных средств и иные требования Покупателя в связи с обнаруженными недостатками осуществляются в сроки и порядке, предусмотренные законодательством Российской Федерации.\n\nГарантия не распространяется на недостатки, неисправности и повреждения товара, возникшие после его передачи Покупателю вследствие механического воздействия, удара, падения, деформации, сколов, трещин, повреждения контактов, разъёмов, печатных плат и иных элементов товара.\n\nГарантия не распространяется на повреждения, возникшие вследствие попадания внутрь товара жидкости, влаги, посторонних предметов, веществ, насекомых, чрезмерного количества пыли либо иных загрязнений, если соответствующий товар конструктивно не предназначен для эксплуатации в таких условиях.\n\nГарантия не распространяется на недостатки, возникшие вследствие неправильной установки, подключения, монтажа, демонтажа, эксплуатации, хранения или транспортировки товара Покупателем либо третьими лицами.\n\nГарантия не распространяется на неисправности, возникшие вследствие использования товара с нарушением установленных изготовителем технических параметров, требований, инструкций и условий эксплуатации.\n\nГарантия не распространяется на повреждения, возникшие вследствие подачи ненадлежащего напряжения, скачков напряжения, короткого замыкания, неисправности электросети, блока питания либо иного оборудования, подключённого к товару.\n\nГарантия не распространяется на недостатки, возникшие вследствие использования несовместимых, неисправных либо не соответствующих требованиям изготовителя комплектующих, оборудования, кабелей, переходников или иных аксессуаров.\n\nГарантия не распространяется на недостатки, возникшие вследствие самостоятельного ремонта, пайки, физического изменения конструкции товара, замены его элементов либо иного технического вмешательства Покупателя или третьих лиц, не уполномоченных на проведение соответствующих работ, если такое вмешательство стало причиной возникновения неисправности.\n\nГарантия не распространяется на неисправности, возникшие вследствие изменения прошивки, BIOS, аппаратных настроек, напряжения, частот, лимитов мощности, разгона, модификации системы охлаждения либо иных параметров товара за пределами предусмотренных изготовителем значений, если установлено, что соответствующие действия стали причиной возникновения неисправности.\n\nГарантия не распространяется на недостатки и повреждения, возникшие вследствие воздействия огня, затопления, чрезмерно высоких или низких температур, химических веществ, природных явлений, стихийных бедствий и иных внешних обстоятельств.\n\nГарантия не распространяется на естественный эксплуатационный износ отдельных элементов товара, если такой износ обусловлен нормальным использованием товара и не является следствием производственного недостатка.\n\nНаличие следов эксплуатации, вскрытия упаковки либо установки товара в компьютер само по себе не является основанием для отказа в гарантийном обслуживании, если соответствующие действия являются нормальными для использования товара и не стали причиной возникшей неисправности.\n\nНаличие одного из перечисленных выше обстоятельств является основанием для отказа в гарантийном обслуживании только в случае, если установлена причинно-следственная связь между таким обстоятельством и возникшим недостатком товара.\n\nВ случае возникновения спора о причинах появления недостатка проверка качества и, при необходимости, экспертиза товара проводятся в порядке, предусмотренном законодательством Российской Федерации.\n\nПодробная информация о порядке гарантийного обращения, передаче товара на диагностику, проведении ремонта, замены, возврата, а также об условиях эксплуатации товара может дополнительно указываться в гарантийном талоне Продавца, передаваемом Покупателю вместе с товаром. Положения гарантийного талона применяются в части, не противоречащей настоящему Договору и законодательству Российской Федерации.\n\nПо отдельному соглашению Покупатель вправе приобрести расширенную гарантию сроком до 3 лет. Стоимость расширенной гарантии составляет 10% от стоимости товара или товаров, в отношении которых приобретается расширенная гарантия, указанной в Заказе-спецификации. Срок, объём и условия расширенной гарантии указываются в Заказе-спецификации и/или гарантийном талоне.",
+      "faq": [
+        {
+          "id": "faq_1",
+          "q": "Что именно ремонтировалось в конкретном товаре?",
+          "a": "История первоначальной неисправности конкретного экземпляра нам не передаётся.\n\nУ поставщика товар проходит полную диагностику. Компоненты, которые требуют замены или показывают отклонения от нормальных рабочих параметров, заменяются либо восстанавливаются. Это может касаться системы охлаждения, элементов питания и отдельных компонентов непосредственно на плате.\n\nПосле проведения необходимых работ товар повторно проверяется и тестируется под нагрузкой.\n\nПоэтому достоверно сказать, какой именно компонент ремонтировался или заменялся в конкретном экземпляре, мы не можем — такую подробную историю поставщик не предоставляет.\n\nПосле поступления товара в Россию мы предоставляем гарантию 12 месяцев.",
+          "visible": true
+        },
+        {
+          "id": "faq_2",
+          "q": "Что восстанавливают у процессоров?",
+          "a": "Восстановленные процессоры — это, как правило, бывшие в использовании устройства, которые проходят проверку, очистку и, при необходимости, восстановительные работы.\n\nМогут восстанавливаться контакты, пайка и небольшие SMD-компоненты на подложке. Сам кристалл процессора, как правило, ремонту не подлежит.\n\nПосле восстановления процессор проходит проверку работоспособности.",
+          "visible": true
+        },
+        {
+          "id": "faq_3",
+          "q": "Что есть в наличии?",
+          "a": "Все товары, которые находятся в наличии в России, мы публикуем в нашем Telegram-канале @compmasterone.",
+          "visible": true
+        },
+        {
+          "id": "faq_4",
+          "q": "Можно ли оплатить товар после получения в России?",
+          "a": "Нет. Заказ оплачивается полностью при оформлении.\n\nПосле оплаты мы выкупаем товар у поставщика, оплачиваем его доставку, таможенные платежи и другие расходы, связанные с поставкой в Россию. Поэтому отложенная оплата после поступления товара не предусмотрена.",
+          "visible": true
+        },
+        {
+          "id": "faq_5",
+          "q": "Можно ли оплатить заказ по безналичному расчёту от ООО или ИП?",
+          "a": "Да.\n\nДля заказов от организаций можно использовать безналичную оплату. Если вам требуется счёт на ООО или ИП, при оформлении заказа выберите соответствующий вариант или напишите нашему менеджеру.",
+          "visible": true
+        },
+        {
+          "id": "faq_6",
+          "q": "Можно ли оплатить наличными в офисе?",
+          "a": "Да, для товаров, которые уже находятся у нас и доступны для продажи в офисе.\n\nАдрес: Сочи, ул. Тепличная, 35А. Москва — скоро.\n\nПо вопросам оплаты наличными лучше предварительно связаться с менеджером.",
+          "visible": true
+        },
+        {
+          "id": "faq_7",
+          "q": "Изменится ли цена после оплаты заказа?",
+          "a": "Нет. Стоимость товара фиксируется в момент оплаты и во время поставки не меняется.\n\nОтдельно оплачивается только доставка после поступления товара в Россию, если вы выбираете отправку в Москве или в другой город.\n\nДоступные способы доставки: СДЭК, EMS, Ozon и Яндекс.",
+          "visible": true
+        },
+        {
+          "id": "faq_8",
+          "q": "Смогу ли я отслеживать свой заказ?",
+          "a": "Да. В личном кабинете отображается актуальный статус заказа.\n\nОсновные этапы: Формируется заказ, В пути, Прибыл / готов к выдаче, В пути к клиенту, Завершён / выдан.\n\nПосле каждого изменения статуса также приходит уведомление на e-mail.",
+          "visible": true
+        },
+        {
+          "id": "faq_9",
+          "q": "Есть ли скидка при заказе нескольких товаров или на опт?",
+          "a": "Да. Размер скидки зависит от количества товаров в одном заказе.\n\nОт 3 товаров — 2%\nОт 10 товаров — 3%\nОт 20 товаров — 4%\nОт 30 товаров — 5%",
+          "visible": true
+        },
+        {
+          "id": "faq_10",
+          "q": "Можно ли посмотреть тесты товара перед покупкой?",
+          "a": "Индивидуальные тесты для каждого экземпляра поставщик не предоставляет.\n\nПеред отправкой товар проходит полную диагностику. Компоненты, которые требуют замены или показывают отклонения от нормальных рабочих параметров, заменяются либо восстанавливаются. После этого устройство повторно проверяется и тестируется под нагрузкой.\n\nПосле получения вы можете самостоятельно провести необходимые тесты. Если в работе товара будут выявлены неисправности, подпадающие под гарантийные условия, действует гарантия сроком 12 месяцев.",
+          "visible": true
+        },
+        {
+          "id": "faq_11",
+          "q": "Есть ли на товаре следы использования?",
+          "a": "Как правило, выраженных следов эксплуатации нет, однако полностью исключить следы предыдущей установки или использования нельзя.\n\nТовар является восстановленным, поэтому его внешний вид может не всегда соответствовать абсолютно новому устройству из заводской упаковки.",
+          "visible": true
+        },
+        {
+          "id": "faq_12",
+          "q": "Могут ли быть царапины или другие внешние дефекты?",
+          "a": "Незначительные следы предыдущего использования возможны.\n\nЕсли товар поступит с существенными внешними повреждениями или дефектами, которые выходят за рамки нормального состояния восстановленного товара, вопрос решается в соответствии с нашими гарантийными условиями.",
+          "visible": true
+        },
+        {
+          "id": "faq_13",
+          "q": "Это не китайская подделка с перепаянными чипами от более слабых моделей?",
+          "a": "Нет. При восстановлении используются оригинальные комплектующие.\n\nТовар проходит диагностику и проверку работоспособности до отправки.",
+          "visible": true
+        },
+        {
+          "id": "faq_14",
+          "q": "Что будет, если товар повредят при доставке?",
+          "a": "Если повреждение произошло во время доставки товара к нам, мы решаем этот вопрос со своей стороны: заказываем замену либо возвращаем деньги, если выполнить заказ невозможно.\n\nПосле передачи заказа транспортной компании для доставки от нас к покупателю ответственность за перевозку регулируется условиями выбранной службы доставки.\n\nДля дорогостоящих отправлений рекомендуем оформлять страхование груза у перевозчика.",
+          "visible": true
+        },
+        {
+          "id": "faq_15",
+          "q": "Почему цены ниже рынка?",
+          "a": "Основная причина — мы работаем с восстановленной электроникой.\n\nТовар проходит диагностику и восстановление с использованием оригинальных комплектующих. Элементы, которые требуют замены или имеют недопустимый износ, заменяются.\n\nЗа счёт этого стоимость получается ниже, чем у нового оборудования, при этом на товар мы предоставляем гарантию 12 месяцев. При желании можно приобрести расширенную гарантию до 3 лет.\n\nСейчас мы также сохраняем привлекательные цены, потому что развиваем это направление и формируем постоянную клиентскую базу.",
+          "visible": true
+        }
+      ]
+    },
+    "paymentSettings": {
+      "mode": "manual",
+      "managerTelegram": "mastercompone",
+      "fallbackToManual": true,
+      "manualPageText": "Мы подключаем платёжную систему. Чтобы завершить покупку, свяжитесь с нашим менеджером — он подтвердит способ оплаты и дальнейшее оформление заказа.",
+      "managerMessageTemplate": "Здравствуйте! Хочу оформить заказ №{order}.\n\nТовары:\n{items}\n\nСумма: {total}\nПолучение: {receive}",
+      "activeIntegrationId": "",
+      "integrations": []
+    },
+    "media": {
+      "photo": "",
+      "video": ""
+    }
+  },
+  "products": {
+    "laptops": [
+      [
+        "Ноутбук 15.6” Acer Aspire 7 A715-59G-55GC Black",
+        46499,
+        171
+      ],
+      [
+        "Ноутбук 16” Acer Nitro V 16S AI ANV16S-41-R0N8 Black",
+        69499,
+        134
+      ],
+      [
+        "Ноутбук 16” Acer Predator Helios Neo 16 AI PHN16-73-92NH Black",
+        138499,
+        46
+      ],
+      [
+        "Ноутбук 16” ASUS ROG Strix G614PP-S5117 Gray",
+        111499,
+        79
+      ],
+      [
+        "Ноутбук 18” ASUS ROG Strix G835LX-SA034W Black",
+        268499,
+        36
+      ]
+    ],
+    "monitors": [
+      [
+        "Acer EK271P6bi Black 27\"",
+        6499,
+        156
+      ],
+      [
+        "Acer Nitro ED343CURJ0bmiippx Black 34\"",
+        13499,
+        38
+      ],
+      [
+        "Acer Nitro VG270KV4bmiipx Black 27\"",
+        19499,
+        134
+      ],
+      [
+        "ASUS ROG Strix XG27ACS Black 27\"",
+        15499,
+        90
+      ],
+      [
+        "ASUS ROG Strix OLED XG32UCWG Black 31.5\"",
+        74499,
+        17
+      ]
+    ],
+    "wheels": [
+      [
+        "Руль Moza R3 PC Black",
+        18499,
+        96
+      ],
+      [
+        "Руль Moza R5 Black",
+        27499,
+        82
+      ],
+      [
+        "Руль ARDOR GAMING Silverstone V2 Black",
+        13499,
+        118
+      ],
+      [
+        "Руль Logitech G29 Black",
+        17499,
+        126
+      ],
+      [
+        "Руль ThrustMaster T300RS GT Edition Black",
+        21499,
+        88
+      ]
+    ],
+    "gpus": [
+      [
+        "ASUS AMD Radeon RX 9070 PRIME EVO OC 16GB",
+        34499,
+        104
+      ],
+      [
+        "ASUS AMD Radeon RX 9070 XT PRIME OC Edition 16GB",
+        36499,
+        142
+      ],
+      [
+        "ASRock AMD Radeon RX 9070 XT Challenger 16GB",
+        35499,
+        194
+      ],
+      [
+        "GIGABYTE AMD Radeon RX 9070 GAMING OC 16GB",
+        34499,
+        185
+      ],
+      [
+        "Sapphire AMD Radeon RX 9070 XT NITRO+ OC 16GB",
+        35499,
+        107
+      ]
+    ],
+    "ram": [
+      [
+        "G.Skill Aegis 5 16GB 5600MHz CL36 1x16GB",
+        16499,
+        43
+      ],
+      [
+        "G.Skill Aegis 5 32GB 5200MHz CL40 2x16GB",
+        27499,
+        334
+      ],
+      [
+        "G.Skill Aegis 5 32GB 5600MHz CL36 2x16GB",
+        27499,
+        318
+      ],
+      [
+        "G.Skill Trident Z5 RGB 32GB 6000MHz CL30 2x16GB",
+        31499,
+        34
+      ],
+      [
+        "Patriot Viper Venom 32GB 6000MHz CL30 2x16GB",
+        23499,
+        266
+      ]
+    ],
+    "cpus": [
+      [
+        "AMD Ryzen 5 5500",
+        4499,
+        356
+      ],
+      [
+        "AMD Ryzen 5 5600",
+        7499,
+        331
+      ],
+      [
+        "AMD Ryzen 5 7500F",
+        8499,
+        318
+      ],
+      [
+        "AMD Ryzen 7 7800X3D",
+        17499,
+        239
+      ],
+      [
+        "AMD Ryzen 7 9800X3D",
+        19499,
+        299
+      ]
+    ],
+    "motherboards": [
+      [
+        "ASUS TUF GAMING B850-PLUS WIFI",
+        11499,
+        276
+      ],
+      [
+        "ASUS PRIME B760-PLUS D4",
+        7499,
+        324
+      ],
+      [
+        "ASUS ROG STRIX B850-A GAMING WIFI",
+        12499,
+        334
+      ],
+      [
+        "MSI MAG B850 TOMAHAWK MAX WIFI",
+        14499,
+        321
+      ],
+      [
+        "GIGABYTE B850 AORUS ELITE WIFI7",
+        13499,
+        336
+      ]
+    ],
+    "ssd": [
+      [
+        "1000 GB M.2 NVMe ADATA LEGEND 900",
+        10499,
+        276
+      ],
+      [
+        "1000 GB M.2 NVMe ADATA LEGEND 960 MAX",
+        12499,
+        162
+      ],
+      [
+        "2000 GB M.2 NVMe ADATA LEGEND 900",
+        17499,
+        318
+      ],
+      [
+        "1000 GB M.2 NVMe Kingston NV3",
+        9499,
+        211
+      ],
+      [
+        "2000 GB M.2 NVMe Kingston KC3000",
+        19499,
+        142
+      ]
+    ],
+    "psu": [
+      [
+        "Corsair RM850x Black",
+        8499,
+        249
+      ],
+      [
+        "Corsair SF1000 Black",
+        15499,
+        195
+      ],
+      [
+        "Corsair RM1000e Black",
+        12499,
+        390
+      ],
+      [
+        "MSI MAG A850GL PCIE5 Black",
+        4499,
+        241
+      ],
+      [
+        "MSI MPG A850G PCIE5 Black",
+        7499,
+        265
+      ]
+    ],
+    "cooling": [
+      [
+        "Cougar Poseidon Elite 360 ARGB Black",
+        2499,
+        29
+      ],
+      [
+        "DEEPCOOL LE360 V2 Black",
+        3499,
+        390
+      ],
+      [
+        "DEEPCOOL LM360 Black",
+        4499,
+        390
+      ],
+      [
+        "ARCTIC Liquid Freezer III Pro 360 ARGB Black",
+        5499,
+        306
+      ],
+      [
+        "NZXT Kraken 360 RGB Black",
+        24499,
+        239
+      ]
+    ]
+  }
+}
