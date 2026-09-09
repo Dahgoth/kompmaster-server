@@ -4,25 +4,37 @@
   "description": "Backend API for KompMaster store (products, orders, users, reviews, price import/export, notifications)",
   "main": "src/index.js",
   "type": "commonjs",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dahgoth/kompmaster-server.git"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "migrate": "node src/migrate.js"
+    "migrate": "node src/migrate.js",
+    "lint:commit": "commitlint --from HEAD~1",
+    "prepare": "husky"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "pg": "^8.12.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.4.5",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "express-rate-limit": "^7.4.0",
-    "multer": "^1.4.5-lts.1",
     "@aws-sdk/client-s3": "^3.637.0",
-    "xlsx": "^0.18.5",
-    "nodemailer": "^6.9.14",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
     "node-fetch": "^2.7.0",
-    "uuid": "^9.0.1"
+    "nodemailer": "^6.9.14",
+    "pg": "^8.12.0",
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "husky": "^9.1.7"
   }
 }
