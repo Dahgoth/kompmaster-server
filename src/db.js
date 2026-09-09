@@ -1,17 +1,17 @@
-import pg from 'pg';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-const { Pool } = pg;
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export async function query(text, params=[]) { return pool.query(text, params); }
-export async function initSchema(){
-  const sql=fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8');
-  await pool.query(sql);
-}
-export async function tx(fn){
-  const c=await pool.connect();
-  try{await c.query('BEGIN');const out=await fn(c);await c.query('COMMIT');return out;}
-  catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}
-}
+const { Pool } = require("pg");
+const config = require("./config");
+
+const pool = new Pool({ connectionString: config.databaseUrl });
+
+pool.on("error", (err) => {
+  // Ошибка на простаивающем соединении не должна ронять весь процесс.
+  console.error("[db] Неожиданная ошибка пула соединений:", err);
+});
+
+module.exports = {
+  query: (text, params) => pool.query(text, params),
+  // Для операций, которым обязательно нужна транзакция (например списание
+  // остатка при заказе) — берём отдельное соединение и явно управляем им.
+  getClient: () => pool.connect(),
+  pool,
+};

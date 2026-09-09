@@ -1,49 +1,30 @@
+version: "3.8"
 services:
-  db:
+  postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: kompmaster
+      POSTGRES_PASSWORD: kompmaster
+      POSTGRES_DB: kompmaster
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
 
-  app:
-    build: .
+  minio:
+    image: minio/minio
     restart: unless-stopped
-    env_file: .env
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - uploads:/app/uploads
-    expose:
-      - "3000"
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      - app
+    command: server /data --console-address ":9001"
     environment:
-      DOMAIN: ${DOMAIN}
+      MINIO_ROOT_USER: kompmaster
+      MINIO_ROOT_PASSWORD: kompmaster123
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # веб-консоль MinIO
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - miniodata:/data
 
 volumes:
   pgdata:
-  uploads:
-  caddy_data:
-  caddy_config:
+  miniodata:
