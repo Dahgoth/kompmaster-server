@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   setup), `ENVIRONMENT.md` (environment variables), and `DESIGN.md` (UX/UI
   contract), and referenced them from `README.md` and `AGENTS.md`.
 - Added `.env.example`.
+- Added `docs/` planning documentation: executive cost estimate and strategic
+  roadmap for the PoC web store and white-label platform
+  (`docs/PoC_WhiteLabel_Cost_Roadmap_RU.md`, in Russian) plus the underlying
+  pricing research reports (`docs/AI_TOOLING_COST_ESTIMATE_2026.md`,
+  `docs/2026-hosting-pricing-research.md`).
 
 ### Changed
 - `package.json`: set `license` to `AGPL-3.0`, added dev dependencies

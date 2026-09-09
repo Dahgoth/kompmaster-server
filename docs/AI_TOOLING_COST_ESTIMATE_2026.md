@@ -1,8 +1,29 @@
 # AI-Only Dev Team Tooling Cost Estimate — 2026 Pricing Research Report
 
-**Date:** 2026-09-08  
+**Date:** 2026-09-08 (updated 2026-09-09)  
 **Scope:** Verifiable 2026 pricing for AI coding subscriptions, API token rates, automation platforms, orchestration frameworks, and realistic solo-operator budget scenarios.  
 **Constraint:** All numbers are USD. Every item includes an official or primary source URL.
+
+---
+
+## 0. UPDATE 2026-09-09: Project constraint — basic $20 subscriptions only (RF context)
+
+Per the product owner's decision, the project uses **only basic $20/mo AI subscriptions**, no premium tiers (Cursor Pro+/Ultra, Claude Max, Windsurf Max are excluded from the budget):
+
+| Tool | Role in project | Price | Source |
+|------|-----------------|-------|--------|
+| **Claude Pro** (includes Claude Code CLI) | Primary coding agent, complex reasoning, refactoring | $20/mo | [claude.com/pricing](https://claude.com/pricing) |
+| **ChatGPT Plus** (includes Codex) | Second agent: code review, docs, test generation, cross-checking | $20/mo | [openai.com/chatgpt/pricing](https://openai.com/chatgpt/pricing/) |
+| **Kilo Code** (open source, free) / **OpenCode** (open source, free) | Agent runner in IDE/CLI; BYOK via Kilo Gateway at exact provider rates, 0% markup | $0 + tokens | [kilo.ai/pricing](https://kilo.ai/pricing), [kilo.ai/inference](https://kilo.ai/inference), [github.com/sst/opencode](https://github.com/sst/opencode) |
+| **Token buffer** (Kilo Gateway BYOK: Gemini 2.5 Flash $0.30/$2.50 per 1M, GPT-5 Mini $0.25/$2 per 1M, Haiku 4.5 $1/$5 per 1M) | Background/automation tasks beyond subscription limits | ~$20/mo budgeted | [ai.google.dev/gemini-api/docs/pricing](https://ai.google.dev/gemini-api/docs/pricing), [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing), [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+
+**Resulting AI tooling budget: $60/mo** (vs Scenario A $45–65 below — same range, different composition).
+
+**RF availability notes (September 2026):**
+- Claude Pro / ChatGPT Plus subscriptions require a non-RF payment card or intermediary service; this is an operational (not budget) risk — see risk register in the main roadmap document.
+- Kilo Code / OpenCode are open-source and work from RF; inference via BYOK gateway with budget caps.
+- Model routing discipline (80% routine tasks → Flash/Mini/Haiku) is the primary lever keeping the token buffer at ~$20/mo ([Cerver, State of AI-Coding Spend, 2026](https://cerver.ai/report): 40–85% cost cut possible, ~30% realistic).
+- Spec & Test-Driven Development workflow (required because the owner has zero development experience): free tooling — AGENTS.md convention ([agents.md](https://agents.md)), GitHub Spec Kit ([github.com/github/spec-kit](https://github.com/github/spec-kit)), Playwright ([playwright.dev](https://playwright.dev)), Vitest ([vitest.dev](https://vitest.dev)). Tests as an acceptance gate for every AI-agent change.
 
 ---
 
@@ -269,12 +290,10 @@
 
 ---
 
-## 9. Bottom-Line Recommendation
+## 9. Bottom-Line Recommendation (updated 2026-09-09)
 
-For a **single-operator AI-agent dev team** building an e-commerce PoC:
+For this project (single non-technical operator, RF context, maximum budget economy), the approved stack is **Section 0 above: Claude Pro $20 + ChatGPT Plus $20 + Kilo Code/OpenCode $0 + token buffer ~$20 = $60/mo**. Premium tiers (Claude Max, Cursor Pro+/Ultra, Windsurf Max) are explicitly excluded; the refactoring phase (months 3–5) is covered by a one-time extra token budget (~$200) instead of subscription upgrades.
 
-- **Start with Scenario A ($45–65/mo).** Use Cursor Pro or Windsurf Pro ($20), Claude Pro ($20), self-hosted n8n ($5–10), and free GitHub Actions / LangGraph.
-- **Upgrade to Scenario B ($120–160/mo)** when you need reliable automations, agent tracing, and higher model throughput.
-- **Reserve Scenario C ($280–400/mo)** for production agent fleets, not PoC validation.
+The most important lever remains **model routing**: defaulting every agent call to Opus or GPT-5.6 Sol is the fastest way to 5–10× your bill. Route to Flash/Haiku/Mini for 80% of routine work, and spend on frontier models only where reasoning quality changes the outcome.
 
-The most important lever is **model routing**: defaulting every agent call to Opus or GPT-5.6 Sol is the fastest way to 5–10× your bill. Route to Flash/Haiku/Mini for 80% of routine work, and spend on frontier models only where reasoning quality changes the outcome.
+Because the owner has no development experience, every agent task must run through **Spec & TDD**: written spec → agent implementation → automated tests (Vitest/Playwright) → human approval of the test report, not of the code. This is the quality substitute for engineering experience, and all tooling for it is free (see Section 0).
