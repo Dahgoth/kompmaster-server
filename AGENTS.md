@@ -9,6 +9,16 @@ hard convention you must follow.
 KompMaster backend — Node.js/Express + PostgreSQL + S3-compatible photo
 storage. See `README.md` for architecture, API surface, and setup.
 
+## Documentation map
+
+- `CONTRIBUTING.md` — canonical contribution process (branches, PRs, commits,
+  docs-in-sync rule).
+- `DEVELOPMENT.md` — workspace setup and dev workflow.
+- `ENVIRONMENT.md` — environment variables reference.
+- `DESIGN.md` — UX/UI contract.
+- `CHANGELOG.md` — Keep a Changelog.
+- `README.md` — index of all of the above plus the API surface.
+
 ## Ground rules
 
 1. **Never commit directly to `main`.** All changes go through a branch and a
@@ -26,6 +36,19 @@ storage. See `README.md` for architecture, API surface, and setup.
 5. **AGPL-3.0.** This project is licensed under the GNU Affero General Public
    License v3 (`LICENSE`). Do not introduce code under an incompatible
    license, and never commit secrets, keys, or credentials.
+6. **Keep documentation in sync (hard rule).** Whenever you propose a change
+   that touches a documented domain, you MUST update the corresponding
+   document in the same pull request — not as a follow-up:
+
+   | Domain                            | Update                     |
+   | --------------------------------- | -------------------------- |
+   | UX / UI / visual design           | `DESIGN.md`                |
+   | Environment variables / config    | `ENVIRONMENT.md`           |
+   | Workspace setup / dev workflow    | `DEVELOPMENT.md`           |
+   | User-facing behavior              | `CHANGELOG.md`             |
+
+   The full contribution process lives in `CONTRIBUTING.md`; the docs map is
+   in `README.md`.
 
 ## Commit message format
 
@@ -65,6 +88,8 @@ Examples:
 3. Push the branch and open a pull request against `main`.
 4. Have the PR reviewed and merge it through GitHub (squash or merge — never
    push directly to `main`).
+
+See `CONTRIBUTING.md` for the full process.
 
 ## Releasing (SemVer + Changelog)
 

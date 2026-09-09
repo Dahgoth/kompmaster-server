@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enforced Conventional Commits with commitlint + Husky (`commit-msg` hook).
 - Added this changelog and linked it from `README.md`.
 - Added `npm run lint:commit` helper to validate commit messages.
+- Added `CONTRIBUTING.md` (contribution process), `DEVELOPMENT.md` (workspace
+  setup), `ENVIRONMENT.md` (environment variables), and `DESIGN.md` (UX/UI
+  contract), and referenced them from `README.md` and `AGENTS.md`.
+- Added `.env.example`.
 
 ### Changed
 - `package.json`: set `license` to `AGPL-3.0`, added dev dependencies

@@ -27,6 +27,15 @@ Node.js/Express + PostgreSQL + S3-совместимое хранилище фо
 - Image Search Service (автопоиск фото по Icecat/API поиска картинок) — в этой версии не реализован; структура БД (`image_search_cache`) под него уже заложена в миграции, чтобы не переделывать схему при добавлении.
 - Реальный текст политики конфиденциальности и публичной оферты — сейчас нигде не хранится как отдельный контент, добавьте страницы на фронте.
 
+## Документация
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — как вносить изменения: ветки, pull requests, Conventional Commits, changelog, обязательное обновление документации.
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** — настройка рабочего окружения (установка, запуск, миграции, отладка).
+- **[ENVIRONMENT.md](ENVIRONMENT.md)** — справочник по переменным окружения (`.env`).
+- **[DESIGN.md](DESIGN.md)** — UX/UI-контракт витрины (цвета, типографика, компоненты).
+- **[AGENTS.md](AGENTS.md)** — обязательные правила для AI-агентов и контрибьюторов.
+- **[CHANGELOG.md](CHANGELOG.md)** — история изменений (Keep a Changelog).
+
 ## 1. Установка на сервере (Ubuntu, чистый VPS)
 
 ```bash
@@ -60,6 +69,7 @@ npm install
 
 cp .env.example .env
 nano .env   # заполните DATABASE_URL, JWT_SECRET, S3_*, SMTP_*, SMS_*, TELEGRAM_*
+            # полный список переменных — в ENVIRONMENT.md
 ```
 
 Обязательно смените:
@@ -197,20 +207,13 @@ POST   /api/uploads/:folder   (admin, multipart: file)
 
 ## Разработка и правила коммитов
 
-- **Не коммитьте напрямую в `main`.** Любое изменение — через ветку и
-  pull request. Прямой `git push` в `main` блокируется локальным Husky-хуком
-  `pre-push`; на GitHub можно дополнительно включить защиту ветки (для
-  приватного репозитория это требует GitHub Pro).
-- **Conventional Commits обязательны**: `<type>(scope): описание`.
-  Типы: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`,
-  `build`, `ci`, `chore`, `revert`. Сообщения проверяются commitlint через
-  Husky (`commit-msg` hook) — невалидный коммит будет отклонён при коммите.
-- **SemVer**: версия релиза хранится только в `package.json#version`.
-- **Keep a Changelog**: каждое пользовательское изменение фиксируется в
-  `CHANGELOG.md`; ещё не вышедшие изменения — в разделе `[Unreleased]`.
-
-Полные правила для AI-агентов и контрибьюторов — в `AGENTS.md`. Проверить
-последний коммит вручную: `npm run lint:commit`.
+Вклад в проект идёт только через ветки и pull request (прямой `git push` в
+`main` блокируется Husky-хуком), коммиты оформляются по Conventional Commits
+и проверяются commitlint, версия хранится только в `package.json#version`, а
+пользовательские изменения фиксируются в `CHANGELOG.md`. Полный процесс и
+обязательное правило обновления документации описаны в
+**[CONTRIBUTING.md](CONTRIBUTING.md)**; краткий свод обязательных правил для
+AI-агентов — в **[AGENTS.md](AGENTS.md)**.
 
 ## Важное честное примечание
 
