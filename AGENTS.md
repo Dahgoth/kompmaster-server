@@ -33,9 +33,9 @@ storage. See `README.md` for architecture, API surface, and setup.
    else.
 4. **Keep a Changelog.** Every user-facing change must be recorded in
    `CHANGELOG.md`. Unreleased changes go under `[Unreleased]`.
-5. **AGPL-3.0.** This project is licensed under the GNU Affero General Public
-   License v3 (`LICENSE`). Do not introduce code under an incompatible
-   license, and never commit secrets, keys, or credentials.
+5. **MIT.** This project is licensed under the MIT License (`LICENSE`).
+   Do not introduce code under an incompatible license, and never commit
+   secrets, keys, or credentials.
 6. **Keep documentation in sync (hard rule).** Whenever you propose a change
    that touches a documented domain, you MUST update the corresponding
    document in the same pull request — not as a follow-up:

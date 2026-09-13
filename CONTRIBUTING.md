@@ -15,7 +15,7 @@ that agents must follow, see [`AGENTS.md`](AGENTS.md).
    [`CHANGELOG.md`](CHANGELOG.md).
 5. **Keep docs in sync** — when you change a documented domain, update the
    corresponding doc in the same PR (see below).
-6. **AGPL-3.0** — do not introduce code under an incompatible license and
+6. **MIT** — do not introduce code under an incompatible license and
    never commit secrets, keys, or credentials.
 
 ## Workflow
@@ -86,6 +86,6 @@ suggestion.
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3 — see
-[`LICENSE`](LICENSE). By contributing you agree that your contributions are
-licensed under the same terms.
+This project is licensed under the MIT License — see [`LICENSE`](LICENSE).
+By contributing you agree that your contributions are licensed under the same
+terms.

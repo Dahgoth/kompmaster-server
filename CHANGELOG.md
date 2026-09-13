@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Adopted AGPL-3.0 license (`LICENSE`).
+- Adopted MIT license (`LICENSE`).
 - Added `AGENTS.md` describing repository ground rules and tooling for agents.
 - Enforced Conventional Commits with commitlint + Husky (`commit-msg` hook).
 - Added this changelog and linked it from `README.md`.
@@ -24,8 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/2026-hosting-pricing-research.md`).
 
 ### Changed
-- `package.json`: set `license` to `AGPL-3.0`, added dev dependencies
+- `package.json`: set `license` to `MIT`, added dev dependencies
   (commitlint, Husky), and `prepare`/`lint:commit` scripts.
+- Changed license from AGPL-3.0 to MIT (resolves #6): the AGPL
+  network-use clause (§13) was incompatible with the planned white-label
+  commercial model where clients use the service over the network without
+  receiving source code. MIT is permissive and imposes no
+  source-disclosure obligations.
 - Removed legacy `VERSION.txt`; `package.json` version is now the single
   source of truth for the release version.
 

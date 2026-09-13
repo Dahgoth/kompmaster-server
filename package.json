@@ -4,7 +4,7 @@
   "description": "Backend API for KompMaster store (products, orders, users, reviews, price import/export, notifications)",
   "main": "src/index.js",
   "type": "commonjs",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Dahgoth/kompmaster-server.git"
