@@ -54,3 +54,35 @@ Deferral unblocks ADR 001 pure C + modular canonical + RF-only HA without waitin
 
 - ADR 001, Issue #3 comments, Issue #8, PR #10 (MIT), `docs/2026-hosting-pricing-research.md` §11
 - tbank.ru/business/payments, payment.alfabank.ru, yookassa.ru, cloudpayments.ru, robokassa.ru, paykeeper.ru/solutions/cheques, atol.ru/cloud, cloudkassir.ru
+
+---
+
+## Amendment 2026-09-15 (DRAFT — pending maintainer approval): PoC re-scope
+
+> **Status:** DRAFT — requires maintainer approval before adoption. Refer to `docs/research/2026-09-15-poc-architecture-hosting.md` for full analysis.
+
+**Summary:** The PoC/MVP launch (3–6 month lifetime, ≤2–5,000 ₽/mo budget, ad-campaign burst tolerance) re-scopes the deployment topology to a **single VPS + pure C CDN architecture** rather than full HA. Chosen plan: Option D+A — Timeweb MSK-50 (1,080 ₽) + Timeweb S3 (79 ₽) + CDN cache headers on catalog reads, total ~1,159–1,379 ₽/mo.
+
+**What's sacrificed/postponed (all explicitly permitted by PO):**
+- **SMS phone confirmation** — skip or optional; email/Telegram for auth
+- **Payment acquiring + 54-ФЗ fiscalization at launch** — checkout flows as "менеджер свяжется / оплата при получении / ссылка от менеджера"; payment adapter code exists behind config, disabled at launch; Avito/Ozon absorb transactions today
+- **HA** — single VPS, no LB, no replicas, no managed PG HA; daily pg_dump to S3 + Uptime Kuma alerts as recovery path; vertical scale (MSK-80, 1,800–2,000 ₽) as spike lever
+- **Redis, delivery tracking, integrations (Sheets, image search), 99.9% SLOs** — all deferred
+
+**What's kept (unchanged from ADR 001/002):**
+- Modular canonical `src/index.js` (CommonJS, 7 routers, Bearer JWT), `src/config.js` fail-closed env, `src/db.js` pool, migrations + advisory lock (E17)
+- Pure C API-only backend (no express.static); frontend separate static artifact on RF S3+CDN
+- RF S3 presigned upload grants (`forcePathStyle`, `S3_ENDPOINT/S3_BUCKET/S3_PUBLIC_URL`)
+- Idempotent patterns (order creation, webhook stubs)
+- Narrow adapter pattern for payments/fiscalization (code exists, disabled at launch)
+- Legacy `src/server.js` family stays quarantined (inspiration-only)
+
+**Budget:** ~1,159–1,379 ₽/mo (MSK-50 1,080–1,200₽ + S3 79₽ + domain amortized ~100₽), well within 2–5,000₽ cap.
+
+**RF market scan (2026-09-15):** 8 vendor families compared (Timeweb, Beget, Selectel, Yandex Cloud, VK Cloud, Cloud.ru, VDSina, RUVDS, SpaceWeb) — see `docs/research/2026-09-15-poc-architecture-hosting.md` § "RF Hosting Market Scan". Result: no vendor beats Timeweb on 2vCPU/4GB price/spec; Beget 2C/4GB (990₽ + 150₽ IP, SPb, free backups, SLA 99.9%) is the runner-up alternative. Managed PG is over-cap everywhere except Beget DBaaS (990₽) — unnecessary for PoC (embedded PG 16 suffices). Yandex Cloud viable only via starting grant (4,000–10,000₽) for 1–2 months. Recommended basket unchanged: **Timeweb MSK-50 + Timeweb S3 + CDN ≈ 1,259–1,379₽/mo**.
+
+**Spike resilience at 60–80+ RPS:** Pure C architecture routes 70–80% of traffic through CDN cache headers on catalog reads. API surface reduces to ~12–24 RPS actual (auth + cart/order mutations + admin) — a single MSK-50 handles this with 3–4× headroom. Vertical scale (MSK-80) available as spike lever with 10–15 min migration downtime.
+
+**SLO adjustment:** Availability relaxed from 99.9% to **99% with spike windows acknowledged** for PoC lifetime. Per-request latency SLOs unchanged. Post-PoC scale-up reverts to 99.9%.
+
+**Full details:** `docs/research/2026-09-15-poc-architecture-hosting.md` — architecture options analysis, spike playbook, ranked recommendation, and ADR amendment text blocks.

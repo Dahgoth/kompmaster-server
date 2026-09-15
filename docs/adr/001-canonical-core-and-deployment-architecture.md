@@ -376,7 +376,27 @@ Concrete vendor pricing (Timeweb vs Yandex) deferred to ADR 002; order-of-magnit
 6. **B9/B10:** confirm defer Realtime and multi-tenancy/queue until beyond 5k WAU.
 7. **Burst profile:** any promo flash sales >80 RPS or >15 concurrent checkouts to re-tune LB/KKT queue?
 
-*No blocking questions remain in ADR 001 — pure C, modular canonical (inspiration-only), RF-only HA cheapest principle, and 5k WAU model are decided.*
+*No blocking questions remain in ADR 001 — pure C, modular canonical (inspiration-only), RF-only principle, and 5k WAU model decided. PoC amendment (pending maintainer) inserted 2026-09-15 below.*
+
+### PoC Amendment 2026-09-15 (DRAFT — pending approval)
+
+Per maintainer direction 2026-09-15: re-scoped from full HA prod to **lean PoC/MVP** (3–6 mo lifetime, ≤2–5,000 ₽/mo, launch tomorrow, survive 500K ₽ ad-campaign spike). Key changes vs accepted ADR 001:
+
+- **A4 frontend**: pure C confirmed; FE to be built (not ready); design preserved per PO, `DESIGN.md` regenerated after rebuild; CDN required from day 1.
+- **A5 scheduler**: deferred to post-PoC (business-rule inventory deferred).
+- **A6 payments + fiscalization**: adapter design kept (narrow interface), concrete gateway deferred to ADR 002; **launch checkout = manual handoff** ("менеджер свяжется / оплата при получении") since Avito/Ozon absorb transactions; payments/fiscal code exists but disabled behind `config.js` feature flags; no webhook required at launch.
+- **B/B8 storage**: RF S3 provider confirmed **Timeweb S3** (vendor from ADR 002 scan); verify `forcePathStyle` + `public-read` ACL before deploy.
+- **Capacity / topology (§11):** single VPS `Timeweb MSK-50` (~1,080 ₽/mo, 2vCPU/4GB, 4GB is floor for PG+app+monitoring per pricing §11.1) + S3 (~79 ₽/10GB) ≈ 1,159–1,379 ₽/mo; CDN absorbs catalog reads so API sees only 12–24 RPS at 80 RPS burst; daily `pg_dump` to S3; `FRONTEND_ORIGIN` required at deploy (fail-closed); `node --check` all `.js`; `E14` CORS allowlist; `E15` in-process limit acceptable at PoC; `E17` advisory lock mandatory (even single deploy for future parallel runs).
+- **SLO (§11.4):** availability 99% (not 99.9%) with spike-window acknowledgment; per-request latency unchanged; post-PoC returns to 99.9%.
+- **ADR 002 deferred choices resolved for budget:** Timeweb (not Yandex due to price gap 2,513₽ vs 1,080₽; Beget 990₽ + 150₽ IP is alternative); payments/fiscalization deferred; storage = Timeweb S3.
+
+No codebase edits made; no commit made yet — this amendment is the only pending change.
+
+---
+
+*No blocking questions remain in ADR 001 — pure C, modular canonical (inspiration-only), RF-only principle, and 5k WAU model decided. PoC amendment (pending maintainer) inserted above.*
+
+---
 
 ## References
 
