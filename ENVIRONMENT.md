@@ -94,8 +94,9 @@ notifications are logged to the console instead of sent.
 
 ## Legacy entry point
 
-`src/server.js` (run by the `Dockerfile`, see `DEVELOPMENT.md`) reads these
-additional variables directly from `process.env`:
+`src/server.js` (legacy ESM entry, documented in
+  `docs/archive/DOCKER_EVALUATION.md`) reads these
+  additional variables directly from `process.env`:
 
 - `DOMAIN` — public domain, used to build reset links. Falls back to the
   request host.

@@ -19,7 +19,7 @@ S3-compatible store for photos. The active entry point is `src/index.js`
 | npm            | ships with Node                                                    |
 | PostgreSQL     | 16 (see `docker-compose.yml`)                                      |
 | S3-compatible  | MinIO (via Docker), or Selectel Object Storage / Cloudflare R2      |
-| Docker         | optional — for `docker compose`-managed Postgres and MinIO          |
+| Docker         | optional — for `docker compose`-managed Postgres and MinIO only (not the app) |
 
 ## Getting started
 
@@ -79,6 +79,22 @@ curl http://localhost:4000/api/health
 # {"ok":true,"time":"..."}
 ```
 
+### 6. Production deployment
+
+For production on a VPS, use PM2 (see [README §6](../README.md#6-%D0%97%D0%B0%D0%BF%D1%83%D1%81%D0%BA)):
+
+```bash
+sudo npm install -g pm2
+pm2 start src/index.js --name kompmaster-api
+pm2 save
+pm2 startup   # выполните команду, которую он покажет — автозапуск после перезагрузки сервера
+```
+
+> **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
+> Production app deployment uses PM2. See
+> [docs/archive/DOCKER_EVALUATION.md](docs/archive/DOCKER_EVALUATION.md)
+> for the full rationale.
+
 ## Common commands
 
 | Command                 | Description                                      |
@@ -87,7 +103,7 @@ curl http://localhost:4000/api/health
 | `npm run dev`           | Run with file watching                           |
 | `npm run migrate`       | Apply pending `migrations/*.sql`                 |
 | `npm run lint:commit`   | Validate the most recent commit message          |
-| `docker compose up -d postgres minio` | Start local Postgres + MinIO        |
+| `docker compose up -d postgres minio` | Start local Postgres + MinIO only; app runs via PM2 (`npm start`) |
 
 ## Entry points
 
@@ -103,7 +119,11 @@ verify you do not need the same change in the other, and flag the discrepancy
 in your pull request. (`ENVIRONMENT.md` documents the env-var differences
 between the two.)
 
-## Docker-based setup
+> **Note on `src/server.js` and `Dockerfile`:** Both target a legacy ESM entry
+> that cannot boot under the current CommonJS runtime. They are preserved for
+> historical reference only. See `docs/archive/DOCKER_EVALUATION.md`.
+
+## Docker-based setup (databases only)
 
 `docker-compose.yml` provides PostgreSQL 16 (`postgres`) and MinIO (`minio`)
 with local volumes:
@@ -111,9 +131,6 @@ with local volumes:
 - Postgres: `localhost:5432`, user/db `kompmaster`, password `kompmaster`
   (dev-only defaults — change before any real deployment).
 - MinIO: S3 API on `localhost:9000`, web console on `localhost:9001`.
-
-To run the app itself under Docker, see `DEPLOY.md` and `UPDATE.md` (the
-`Dockerfile`/`Caddyfile` path targets the legacy `src/server.js` entry).
 
 ## Git workflow
 
@@ -160,7 +177,8 @@ Confirm `DATABASE_URL` matches the credentials in `docker-compose.yml`
 ### Port already in use
 
 The active entry point uses `PORT` (default `4000`). Set `PORT` in `.env` to
-change it. Note the Docker/Caddy path uses port `3000`.
+change it. Note: the legacy `src/server.js` entry used port `3000` (see
+`docs/archive/DOCKER_EVALUATION.md`); the canonical port is now `4000`.
 
 ### Migration fails partway
 

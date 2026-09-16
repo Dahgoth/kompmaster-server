@@ -9,19 +9,15 @@
 
 При желании добавьте `www` как CNAME на основной домен.
 
-## 2. Установка Docker
+## 2. Установка сервера
 
 На чистом Ubuntu 24.04:
 
 ```bash
 sudo apt update
 sudo apt install -y ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.asc >/dev/null
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs postgresql postgresql-contrib
 ```
 
 ## 3. Загрузка проекта
@@ -45,8 +41,7 @@ nano .env
 
 - `DOMAIN`
 - `JWT_SECRET`
-- `POSTGRES_PASSWORD`
-- пароль внутри `DATABASE_URL`
+- `DATABASE_URL` (пароль совпадает с `POSTGRES_PASSWORD`)
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
 
@@ -59,19 +54,22 @@ openssl rand -hex 48
 ## 5. Запуск
 
 ```bash
-docker compose up -d --build
+sudo npm install -g pm2
+pm2 start src/index.js --name kompmaster-api
+pm2 save
+pm2 startup   # выполните команду, которую он покажет — автозапуск после перезагрузки сервера
 ```
 
-Проверить контейнеры:
+Проверить контейнеры (PostgreSQL):
 
 ```bash
-docker compose ps
+pg_isready
 ```
 
 Логи приложения:
 
 ```bash
-docker compose logs -f app
+pm2 logs kompmaster-api
 ```
 
 После того как DNS указывает на сервер, Caddy сам выпустит HTTPS-сертификат.
@@ -91,3 +89,8 @@ curl https://ВАШ-ДОМЕН/api/health
 Используйте `ADMIN_EMAIL` и `ADMIN_PASSWORD` из `.env`.
 
 После первого входа пароль можно поменять в админке.
+
+> **Note:** Docker is not used for app deployment. Docker Compose is only
+> used locally for PostgreSQL + MinIO development databases. See
+> [docs/archive/DOCKER_EVALUATION.md](docs/archive/DOCKER_EVALUATION.md)
+> for the full rationale.
