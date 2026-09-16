@@ -2,12 +2,18 @@
 
 ## 1. DNS
 
-У регистратора домена создайте A-запись:
+DNS создается автоматически через Terraform (`terraform/`) — см.
+[terraform/README.md](terraform/README.md). Итоговая топология:
 
-- имя: `@`
-- значение: IPv4 вашего VPS
+| Имя | Тип | Значение | Назначение |
+| --- | --- | --- | --- |
+| `@` | A | IPv4 VPS | 301-редирект на `www` (Caddy) |
+| `www` | CNAME | `s3.timeweb.com` | Статический фронтенд (S3-сайт + SSL) |
+| `api` | A | IPv4 VPS | API (Caddy → 127.0.0.1:PORT) |
+| `assets` | CNAME | `s3.timeweb.com` | Медиа-бакет (фото товаров) |
 
-При желании добавьте `www` как CNAME на основной домен.
+Канонический адрес магазина — `https://www.compmasone.ru` (Timeweb DNS не
+позволяет CNAME на апексе, поэтому апекс редиректит на `www`).
 
 ## 2. Установка сервера
 
@@ -39,11 +45,10 @@ nano .env
 
 Обязательно замените:
 
-- `DOMAIN`
+- `FRONTEND_ORIGIN` (разрешённые источники магазина: `https://compmasone.ru,https://www.compmasone.ru`)
 - `JWT_SECRET`
 - `DATABASE_URL` (пароль совпадает с `POSTGRES_PASSWORD`)
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` (бутстрап админа, см. `scripts/reset-admin.js`)
 
 Для случайного секрета можно выполнить:
 
@@ -84,7 +89,7 @@ curl https://ВАШ-ДОМЕН/api/health
 
 Откройте:
 
-`https://ВАШ-ДОМЕН/#admin`
+`https://www.compmasone.ru/admin`
 
 Используйте `ADMIN_EMAIL` и `ADMIN_PASSWORD` из `.env`.
 

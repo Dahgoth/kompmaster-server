@@ -29,10 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   setup), `ENVIRONMENT.md` (environment variables), and `DESIGN.md` (UX/UI
   contract), and referenced them from `README.md` and `AGENTS.md`.
 - Added `.env.example`.
-- Added `terraform/` PoC infrastructure (Timeweb Cloud, ADR-002 Option D+A):
-  single MSK-50-shape VPS, firewall (80/443/22), daily disk autobackups, S3
-  media bucket with `assets` subdomain + SSL, and DNS records in the
-  Timeweb-managed zone. No secrets in configs; state stays local.
+- Added `terraform/` PoC infrastructure (Timeweb Cloud, ADR-002 Option D+A,
+  Option B): single MSK-50-shape VPS running the API only, firewall
+  (80/443/22), daily disk autobackups, media S3 bucket (`assets.` subdomain +
+  SSL), and a static-storefront S3 bucket with website hosting (`www.`
+  subdomain, 404→`index.html` SPA fallback). DNS `@`/`api` → VPS, `www`/`assets`
+  → S3; CDN is attached manually (provider has no CDN resource). Backend
+  CORS default now allows both `compmasone.ru` and `www.compmasone.ru`;
+  Caddyfile redirects the apex to `www` and proxies `api.` to the app.
+  No secrets in configs; state stays local.
 - Added `docs/` planning documentation: executive cost estimate and strategic
   roadmap for the PoC web store and white-label platform
   (`docs/PoC_WhiteLabel_Cost_Roadmap_RU.md`, in Russian) plus the underlying

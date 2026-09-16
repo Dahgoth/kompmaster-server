@@ -33,11 +33,12 @@ function frontendOrigins(raw) {
 module.exports = {
   port: Number(required("PORT", "4000")),
   nodeEnv: required("NODE_ENV", "development"),
-  // Unset FRONTEND_ORIGIN keeps the default origin, but an explicitly empty
-  // value fails closed inside frontendOrigins (fail-closed allowlist, E14).
+  // Unset FRONTEND_ORIGIN keeps the PoC default origins (apex + www both
+  // serve the storefront), but an explicitly empty value fails closed inside
+  // frontendOrigins (fail-closed allowlist, E14).
   frontendOrigin: frontendOrigins(
     process.env.FRONTEND_ORIGIN === undefined
-      ? "https://compmasone.ru"
+      ? "https://compmasone.ru,https://www.compmasone.ru"
       : process.env.FRONTEND_ORIGIN
   ),
   databaseUrl: required("DATABASE_URL"),

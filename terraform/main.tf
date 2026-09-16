@@ -1,6 +1,18 @@
 # KompMaster PoC infrastructure — Timeweb Cloud (Option D+A, ADR-002 re-scope).
-# Provisions ONLY infra: project, VPS, firewall, disk autobackups, S3 media bucket, DNS.
+# Provisions ONLY infra: project, VPS, firewall, disk autobackups, S3 buckets, DNS.
 # App deploy (code, .env, migrations) and secrets stay outside Terraform — see DEVELOPMENT.md.
+#
+# Topology (ADR-001 §1a pure C — backend serves /api/* only, frontend is a
+# separate static artifact, Option B):
+#
+#   compmasone.ru        A     → VPS  (Caddy 301 → https://www.compmasone.ru)
+#   www.compmasone.ru    CNAME → S3   (frontend bucket, static website + SSL)
+#   api.compmasone.ru    A     → VPS  (Caddy reverse_proxy → 127.0.0.1:PORT)
+#   assets.compmasone.ru CNAME → S3   (media bucket + SSL)
+#
+# The apex cannot be a CNAME on Timeweb DNS, hence the www-canonical redirect.
+# CDN is NOT provisioned here: terraform-provider-timeweb-cloud v1.8.2 has no
+# CDN resource. Attach it in the panel/API to the frontend origin — README.md.
 
 data "twc_configurator" "server" {
   location = var.location
@@ -19,6 +31,12 @@ data "twc_s3_preset" "media" {
   location      = var.location
   storage_class = var.s3_storage_class
   disk          = var.s3_disk_mb
+}
+
+data "twc_s3_preset" "frontend" {
+  location      = var.location
+  storage_class = var.s3_storage_class
+  disk          = var.frontend_s3_disk_mb
 }
 
 resource "twc_project" "main" {
@@ -105,6 +123,9 @@ resource "twc_s3_bucket" "media" {
 }
 
 # DNS is managed in Timeweb (zone pre-exists) — no manual registrar records needed.
+#
+# Apex: A-record to the VPS only because Timeweb DNS forbids CNAME at the zone
+# apex; Caddy 301-redirects apex traffic to the canonical frontend subdomain.
 resource "twc_dns_rr" "root_a" {
   zone_id = data.twc_dns_zone.main.id
   name    = "@"
@@ -112,11 +133,21 @@ resource "twc_dns_rr" "root_a" {
   value   = twc_server.main.main_ipv4
 }
 
+# API hostname — same VPS, dedicated origin for CORS clarity and later LB swap.
+resource "twc_dns_rr" "api" {
+  zone_id = data.twc_dns_zone.main.id
+  name    = var.api_subdomain
+  type    = "A"
+  value   = twc_server.main.main_ipv4
+}
+
+# Static frontend: CNAME must point to s3.timeweb.com before the bucket
+# subdomain requests its certificate. The bucket is public with website hosting.
 resource "twc_dns_rr" "www" {
   zone_id = data.twc_dns_zone.main.id
-  name    = "www"
+  name    = var.frontend_subdomain
   type    = "CNAME"
-  value   = var.domain
+  value   = "s3.timeweb.com"
 }
 
 # Media hostname: CNAME must resolve to s3.timeweb.com before the bucket
@@ -134,4 +165,34 @@ resource "twc_s3_bucket_subdomain" "media" {
   release_cert = true
 
   depends_on = [twc_dns_rr.assets]
+}
+
+# Static storefront (Option B): public bucket + S3 website hosting. The SPA
+# router is history-based, so 404s fall back to index.html for deep links.
+resource "twc_s3_bucket" "frontend" {
+  name      = var.frontend_bucket_name
+  type      = "public"
+  preset_id = data.twc_s3_preset.frontend.id
+
+  description           = "KompMaster PoC storefront (frontend/dist, served via website hosting + CDN)"
+  is_allow_auto_upgrade = true
+  project_id            = twc_project.main.id
+
+  website_config {
+    enabled    = true
+    index_page = var.frontend_index_page
+
+    error_pages {
+      code     = 404
+      document = var.frontend_spa_fallback
+    }
+  }
+}
+
+resource "twc_s3_bucket_subdomain" "frontend" {
+  bucket_id    = twc_s3_bucket.frontend.id
+  subdomain    = "${var.frontend_subdomain}.${var.domain}"
+  release_cert = true
+
+  depends_on = [twc_dns_rr.www]
 }

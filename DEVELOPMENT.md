@@ -200,33 +200,33 @@ with local volumes:
 ## Terraform (PoC infrastructure)
 
 `/terraform/` provisions the PoC runtime on Timeweb Cloud (ADR-002, Option
-D+A): one MSK-50-shape VPS, firewall (80/443/22), daily disk autobackups, S3
-media bucket + `assets` subdomain with SSL, and DNS records in the
-Timeweb-managed `compmasone.ru` zone. App code, `.env`, and migrations are
-NOT managed by Terraform.
-
-Prerequisites: Terraform `>= 1.5` and a Timeweb API token with Telegram
-delete-confirmation disabled.
+D+A) for **Option B**: one MSK-50-shape VPS running the API only, daily disk
+autobackups, two S3 buckets (media + static storefront with website hosting),
+and DNS records in the Timeweb-managed `compmasone.ru` zone. App code, `.env`,
+and migrations are NOT managed by Terraform. Full stack details live in
+[`terraform/README.md`](terraform/README.md).
 
 ```bash
 export TWC_TOKEN=...   # never commit this value
 cd terraform
 terraform init
-terraform plan         # review: 1 VPS + firewall + 3 rules + backup schedule + bucket + subdomain + 3 DNS records
+terraform plan         # 1 VPS + firewall + backups + 2 buckets + 4 DNS records
 terraform apply
 terraform output       # map S3_* into .env — see ENVIRONMENT.md
 ```
 
 Notes:
 
-- State is local (`terraform.tfstate`, gitignored). Shared/S3 backend is
-  deferred to post-PoC.
-- `terraform.tfvars` is gitignored; defaults in `variables.tf` already match
-  the PoC (`compmasone.ru`, MSK-50 shape, 10 GB hot S3). Copy
-  `terraform.tfvars.example` only to override (e.g. `ssh_keys_ids`).
-- Restrict `ssh_allowed_cidr` to your IP after first login.
-- `terraform destroy` removes the VPS, bucket, and DNS records — snapshots /
-  `pg_dump` archives in S3 go with the bucket. Back up first.
+- Storefront is canonical on `https://www.compmasone.ru` (S3 website + SSL;
+  Timeweb DNS forbids apex CNAME, so the apex 301-redirects via Caddy).
+- API origin is `https://api.compmasone.ru` — set
+  `VITE_API_BASE=https://api.compmasone.ru/api` when building the frontend.
+- CDN is attached manually (provider v1.8.2 has no CDN resource) — see
+  `terraform/README.md §CDN`.
+- State is local (`terraform.tfstate`, gitignored); `terraform.tfvars` is
+  gitignored; defaults in `variables.tf` already match the PoC.
+- `terraform destroy` removes the VPS, buckets, and DNS records — back up
+  snapshots / `pg_dump` archives first.
 
 ## Git workflow
 

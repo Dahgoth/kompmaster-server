@@ -25,10 +25,12 @@ noted in [Legacy entry point](#legacy-entry-point).
   Default `development`. In production, missing `JWT_SECRET` is fatal.
 - `PORT` — HTTP port for the API. Default `4000`.
 - `FRONTEND_ORIGIN` — allowed CORS origin(s), comma-separated for multi-origin
-  (e.g. `https://compmasone.ru`). Used for the browser app and for building
-  password-reset links. **Required.** Wildcard `*` is rejected at startup
-  (fail-closed); server requests without `Origin` (curl, health checks) are
-  still allowed. An explicitly empty value also fails closed (the dev default
+  (e.g. `https://compmasone.ru,https://www.compmasone.ru`). Used for the
+  browser app and for building password-reset links. **Required.** Wildcard
+  `*` is rejected at startup (fail-closed); server requests without `Origin`
+  (curl, health checks) are still allowed. The PoC default (when the variable
+  is unset) lists both the apex and `www` because the apex redirects to the
+  canonical `www` storefront (see `terraform/`). An explicitly empty value also fails closed (the dev default
   applies only when the variable is unset).
 
 ### Database
@@ -115,8 +117,9 @@ variable you add or rename.
 
 ## Terraform (Timeweb Cloud PoC infra)
 
-Infrastructure in `/terraform/` (ADR-002, Option D+A) is provisioned with the
-Timeweb Terraform provider:
+Infrastructure in `/terraform/` (ADR-002, Option D+A — Option B topology) is
+provisioned with the Timeweb Terraform provider; see
+[`terraform/README.md`](terraform/README.md) for the stack and CDN notes:
 
 - `TWC_TOKEN` — Timeweb API token (panel → API keys). **Environment only,
   never in `.tfvars` or `.env`.** The token must have Telegram
@@ -131,9 +134,16 @@ After `terraform apply`, map outputs into `.env`:
 | `s3_access_key` | `S3_ACCESS_KEY` `[SECRET]` |
 | `s3_secret_key` | `S3_SECRET_KEY` `[SECRET]` |
 | `s3_public_url` | `S3_PUBLIC_URL` |
-| `server_ipv4` | Informational (DNS `@` A-record already points here) |
+| `server_ipv4` | Informational (DNS `@`/`api` A-records already point here) |
+| `api_url` | Bake `VITE_API_BASE=<api_url>/api` into the frontend build |
+| `frontend_url` | Canonical storefront (include in `FRONTEND_ORIGIN`) |
 
 `DATABASE_URL` still targets PostgreSQL on the VPS itself (embedded/Docker),
-not a managed cluster — Terraform does not output it. `FRONTEND_ORIGIN`
-stays `https://compmasone.ru`; payment/SMS variables stay empty at PoC launch
-(manual checkout, Telegram/e-mail only).
+not a managed cluster — Terraform does not output it. Set
+`FRONTEND_ORIGIN=https://compmasone.ru,https://www.compmasone.ru` (apex
+redirects to `www`); payment/SMS variables stay empty at PoC launch (manual
+checkout, Telegram/e-mail only).
+
+Frontend build output (`frontend/dist`) is deployed to the `kompmaster-frontend`
+bucket via S3 sync (credentials from `frontend_access_key`/`frontend_secret_key`
+outputs) — see `terraform/README.md §Deploying the storefront`.

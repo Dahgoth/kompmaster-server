@@ -1,4 +1,13 @@
+# Option B topology (see terraform/): storefront is static on S3+CDN
+# (www.$DOMAIN); this host only redirects the apex and proxies the API.
+#
+# DNS: @ and api → this VPS (A), www/assets → s3.timeweb.com (CNAME).
+
 {$DOMAIN} {
+  redir https://www.{$DOMAIN}{uri} permanent
+}
+
+api.{$DOMAIN} {
   encode zstd gzip
-  reverse_proxy 127.0.0.1:4000
+  reverse_proxy 127.0.0.1:{$PORT:4000}
 }

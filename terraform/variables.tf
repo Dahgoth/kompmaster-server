@@ -32,6 +32,48 @@ variable "media_subdomain" {
   default     = "assets"
 }
 
+# --- Static frontend (Option B: S3 website + CDN, API stays on the VPS) ---
+#
+# Timeweb DNS allows CNAME only on subdomains (no apex CNAME/ALIAS), so the
+# zone apex cannot point at S3. The canonical frontend therefore lives on a
+# subdomain and the apex 301-redirects to it from Caddy on the VPS.
+
+variable "frontend_bucket_name" {
+  description = "Bucket holding the built storefront (frontend/dist)."
+  type        = string
+  default     = "kompmaster-frontend"
+}
+
+variable "frontend_subdomain" {
+  description = "Canonical frontend hostname (S3 website + SSL). Apex redirects here."
+  type        = string
+  default     = "www"
+}
+
+variable "api_subdomain" {
+  description = "API hostname pointing at the VPS (Caddy reverse_proxy → PORT)."
+  type        = string
+  default     = "api"
+}
+
+variable "frontend_s3_disk_mb" {
+  description = "Frontend bucket preset size in MB. dist/ is ~140 KB, so the 1 GB tier (1 ₽/mo) is plenty; set 10240 if the 1 GB preset is unavailable in the location."
+  type        = number
+  default     = 1024
+}
+
+variable "frontend_index_page" {
+  description = "S3 website index document."
+  type        = string
+  default     = "index.html"
+}
+
+variable "frontend_spa_fallback" {
+  description = "Document served for 404 so history-API deep links (/catalog, /admin) boot the SPA. The frontend router is path-based, not hash-based."
+  type        = string
+  default     = "index.html"
+}
+
 variable "location" {
   description = "Timeweb location for server configurator and S3 preset."
   type        = string
