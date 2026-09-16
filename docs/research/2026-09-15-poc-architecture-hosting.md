@@ -14,7 +14,7 @@ KompMaster sells restored electronics (PC parts, laptops) from Sochi. The PoC/MV
 
 **Sacrifices (explicitly permitted by PO):** SMS phone confirmation, payment acquiring + 54-ФЗ fiscalization at launch, delivery tracking, integrations (Sheets, image search), HA, Redis, managed PG, 99.9% SLOs — anything that does not serve "lead → order → admin fulfills."
 
-**Must keep:** Modular canonical app (`src/index.js`, CommonJS, 7 routers, Bearer JWT, `src/config.js` fail-closed env, `src/db.js` pool, migrations + advisory lock), pure C API-only backend, legacy `src/server.js` quarantined, idempotent patterns, structured logging, health checks, presigned S3 uploads.
+**Must keep:** Modular canonical app (`src/index.js`, CommonJS, 7 routers, Bearer JWT, `src/config.js` fail-closed env, `src/db.js` pool, migrations + advisory lock), pure C API-only backend, legacy `docs/legacy/server.js` quarantined, idempotent patterns, structured logging, health checks, presigned S3 uploads.
 
 ---
 

@@ -75,7 +75,7 @@ Deferral unblocks ADR 001 pure C + modular canonical + RF-only HA without waitin
 - RF S3 presigned upload grants (`forcePathStyle`, `S3_ENDPOINT/S3_BUCKET/S3_PUBLIC_URL`)
 - Idempotent patterns (order creation, webhook stubs)
 - Narrow adapter pattern for payments/fiscalization (code exists, disabled at launch)
-- Legacy `src/server.js` family stays quarantined (inspiration-only)
+- Legacy `docs/legacy/server.js` family stays quarantined (inspiration-only)
 
 **Budget:** ~1,159–1,379 ₽/mo (MSK-50 1,080–1,200₽ + S3 79₽ + domain amortized ~100₽), well within 2–5,000₽ cap.
 
