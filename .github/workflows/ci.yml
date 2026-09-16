@@ -29,8 +29,13 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="${{ github.event.pull_request.base.sha }}"
           else
-            git fetch --no-tags --depth=0 origin main
-            base=$(git merge-base HEAD origin/main)
+            # checkout@v4 with fetch-depth: 0 already fetched all branches;
+            # only re-fetch if origin/main is somehow missing.
+            base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+            if [ -z "$base" ]; then
+              git fetch --no-tags origin main
+              base=$(git merge-base HEAD origin/main)
+            fi
           fi
           echo "docs-sync base: $base"
           node scripts/check-docs.js --base "$base"
@@ -84,10 +89,16 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="${{ github.event.pull_request.base.sha }}"
           else
-            git fetch --no-tags --depth=0 origin main
-            base=$(git merge-base HEAD origin/main)
+            base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+            if [ -z "$base" ]; then
+              git fetch --no-tags origin main
+              base=$(git merge-base HEAD origin/main)
+            fi
           fi
-          files=$(git diff --name-only "$base"...HEAD -- 'src/**/*.js' 'tests/**/*.js' 'scripts/**/*.js' || true)
+          # NOTE: plain '*' pathspecs — git's default fnmatch crosses '/' so
+          # 'src/*.js' matches src/routes/x.js too, while 'src/**/*.js' misses
+          # files directly in src/.
+          files=$(git diff --name-only "$base"...HEAD -- 'src/*.js' 'tests/*.js' 'scripts/*.js' || true)
           if [ -n "$files" ]; then
             for f in $files; do node --check "$f"; done
           fi
