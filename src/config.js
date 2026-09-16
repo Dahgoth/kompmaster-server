@@ -10,10 +10,32 @@ function required(name, fallback) {
   return v;
 }
 
+function frontendOrigins(raw) {
+  const origins = String(raw || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+  if (!origins.length) {
+    throw new Error(
+      "FRONTEND_ORIGIN must list at least one origin (e.g. https://compmasone.ru)"
+    );
+  }
+  for (const o of origins) {
+    if (o === "*" || !/^https?:\/\/[^/]+$/.test(o)) {
+      throw new Error(
+        `FRONTEND_ORIGIN entry is not an allowed explicit origin: ${o}`
+      );
+    }
+  }
+  return origins.join(",");
+}
+
 module.exports = {
   port: Number(required("PORT", "4000")),
   nodeEnv: required("NODE_ENV", "development"),
-  frontendOrigin: required("FRONTEND_ORIGIN", "https://compmasone.ru"),
+  frontendOrigin: frontendOrigins(
+    required("FRONTEND_ORIGIN", "https://compmasone.ru")
+  ),
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: required("JWT_EXPIRES_IN", "7d"),

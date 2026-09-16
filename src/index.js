@@ -13,10 +13,21 @@ const uploadsRoutes = require("./routes/uploads");
 
 const app = express();
 
+const allowedOrigins = config.frontendOrigin
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(helmet());
 app.use(
   cors({
-    origin: config.frontendOrigin === "*" ? true : config.frontendOrigin,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   })
 );
