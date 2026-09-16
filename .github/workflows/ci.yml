@@ -21,11 +21,19 @@ jobs:
           node-version: 22
       - name: Docs-in-sync check
         run: |
+          # The rule is PR-scoped ("update the doc in the same pull request"),
+          # so always diff against the merge-base with main — NOT
+          # github.event.before, which on a push event only covers the latest
+          # push and would re-demand docs that an earlier commit on this
+          # branch already updated.
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            node scripts/check-docs.js --base "${{ github.event.pull_request.base.sha }}"
+            base="${{ github.event.pull_request.base.sha }}"
           else
-            node scripts/check-docs.js --base "${{ github.event.before }}"
+            git fetch --no-tags --depth=0 origin main
+            base=$(git merge-base HEAD origin/main)
           fi
+          echo "docs-sync base: $base"
+          node scripts/check-docs.js --base "$base"
 
   commitlint:
     runs-on: ubuntu-latest
@@ -73,7 +81,12 @@ jobs:
       - name: Syntax check (backend JS files in this change set)
         if: steps.changes.outputs.backend == 'true'
         run: |
-          base="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            git fetch --no-tags --depth=0 origin main
+            base=$(git merge-base HEAD origin/main)
+          fi
           files=$(git diff --name-only "$base"...HEAD -- 'src/**/*.js' 'tests/**/*.js' 'scripts/**/*.js' || true)
           if [ -n "$files" ]; then
             for f in $files; do node --check "$f"; done

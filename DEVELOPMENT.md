@@ -143,6 +143,28 @@ changes → `CHANGELOG.md` (`[Unreleased]` must be non-empty); any
 `frontend/**` change → `frontend/README.md`; any `terraform/**` change →
 `terraform/README.md`. Editing a required doc satisfies its own rule.
 
+### Scope: PR-scoped, not commit-scoped
+
+The rule says "update the doc **in the same pull request**", so both
+enforcement points diff the **whole branch against `origin/main`**
+(merge-base), never just the latest commit:
+
+- **CI `docs-sync` job** — on `pull_request` events it uses the PR base SHA;
+  on `push` events it computes `git merge-base HEAD origin/main`. It must
+  *not* use `github.event.before`, which only covers the most recent push and
+  would re-demand docs an earlier commit on the same branch already updated.
+- **Husky `pre-push`** — buffers the ref lines git passes on stdin into a
+  temp file, then resolves `<remote-sha>..<local-sha>` per ref, falling back
+  to the `origin/main` merge-base for a new branch.
+
+> **History (bug fixed 2026-09-16):** the first `pre-push` revision consumed
+> stdin in its main-branch guard loop, so the range-resolution loop read
+> nothing, `changed` came out empty, and the hook silently reported
+> "docs-only change" while skipping **every** suite and the docs check. If a
+> hook ever prints that it found no changes on a real code push, suspect stdin
+> consumption. CI had the mirror-image bug: it scoped to `github.event.before`
+> and flagged already-updated docs as missing.
+
 ## Entry points
 
 There are two server implementations in `src/`, and they are **not** identical:
