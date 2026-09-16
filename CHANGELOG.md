@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed legacy `VERSION.txt`; `package.json` version is now the single
   source of truth for the release version.
 
+### Fixed
+- CORS (E14): `FRONTEND_ORIGIN` is now a validated explicit allowlist
+  (comma-separated, credentials preserved); wildcard `*` is rejected at
+  startup (fail-closed). Requests without `Origin` (curl, health checks)
+  are still allowed.
+- Migrations (E17): `src/migrate.js` now runs under a PostgreSQL advisory
+  lock (`pg_advisory_lock`), so parallel deploys/replicas cannot apply the
+  same migration twice. Added reusable `src/utils/advisoryLock.js`
+  (`withAdvisoryLock`) for future idempotent cron jobs.
+
 ## [1.0.0] - 2026-09-08
 
 ### Added

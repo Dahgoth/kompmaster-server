@@ -24,8 +24,11 @@ directly from `process.env` with different names; the differences are noted in
 - `NODE_ENV` — Node environment: `development`, `test`, or `production`.
   Default `development`. In production, missing `JWT_SECRET` is fatal.
 - `PORT` — HTTP port for the API. Default `4000`.
-- `FRONTEND_ORIGIN` — allowed CORS origin (or `*`). Used for the browser app
-  and for building password-reset links. **Required** (e.g., `https://compmasone.ru`).
+- `FRONTEND_ORIGIN` — allowed CORS origin(s), comma-separated for multi-origin
+  (e.g. `https://compmasone.ru`). Used for the browser app and for building
+  password-reset links. **Required.** Wildcard `*` is rejected at startup
+  (fail-closed); server requests without `Origin` (curl, health checks) are
+  still allowed.
 
 ### Database
 
