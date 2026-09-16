@@ -13,9 +13,9 @@ Never commit `.env` or any other file containing real secrets. The `.env`
 file is gitignored.
 
 The active entry point (`npm start` → `src/index.js`) reads configuration
-through `src/config.js`. The legacy `src/server.js` entry reads some variables
-directly from `process.env` with different names; the differences are noted in
-[Legacy entry point](#legacy-entry-point).
+through `src/config.js`. The legacy entry at `docs/legacy/server.js` reads some
+variables directly from `process.env` with different names; the differences are
+noted in [Legacy entry point](#legacy-entry-point).
 
 ## Active entry point (via `src/config.js`)
 
@@ -94,7 +94,7 @@ notifications are logged to the console instead of sent.
 
 ## Legacy entry point
 
-`src/server.js` (legacy ESM entry, documented in
+`docs/legacy/server.js` (legacy ESM entry, archived, documented in
   `docs/archive/DOCKER_EVALUATION.md`) reads these
   additional variables directly from `process.env`:
 
