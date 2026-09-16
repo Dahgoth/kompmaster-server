@@ -112,16 +112,16 @@ There are two server implementations in `src/`, and they are **not** identical:
 | File             | Module style | Run via             | Notes                                   |
 | ---------------- | ------------ | ------------------- | --------------------------------------- |
 | `src/index.js`   | CommonJS     | `npm start` / `npm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`. |
-| `src/server.js`  | ESM          | none — unreachable | Legacy monolith; references helpers not present in the current `db.js`. |
+| — | — | — | `docs/legacy/server.js` — archived legacy ESM monolith, cannot boot. See ADR 001 §1. |
 
 Treat `src/index.js` as the source of truth. If you touch one entry point,
 verify you do not need the same change in the other, and flag the discrepancy
 in your pull request. (`ENVIRONMENT.md` documents the env-var differences
 between the two.)
 
-> **Note on `src/server.js`:** Legacy ESM entry that cannot boot under the
-> current CommonJS runtime. It is quarantined as inspiration-only per ADR 001.
-> The `Dockerfile` that ran it was removed — see
+> **Note on `docs/legacy/server.js`:** Former legacy ESM entry that cannot boot under
+> the current CommonJS runtime. It is quarantined as inspiration-only per ADR 001.
+> Moved out of `src/` to prevent confusion with the canonical entry. See
 > `docs/archive/DOCKER_EVALUATION.md`.
 
 ## Docker-based setup (databases only)
@@ -152,7 +152,7 @@ commit conventions.
 ### `node --check` / startup fails with missing module
 
 Make sure you ran `npm install`. If a module still cannot be resolved, you may
-be running the legacy `src/server.js` entry — switch to `npm start`.
+be running the legacy `docs/legacy/server.js` entry — switch to `npm start`.
 
 ### `JWT_SECRET` not set
 
@@ -178,8 +178,8 @@ Confirm `DATABASE_URL` matches the credentials in `docker-compose.yml`
 ### Port already in use
 
 The active entry point uses `PORT` (default `4000`). Set `PORT` in `.env` to
-change it. Note: the legacy `src/server.js` entry used port `3000` (see
-`docs/archive/DOCKER_EVALUATION.md`); the canonical port is now `4000`.
+change it. Note: the legacy entry at `docs/legacy/server.js` used port
+`3000` (see `docs/archive/DOCKER_EVALUATION.md`); the canonical port is now `4000`.
 
 ### Migration fails partway
 

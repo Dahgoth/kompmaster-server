@@ -10,7 +10,7 @@
 
 ### Issue #3: Two divergent servers, one un-runnable
 
-| Concern | `src/index.js` (active, `npm start`) | `src/server.js` (Docker legacy) |
+| Concern | `src/index.js` (active, `npm start`) | `docs/legacy/server.js` (Docker legacy) |
 |---|---|---|
 | Module system | CommonJS, `type: commonjs` — boots | ESM `import` — `SyntaxError: Cannot use import outside a module` |
 | DB contract | `{query, getClient, pool}` + `migrations/001_init.sql` + runner | imports `{initSchema, query, tx}` — missing |
@@ -19,7 +19,7 @@
 | Env | `src/config.js`: `SMTP_PASSWORD`, `SMS_PROVIDER_API_URL`, `TELEGRAM_*`, `FRONTEND_ORIGIN`, `PORT` 4000 | `SMTP_PASS`, `DOMAIN`, `ADMIN_EMAIL/PASSWORD`, `MAX_UPLOAD_MB`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `PORT` 3000 |
 | Endpoints | `POST /api/auth/forgot-password` / `reset-password` | `POST /api/auth/forgot` / `reset` |
 
-`Dockerfile` `CMD ["node","src/server.js"]` + `EXPOSE 3000` vs `README`/`ENVIRONMENT.md`/`config.js` port 4000 — documented Docker path crashes. Security findings excluded (private channel).
+`Dockerfile` targeted `docs/legacy/server.js` (formerly `src/server.js`, now archived; `Dockerfile` deleted) via `CMD ["node","src/server.js"]` + `EXPOSE 3000` vs `README`/`ENVIRONMENT.md`/`config.js` port 4000 — documented Docker path crashes. Security findings excluded (private channel).
 
 Target topology from Issue #3 comments (originally dual-track):
 
@@ -37,7 +37,7 @@ Vercel Functions + Supabase Postgres     Timeweb Node container/process
 
 Principles (final): one API/auth/schema contract (`src/index.js` + 7 routers + 2 middleware + `config.js`/`db.js` + `migrations/`); runtime is RF HA; `PostgreSQL` stays `PostgreSQL` (managed HA, no Supabase in prod); custom JWT unified; media via RF S3 presigned grant (see presigned handshake below); migrations single CI/release job with advisory lock; payments+fiscalization are narrow required boundaries; no generic multi-cloud abstraction.
 
-Modular core is only runnable path. Legacy family (`src/server.js`, `src/auth.js`, `src/mail.js`, `src/sheets.js`, `src/payment-adapters/`, `public/index.html`+`server-bridge.js`, `src/schema.sql`, `scripts/init-db.js`) is fossil — not `DEAD_WEIGHT`; treated **inspiration-only** per maintainer (audit non-blocking, see §1).
+Modular core is only runnable path. Legacy family (`docs/legacy/server.js` (formerly `src/server.js`), `src/auth.js`, `src/mail.js`, `src/sheets.js`, `src/payment-adapters/`, `public/index.html`+`server-bridge.js`, `src/schema.sql`, `scripts/init-db.js`) is fossil — not `DEAD_WEIGHT`; treated **inspiration-only** per maintainer (audit non-blocking, see §1).
 
 Diagrams: Mermaid verbatim from Issue #3 comment 5653517595 (renders in GitHub); PNG fallbacks in PR #7 `docs/architecture/current-fracture.png`/`target-architecture.png`; interactive pan/zoom `file:line` versions sent directly (not embeddable). **Target updated to RF-only HA optimized** per external feedback — history preserved, optimized below is canonical.
 
@@ -52,7 +52,7 @@ flowchart TB
   s3[("S3-compatible storage<br/>src/utils/storage.js")]
 
   docker["docker build/run<br/>documented deploy path"]
-  server["Legacy Server<br/>src/server.js — does not boot"]
+  server["Legacy Server<br/>(docs/legacy/server.js) — does not boot"]
   cookie["km_auth cookie auth<br/>src/auth.js"]
   frontend["public/index.html<br/>server-bridge.js"]
 
@@ -184,7 +184,7 @@ Issue #6 (`AGPL-3.0` §13 vs white-label) **closed 2026-09-13 by PR #10** `chore
 
 ### 1. One canonical application core — Group A (inspiration-only for legacy)
 
-| # | Decision | Modular (`src/index.js`) | Legacy (`src/server.js`) | Options | Decision |
+| # | Decision | Modular (`src/index.js`) | Legacy (`docs/legacy/server.js`) | Options | Decision |
 |---|---|---|---|---|---|
 | A1 | Canonical auth | Bearer JWT + role from DB (`middleware/auth.js`) | cookie `km_auth` | modular / legacy / both | **Modular canonical** — legacy `km_auth` inspiration-only |
 | A2 | Canonical API surface | `/api/*`, 7 routers | separate monolith + storefront | modular / carry over | **Modular canonical** — legacy inspiration-only for behavior notes |
@@ -353,7 +353,7 @@ Concrete vendor pricing (Timeweb vs Yandex) deferred to ADR 002; order-of-magnit
 
 ## Alternatives Considered
 
-- Option B (adopt `src/server.js`): rejected — ESM crash, higher effort.
+- Option B (adopt `docs/legacy/server.js`): rejected — ESM crash, higher effort.
 - Option C (keep both in sync): rejected — double maintenance.
 - Supabase/Vercel: superseded by RF-only.
 - Proxy upload: viable on RF but grant preferred — keep grant (presigned handshake).
@@ -386,5 +386,5 @@ Concrete vendor pricing (Timeweb vs Yandex) deferred to ADR 002; order-of-magnit
 - Issue #8 — Groups A-E (no comments yet; `Решение` empty — A1-A3/A4 resolved here as inspiration-only/pure C)
 - tbank.ru/business/payments (Tinkoff), payment.alfabank.ru (Alfa-Bank + free KKT, Alfa Pay no VAT), yookassa.ru, cloudpayments.ru, robokassa.ru, paykeeper.ru/solutions/cheques & docs.paykeeper.ru — RF gateways & KKT
 - atol.ru/cloud, cloudkassir.ru — FZ-54 KKT (Atol 80%/CloudKassir 20%)
-- `ENVIRONMENT.md`, `DEVELOPMENT.md`, `README.md`, `DEPLOY.md`, `Caddyfile`, `Dockerfile`, `docker-compose.yml`
+- `ENVIRONMENT.md`, `DEVELOPMENT.md`, `README.md`, `DEPLOY.md`, `Caddyfile`, `docker-compose.yml`
 - `docs/2026-hosting-pricing-research.md` §11, `docs/PoC_WhiteLabel_Cost_Roadmap_RU.md:279-283`
