@@ -15,7 +15,7 @@ S3-compatible store for photos. The active entry point is `src/index.js`
 
 | Tool           | Version / notes                                                    |
 | -------------- | ------------------------------------------------------------------ |
-| Node.js        | 20 LTS or newer (any 20+ works; the repo runs on Node 22 in Docker) |
+| Node.js        | 20 LTS or newer                                                    |
 | npm            | ships with Node                                                    |
 | PostgreSQL     | 16 (see `docker-compose.yml`)                                      |
 | S3-compatible  | MinIO (via Docker), or Selectel Object Storage / Cloudflare R2      |
@@ -112,16 +112,17 @@ There are two server implementations in `src/`, and they are **not** identical:
 | File             | Module style | Run via             | Notes                                   |
 | ---------------- | ------------ | ------------------- | --------------------------------------- |
 | `src/index.js`   | CommonJS     | `npm start` / `npm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`. |
-| `src/server.js`  | ESM          | `Dockerfile` (`node src/server.js`) | Legacy monolith; references helpers not present in the current `db.js`. |
+| `src/server.js`  | ESM          | none — unreachable | Legacy monolith; references helpers not present in the current `db.js`. |
 
 Treat `src/index.js` as the source of truth. If you touch one entry point,
 verify you do not need the same change in the other, and flag the discrepancy
 in your pull request. (`ENVIRONMENT.md` documents the env-var differences
 between the two.)
 
-> **Note on `src/server.js` and `Dockerfile`:** Both target a legacy ESM entry
-> that cannot boot under the current CommonJS runtime. They are preserved for
-> historical reference only. See `docs/archive/DOCKER_EVALUATION.md`.
+> **Note on `src/server.js`:** Legacy ESM entry that cannot boot under the
+> current CommonJS runtime. It is quarantined as inspiration-only per ADR 001.
+> The `Dockerfile` that ran it was removed — see
+> `docs/archive/DOCKER_EVALUATION.md`.
 
 ## Docker-based setup (databases only)
 

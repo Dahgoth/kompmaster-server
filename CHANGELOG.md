@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pricing research reports (`docs/AI_TOOLING_COST_ESTIMATE_2026.md`,
   `docs/2026-hosting-pricing-research.md`).
 
+### Removed
+- Removed the legacy `Dockerfile` (built the un-runnable legacy `src/server.js`
+  entry on port 3000). Production deployment is PM2 (`src/index.js`); Docker
+  Compose remains for local PostgreSQL + MinIO databases only. Docker-based
+  `scripts/deploy.sh` and `scripts/backup.sh` were rewritten for the
+  PM2/host-`pg_dump` flow. Rationale: `docs/archive/DOCKER_EVALUATION.md`.
+
 ### Changed
 - `package.json`: set `license` to `MIT`, added dev dependencies
   (commitlint, Husky), and `prepare`/`lint:commit` scripts.

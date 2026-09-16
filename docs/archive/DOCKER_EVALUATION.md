@@ -1,5 +1,13 @@
 # Docker Evaluation — 2026-09-16
 
+> **Status update (2026-09-16, after PR #15):** The `Dockerfile` has since been
+> **removed from the repository** entirely (Option A implemented to completion —
+> a dead root-level Dockerfile confused agents more than an archived doc could
+> explain). Retained in the repo: `docker-compose.yml` (local PostgreSQL + MinIO
+> dev databases only) and the host-based `Caddyfile` (`127.0.0.1:4000`, TLS for
+> `compmasone.ru`). This document is the historical decision record; references
+> to the Dockerfile below describe the removed file.
+
 ## Executive Summary
 
 **Recommendation: Archive the Docker app deployment path entirely. Keep Docker only for local dev databases (PostgreSQL + MinIO).**
