@@ -102,8 +102,70 @@ pm2 startup   # выполните команду, которую он пока�
 | `npm start`             | Run the server                                   |
 | `npm run dev`           | Run with file watching                           |
 | `npm run migrate`       | Apply pending `migrations/*.sql`                 |
+| `npm test`              | Run backend tests (`node --test`)                |
+| `npm run test:frontend` | Run frontend tests                               |
 | `npm run lint:commit`   | Validate the most recent commit message          |
 | `docker compose up -d postgres minio` | Start local Postgres + MinIO only; app runs via PM2 (`npm start`) |
+
+## Testing
+
+Tests use the built-in `node:test` runner — no extra dependencies.
+
+- Backend: `tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
+  null-safety, JWT round-trips and admin-panel flag rejection, price-import
+  header variants and duplicate detection, the fail-closed `FRONTEND_ORIGIN`
+  allowlist, and `requireRole` 403 behavior.
+- Frontend: `frontend/tests/*.test.js` (ESM). Covers `matchRoute` param
+  matching, no-Vite `apiBase` fallback, escaping/formatting helpers, and
+  category/payment default consistency.
+- Run both suites before committing: `npm test` and `npm run test:frontend`.
+  The Husky `pre-push` hook runs only the suites whose area changed in the
+  pushed commits, plus `node scripts/check-docs.js`; CI
+  (`.github/workflows/ci.yml`) runs path-filtered `backend` / `frontend` /
+  `terraform` jobs plus an always-on `docs-sync` job and commitlint on every
+  push and PR.
+
+## Docs-in-sync enforcement
+
+`scripts/check-docs.js` encodes the CONTRIBUTING docs table as path rules and
+fails when a required doc is missing from the change set:
+
+```bash
+node scripts/check-docs.js --staged      # what the pre-push hook checks
+node scripts/check-docs.js --base main   # what CI checks on a PR branch
+node scripts/check-docs.js <files...>    # ad-hoc check
+```
+
+Rule summary: env/config surface → `ENVIRONMENT.md`; workflow/tooling or any
+code change → `DEVELOPMENT.md`; visual surface (`public/`, frontend
+styles/components/pages, content defaults) → `DESIGN.md`; route/page/public
+changes → `CHANGELOG.md` (`[Unreleased]` must be non-empty); any
+`frontend/**` change → `frontend/README.md`; any `terraform/**` change →
+`terraform/README.md`. Editing a required doc satisfies its own rule.
+
+### Scope: PR-scoped, not commit-scoped
+
+The rule says "update the doc **in the same pull request**", so both
+enforcement points diff the **whole branch against `origin/main`**
+(merge-base), never just the latest commit:
+
+- **CI `docs-sync` job** — on `pull_request` events it uses the PR base SHA;
+  on `push` events it computes `git merge-base HEAD origin/main`. It must
+  *not* use `github.event.before`, which only covers the most recent push and
+  would re-demand docs an earlier commit on the same branch already updated.
+- **Husky `pre-push`** — buffers the ref lines git passes on stdin into a
+  temp file, then diffs every non-main ref against the merge-base with
+  `origin/main` (same PR scope as CI). If a range cannot be resolved it
+  falls back to the full branch diff, then to all tracked files — i.e. it
+  fails safe by running *everything*, never by skipping.
+
+> **History (bug fixed 2026-09-16):** the first `pre-push` revision consumed
+> stdin in its main-branch guard loop, so the range-resolution loop read
+> nothing, `changed` came out empty, and the hook silently reported
+> "docs-only change" while skipping **every** suite and the docs check. If a
+> hook ever prints that it found no changes on a real code push, suspect stdin
+> consumption. CI had the mirror-image bug: it scoped to `github.event.before`
+> and flagged already-updated docs as missing.
 
 ## Entry points
 

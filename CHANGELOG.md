@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Path-filtered CI (`.github/workflows/ci.yml`): `docs-sync` (always-on
+  `scripts/check-docs.js`), `commitlint` (PRs), `backend` / `frontend` /
+  `terraform` jobs gated on changed paths via `dorny/paths-filter`.
+- Path-aware Husky `pre-push`: runs only the suites whose area changed plus
+  the docs-in-sync check; docs-only pushes run the docs check alone.
+- `scripts/check-docs.js`: encodes the docs-in-sync hard rule as path
+  classifiers, usable as `node scripts/check-docs.js [--staged|--base REF|files...]`.
+- TDD test framework on the built-in `node:test` runner: `npm test`
+  (backend, 18 tests) and `npm run test:frontend` (frontend, 16 tests);
+  CI (`.github/workflows/ci.yml`) runs both suites, the frontend build,
+  and commitlint on every push and PR; the Husky `pre-push` hook runs both
+  suites before any push.
 - Adopted MIT license (`LICENSE`).
 - Added `AGENTS.md` describing repository ground rules and tooling for agents.
 - Enforced Conventional Commits with commitlint + Husky (`commit-msg` hook).

@@ -1,0 +1,26 @@
+{
+  "name": "kompmaster-frontend",
+  "version": "1.0.0",
+  "description": "KompMaster storefront — static frontend for the PC parts shop, built for pure-C CDN deployment",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "node --check src/main.js",
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "keywords": [
+    "kompmaster",
+    "storefront",
+    "pc-parts",
+    "vite",
+    "vanilla-js"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "vite-plugin-static-copy": "^1.0.0"
+  }
+}
