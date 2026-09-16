@@ -20,6 +20,7 @@ uploads/
 
 # Terraform (PoC infra in /terraform; state and secrets stay local)
 .terraform/
+terraform/secrets/
 *.tfstate
 *.tfstate.*
 *.tfplan

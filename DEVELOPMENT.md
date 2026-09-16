@@ -223,6 +223,9 @@ Notes:
   `VITE_API_BASE=https://api.compmasone.ru/api` when building the frontend.
 - CDN is attached manually (provider v1.8.2 has no CDN resource) — see
   `terraform/README.md §CDN`.
+- Admin runbook — credential inventory, gitignored secret-file layout
+  (`terraform/secrets/`), rotation and day-2 ops: see
+  [`terraform/RUNBOOK.md`](terraform/RUNBOOK.md).
 - State is local (`terraform.tfstate`, gitignored); `terraform.tfvars` is
   gitignored; defaults in `variables.tf` already match the PoC.
 - `terraform destroy` removes the VPS, buckets, and DNS records — back up

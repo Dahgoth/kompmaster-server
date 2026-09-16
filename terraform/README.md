@@ -31,6 +31,9 @@ The canonical storefront is `https://www.compmasone.ru` because **Timeweb DNS
 allows CNAME only on subdomains** — the zone apex cannot point at S3, so the
 apex A-records to the VPS and Caddy redirects it.
 
+Related: [`RUNBOOK.md`](RUNBOOK.md) — admin operating manual: credential
+inventory, gitignored secret-file layout, deploy/rotate/destroy procedures.
+
 ## Usage
 
 Prerequisites: Terraform `>= 1.5` and a Timeweb API token with Telegram

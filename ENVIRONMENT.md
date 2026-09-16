@@ -146,4 +146,6 @@ checkout, Telegram/e-mail only).
 
 Frontend build output (`frontend/dist`) is deployed to the `kompmaster-frontend`
 bucket via S3 sync (credentials from `frontend_access_key`/`frontend_secret_key`
-outputs) — see `terraform/README.md §Deploying the storefront`.
+outputs) — see `terraform/README.md §Deploying the storefront`. Where to *store*
+all of these credentials (gitignored `terraform/secrets/` files, password
+manager, VPS `.env`) and how to rotate them: `terraform/RUNBOOK.md`.
