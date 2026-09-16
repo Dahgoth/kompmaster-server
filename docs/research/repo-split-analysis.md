@@ -31,3 +31,13 @@ Options for pure C architecture (`src/index.js` API-only + static FE on CDN + Te
 Should I create the `/terraform/` directory with a minimal Timeweb MSK-50 + S3 config (variable-based, no secrets, referencing `docs/research/2026-09-15` choices) so it can be provisioned independently from the code deployment? Or keep infrastructure manual (SSH + `docker-compose up`) for PoC and add Terraform only after the site is live?
 
 Also, should the `/frontend/` directory be created now (empty, with just `.gitignore` and a `README` explaining the rebuild timeline and `DESIGN.md` contract preservation), or wait until the FE rebuild starts?
+
+---
+
+### GitHub ENVs (2026-09-16)
+
+Per GitHub docs (docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment):
+- Environment secrets (FRONTEND_ORIGIN, JWT_SECRET, S3_ACCESS_KEY, DATABASE_URL, etc.) are isolated per environment (e.g., production, staging) and only accessible after any configured protection rules pass (required reviewers, wait timers).
+- For this project: use repository-level ENVs for PoC secrets initially; migrate to environment-level ENVs once the site is live and the `production` environment is configured (post-deployment, per acquiring confirmation).
+- .env files remain for local development; production deploy reads from ENVs (not ).
+
