@@ -25,7 +25,7 @@ directly from `process.env` with different names; the differences are noted in
   Default `development`. In production, missing `JWT_SECRET` is fatal.
 - `PORT` — HTTP port for the API. Default `4000`.
 - `FRONTEND_ORIGIN` — allowed CORS origin (or `*`). Used for the browser app
-  and for building password-reset links. Default `*`.
+  and for building password-reset links. **Required** (e.g., `https://compmasone.ru`).
 
 ### Database
 

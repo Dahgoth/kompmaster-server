@@ -86,3 +86,16 @@ Deferral unblocks ADR 001 pure C + modular canonical + RF-only HA without waitin
 **SLO adjustment:** Availability relaxed from 99.9% to **99% with spike windows acknowledged** for PoC lifetime. Per-request latency SLOs unchanged. Post-PoC scale-up reverts to 99.9%.
 
 **Full details:** `docs/research/2026-09-15-poc-architecture-hosting.md` — architecture options analysis, spike playbook, ranked recommendation, and ADR amendment text blocks.
+
+---
+
+### Decision Confirmed 2026-09-16 (pending maintainer approval): Acquiring & Fiscalization Postponement
+
+Per maintainer direction 2026-09-16:
+
+- **Domain:** `compmasone.ru` — confirmed for `FRONTEND_ORIGIN`, TLS (`Caddyfile`), DNS.
+- **Hosting + IaC:** **Timeweb Cloud MSK-50**, provisioned via **Terraform** (`terraform-provider-timeweb-cloud` + `timeweb.cloud/docs/terraform`).
+- **Admin toggle:** `paymentMode` (`manual` / `tinkoff` / `alfa` / `cloudpayments` / `robokassa`) exposed in admin settings (`POST /api/admin/settings`). Adapter selects gateway from DB/config — same code handles manual handoff at launch and gateway activation post-deployment without redeploy.
+- **Fiscalization (FZ-54):** deferred with payments — Atol/CloudKassir/PayKeeper wiring remains pending; activated after acquiring confirmation.
+- **FE rebuild:** to be built separately (`kompmaster-frontend`); design preserved per PO (`DESIGN.md` regenerated after rebuild); CDN required from launch.
+- **Remaining open for code start:** `FRONTEND_ORIGIN=https://compmasone.ru` must be set in `.env` (fail-closed config); `E14` CORS fix (allowlist); `E17` advisory lock (`pg_advisory_lock` in `src/migrate.js`); `E15` in-process rate limit acceptable at PoC (Redis upgrade deferred); `.recovery/` deleted before any commit.

@@ -277,3 +277,16 @@ For 10–20 GB of product photos: **8–25₽/mo anywhere** — storage cost is 
 ---
 
 *All prices cited from `docs/2026-hosting-pricing-research.md` §11 unless marked `[est.]`. No invented prices. Document is DRAFT — pending maintainer approval before ADR amendment is applied.*
+
+---
+
+## Decisions Confirmed 2026-09-16 (Maintainer approval received)
+
+- **Domain:** `compmasone.ru` — confirmed for `FRONTEND_ORIGIN`, TLS (`Caddyfile` `{$DOMAIN}`), DNS.
+- **Hosting provider:** **Timeweb Cloud MSK-50** (1,080 ₽/mo, 2vCPU/4GB, 4GB floor for PG+app+monitoring per pricing §11.1).
+- **IaC:** **Terraform** with [Timeweb Cloud Terraform provider](https://github.com/timeweb-cloud/terraform-provider-timeweb-cloud) ([docs](https://timeweb.cloud/docs/terraform)).
+- **Checkout / acquiring:** **Postponed to post-deployment** — payment gateway providers require a live, reachable site to issue API credentials and create merchant entities (confirmed by provider onboarding docs). At launch (PoC/MVP 3–6 mo), checkout uses manual handoff: `"менеджер свяжется / оплата при получении / ссылка от менеджера"`. The adapter interface (`createPayment`/`verifyWebhookSignature`/`fiscalizeReceipt`) remains in `src/index.js` but is disabled behind `src/config.js` feature flags; activated after site goes live and contracts are signed.
+- **Fiscalization (FZ-54):** deferred with acquiring; Atol 80%/CloudKassir 20% + PayKeeper wiring confirmed but not activated until acquiring is confirmed.
+- **SMS:** deferred; Telegram/email only for auth/admin at launch.
+- **FE rebuild:** to be built (`kompmaster-frontend`); `DESIGN.md` regenerated post-rebuild.
+- **Ready before code start:** `E14` CORS fix (`FRONTEND_ORIGIN=https://compmasone.ru`), `E17` advisory lock (`pg_advisory_lock` in `src/migrate.js`), `.recovery/` deleted.
