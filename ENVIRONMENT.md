@@ -28,7 +28,8 @@ noted in [Legacy entry point](#legacy-entry-point).
   (e.g. `https://compmasone.ru`). Used for the browser app and for building
   password-reset links. **Required.** Wildcard `*` is rejected at startup
   (fail-closed); server requests without `Origin` (curl, health checks) are
-  still allowed.
+  still allowed. An explicitly empty value also fails closed (the dev default
+  applies only when the variable is unset).
 
 ### Database
 

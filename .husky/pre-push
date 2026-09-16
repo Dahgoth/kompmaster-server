@@ -1,10 +1,98 @@
 #!/bin/sh
 # Block direct pushes to main. All changes must go through a pull request.
+#
+# git feeds "<local_ref> <local_sha> <remote_ref> <remote_sha>" lines on
+# stdin, ONCE. Buffer them into a temp file so both the main-branch guard and
+# the range resolution below can read the same input (consuming stdin in the
+# first loop previously left the path-aware checks with an empty range, which
+# made this hook skip every suite and every docs check).
+refs_file=$(mktemp) || exit 1
+trap 'rm -f "$refs_file"' EXIT
+cat > "$refs_file"
+
 while read -r local_ref local_sha remote_ref remote_sha; do
   if [ "$remote_ref" = "refs/heads/main" ]; then
     echo "error: pushing directly to 'main' is not allowed." >&2
     echo "Create a feature branch and open a pull request instead." >&2
     exit 1
   fi
+done < "$refs_file"
+
+# Path-aware checks: only run the suites whose area changed. The scope is
+# PR-scoped, not push-scoped: every non-main ref is diffed against the
+# merge-base with origin/main, matching the CI docs-sync semantics ("docs
+# updated in the same pull request"). Using only the push range here would
+# re-demand docs that an earlier commit on the same branch already updated.
+ranges=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_sha" ] && continue
+  if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+    continue # branch deletion
+  fi
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    continue # main is already blocked above; never diff main against itself
+  fi
+  base=$(git merge-base "$local_sha" origin/main 2>/dev/null || echo "")
+  if [ -n "$base" ]; then
+    ranges="$ranges $base..$local_sha"
+  elif [ -n "$remote_sha" ] && [ "$remote_sha" != "0000000000000000000000000000000000000000" ]; then
+    ranges="$ranges $remote_sha..$local_sha"
+  fi
+done < "$refs_file"
+
+resolve_changed() {
+  # shellcheck disable=SC2086
+  files=$(git diff --name-only --diff-filter=ACMR $ranges 2>/dev/null || true)
+  if [ -z "$files" ]; then
+    # Fall back to the whole branch vs origin/main, then to all tracked files.
+    files=$(git diff --name-only --diff-filter=ACMR "origin/main...HEAD" 2>/dev/null || true)
+  fi
+  if [ -z "$files" ]; then
+    files=$(git ls-files --cached)
+  fi
+  echo "$files"
+}
+
+changed=$(resolve_changed)
+
+has_backend=false
+has_frontend=false
+has_terraform=false
+
+for f in $changed; do
+  case "$f" in
+    src/*|tests/*|migrations/*|scripts/*|package.json|package-lock.json|docker-compose.yml|Caddyfile|.env.example|public/*|seed.json)
+      has_backend=true ;;
+    terraform/*|frontend/terraform/*)
+      has_terraform=true ;;
+    frontend/*|DESIGN.md)
+      has_frontend=true ;;
+  esac
 done
+
+if [ "$has_backend" = false ] && [ "$has_frontend" = false ] && [ "$has_terraform" = false ]; then
+  echo "pre-push: docs-only change, running docs-in-sync check only."
+fi
+
+echo "pre-push: docs-in-sync check..."
+node scripts/check-docs.js $changed || exit 1
+
+if [ "$has_backend" = true ]; then
+  echo "pre-push: backend files changed — running backend tests..."
+  npm test || exit 1
+else
+  echo "pre-push: no backend changes — skipping backend tests."
+fi
+
+if [ "$has_frontend" = true ]; then
+  echo "pre-push: frontend files changed — running frontend tests..."
+  npm run test:frontend || exit 1
+else
+  echo "pre-push: no frontend changes — skipping frontend tests."
+fi
+
+if [ "$has_terraform" = true ]; then
+  echo "pre-push: terraform files changed — no .tf toolchain yet (see terraform/README.md)."
+fi
+
 exit 0

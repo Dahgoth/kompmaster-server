@@ -77,7 +77,16 @@ Examples:
 
 - **Husky** — `.husky/commit-msg` runs commitlint on every commit.
 - **Commitlint** — `.commitlintrc.json` extends `@commitlint/config-conventional`.
-- **Husky `pre-push`** — blocks pushing directly to `main`.
+- **Husky `pre-push`** — blocks pushing directly to `main`; then runs only
+  the checks whose area changed in the pushed commits: backend (`npm test`),
+  frontend (`npm run test:frontend`), plus the docs-in-sync check
+  (`node scripts/check-docs.js`) on every non-docs-only push.
+  Bypass only with `git push --no-verify` when you can state why, and re-run
+  the suite immediately after.
+- **CI** — `.github/workflows/ci.yml` runs path-filtered jobs on every push
+  and PR: `docs-sync` (always), `commitlint` (PRs), `backend` (backend paths),
+  `frontend` (frontend paths, incl. build), `terraform` (placeholder until
+  `.tf` files land).
 - Manual check: `npm run lint:commit` validates the most recent commit.
 
 ## Workflow
@@ -108,12 +117,20 @@ See `CONTRIBUTING.md` for the full process.
 - `npm start` — run the server.
 - `npm run dev` — run with file watching.
 - `npm run migrate` — apply database migrations.
+- `npm test` — run backend tests (`node --test`).
+- `npm run test:frontend` — run frontend tests.
 - `npm run lint:commit` — validate the last commit message.
 
 ## Project-specific notes
 
-- There is no test suite or linter configured yet. Validate JavaScript syntax
-  before committing with `node --check <file>` for each changed `.js` file.
+- Tests live in `tests/` (backend, CommonJS `node:test`) and
+  `frontend/tests/` (frontend, ESM `node:test`). Run `npm test` and
+  `npm run test:frontend` before committing (or rely on the path-aware
+  `pre-push` hook); also validate changed `.js` files
+  with `node --check <file>`.
+- Docs-in-sync is enforced by tooling, not just convention: run
+  `node scripts/check-docs.js --staged` before committing, and keep the
+  domain table below satisfied in the same PR.
 - Database schema changes go into `migrations/` as new `NNN_*.sql` files;
   existing applied migrations must not be edited.
 - Never commit `.env`, `node_modules/`, or the contents of `uploads/`.

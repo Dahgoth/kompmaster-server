@@ -30,11 +30,26 @@ Node.js/Express + PostgreSQL + S3-совместимое хранилище фо
 ## Документация
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — как вносить изменения: ветки, pull requests, Conventional Commits, changelog, обязательное обновление документации.
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** — настройка рабочего окружения (установка, запуск, миграции, отладка).
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** — настройка рабочего окружения (установка, запуск, миграции, отладка, тесты).
 - **[ENVIRONMENT.md](ENVIRONMENT.md)** — справочник по переменным окружения (`.env`).
 - **[DESIGN.md](DESIGN.md)** — UX/UI-контракт витрины (цвета, типографика, компоненты).
 - **[AGENTS.md](AGENTS.md)** — обязательные правила для AI-агентов и контрибьюторов.
 - **[CHANGELOG.md](CHANGELOG.md)** — история изменений (Keep a Changelog).
+
+## Тесты и CI
+
+Тесты на встроенном раннере `node:test` — без дополнительных зависимостей:
+
+```bash
+npm test                # backend: tests/*.test.js
+npm run test:frontend   # frontend: frontend/tests/*.test.js
+```
+
+CI (`.github/workflows/ci.yml`) на каждый push и PR запускает только задания,
+затронутые изменёнными путями: `docs-sync` (всегда), `commitlint` (PR),
+`backend`, `frontend` (+ сборка), `terraform` (заглушка до появления `.tf`).
+Husky-хук `pre-push` прогоняет те же проверки по PR-объёму изменений и
+`node scripts/check-docs.js` — проверку синхронизации документации.
 
 ## 1. Установка на сервере (Ubuntu, чистый VPS)
 

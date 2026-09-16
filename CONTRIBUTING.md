@@ -78,8 +78,16 @@ suggestion.
 
 - Use **CommonJS** (`require` / `module.exports`), matching the active entry
   point `src/index.js` and its `routes/`, `utils/`, and `middleware/` modules.
-- There is no linter or test suite configured yet. Validate every changed
-  `.js` file before committing with `node --check <file>`.
+  (Frontend code in `frontend/` is ESM, matching its Vite build.)
+- Run the test suites before committing: `npm test` (backend) and
+  `npm run test:frontend` (frontend).
+  The Husky `pre-push` hook runs only the suites whose area changed, plus
+  `node scripts/check-docs.js` on the pushed files.
+- Docs-in-sync is enforced by `scripts/check-docs.js` (run
+  `node scripts/check-docs.js --staged` before committing). CI runs the same
+  check on every push and PR and fails the build when a required doc is
+  missing — the table below is a hard gate, not a suggestion.
+- Validate every changed `.js` file before committing with `node --check <file>`.
 - Database schema changes go into `migrations/` as new `NNN_*.sql` files.
   Never edit a migration that has already been applied.
 - Never commit `.env`, `node_modules/`, or the contents of `uploads/`.
