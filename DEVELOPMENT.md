@@ -110,6 +110,8 @@ pm2 startup   # выполните команду, которую он пока�
 ## Testing
 
 Tests use the built-in `node:test` runner — no extra dependencies.
+A short overview also lives in [README § «Тесты и CI»](README.md#тесты-и-ci);
+this section is the detailed reference.
 
 - Backend: `tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
   null-safety, JWT round-trips and admin-panel flag rejection, price-import
