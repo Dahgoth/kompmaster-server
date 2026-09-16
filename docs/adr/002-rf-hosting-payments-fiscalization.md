@@ -61,7 +61,7 @@ Deferral unblocks ADR 001 pure C + modular canonical + RF-only HA without waitin
 
 > **Status:** DRAFT — requires maintainer approval before adoption. Refer to `docs/research/2026-09-15-poc-architecture-hosting.md` for full analysis.
 
-**Summary:** The PoC/MVP launch (3–6 month lifetime, ≤2–5,000 ₽/mo budget, ad-campaign burst tolerance) re-scopes the deployment topology to a **single VPS + pure C CDN architecture** rather than full HA. Chosen plan: Option D+A — **Timeweb Cloud MSK-50** (1,080 ₽/mo) + **Timeweb S3** (79 ₽/10GB) + CDN cache headers on catalog reads, total ~1,159–1,379 ₽/mo. **Infrastructure provisioned via Terraform** using [Timeweb Cloud Terraform provider](https://github.com/timeweb-cloud/terraform-provider-timeweb-cloud) ([docs](https://timeweb.cloud/docs/terraform)).
+**Summary:** The PoC/MVP launch (3–6 month lifetime, ≤2–5,000 ₽/mo budget, ad-campaign burst tolerance) re-scopes the deployment topology to a **single VPS + pure C CDN architecture** rather than full HA. Chosen plan: Option D+A — Timeweb MSK-50 (1,080 ₽) + Timeweb S3 (79 ₽) + CDN cache headers on catalog reads, total ~1,159–1,379 ₽/mo.
 
 **What's sacrificed/postponed (all explicitly permitted by PO):**
 - **SMS phone confirmation** — skip or optional; email/Telegram for auth
@@ -86,3 +86,16 @@ Deferral unblocks ADR 001 pure C + modular canonical + RF-only HA without waitin
 **SLO adjustment:** Availability relaxed from 99.9% to **99% with spike windows acknowledged** for PoC lifetime. Per-request latency SLOs unchanged. Post-PoC scale-up reverts to 99.9%.
 
 **Full details:** `docs/research/2026-09-15-poc-architecture-hosting.md` — architecture options analysis, spike playbook, ranked recommendation, and ADR amendment text blocks.
+
+---
+
+### Decision Confirmed 2026-09-16 (pending maintainer approval): Acquiring & Fiscalization Postponement
+
+Per maintainer direction 2026-09-16:
+
+- **Domain:** `compmasone.ru` — confirmed for `FRONTEND_ORIGIN`, TLS (`Caddyfile`), DNS.
+- **Hosting + IaC:** **Timeweb Cloud MSK-50**, provisioned via **Terraform** (`terraform-provider-timeweb-cloud` + `timeweb.cloud/docs/terraform`).
+- **Checkout / acquiring:** **Postponed to post-deployment** — payment gateway providers (YooKassa/Tinkoff Kassa/Alfa-Bank/CloudPayments/Robokassa) require a reachable live site to issue API credentials and create merchant entities. At launch, checkout uses manual handoff (`"менеджер свяжется / оплата при получении / ссылка от менеджера"`). Payment adapter (`createPayment`/`verifyWebhookSignature`) + fiscalization adapter (`fiscalizeReceipt` via Atol 80%/CloudKassir 20% + PayKeeper `paykeeper.ru/solutions/cheques`) remain disabled behind `src/config.js` feature flags; activated only after the site is live and gateway contracts signed.
+- **Fiscalization (FZ-54):** deferred with payments — Atol/CloudKassir/PayKeeper wiring remains pending; activated after acquiring confirmation.
+- **FE rebuild:** to be built separately (`kompmaster-frontend`); design preserved per PO (`DESIGN.md` regenerated after rebuild); CDN required from launch.
+- **Remaining open for code start:** `FRONTEND_ORIGIN=https://compmasone.ru` must be set in `.env` (fail-closed config); `E14` CORS fix (allowlist); `E17` advisory lock (`pg_advisory_lock` in `src/migrate.js`); `E15` in-process rate limit acceptable at PoC (Redis upgrade deferred); `.recovery/` deleted before any commit.

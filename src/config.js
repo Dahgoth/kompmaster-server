@@ -13,7 +13,7 @@ function required(name, fallback) {
 module.exports = {
   port: Number(required("PORT", "4000")),
   nodeEnv: required("NODE_ENV", "development"),
-  frontendOrigin: required("FRONTEND_ORIGIN", "https://compmasone.ru"),
+  frontendOrigin: required("FRONTEND_ORIGIN", "*"),
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: required("JWT_EXPIRES_IN", "7d"),
