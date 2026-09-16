@@ -111,3 +111,28 @@ notifications are logged to the console instead of sent.
 
 If you work on the legacy entry, keep `ENVIRONMENT.md` in sync with any
 variable you add or rename.
+
+## Terraform (Timeweb Cloud PoC infra)
+
+Infrastructure in `/terraform/` (ADR-002, Option D+A) is provisioned with the
+Timeweb Terraform provider:
+
+- `TWC_TOKEN` — Timeweb API token (panel → API keys). **Environment only,
+  never in `.tfvars` or `.env`.** The token must have Telegram
+  delete-confirmation disabled (provider requirement). `[SECRET]`
+
+After `terraform apply`, map outputs into `.env`:
+
+| Terraform output | `.env` variable |
+|---|---|
+| `s3_hostname` | `S3_ENDPOINT=https://<hostname>` |
+| `s3_bucket_name` (or `s3_bucket_full_name` if the S3 API rejects the short name) | `S3_BUCKET` |
+| `s3_access_key` | `S3_ACCESS_KEY` `[SECRET]` |
+| `s3_secret_key` | `S3_SECRET_KEY` `[SECRET]` |
+| `s3_public_url` | `S3_PUBLIC_URL` |
+| `server_ipv4` | Informational (DNS `@` A-record already points here) |
+
+`DATABASE_URL` still targets PostgreSQL on the VPS itself (embedded/Docker),
+not a managed cluster — Terraform does not output it. `FRONTEND_ORIGIN`
+stays `https://compmasone.ru`; payment/SMS variables stay empty at PoC launch
+(manual checkout, Telegram/e-mail only).

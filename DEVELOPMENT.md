@@ -133,6 +133,37 @@ with local volumes:
   (dev-only defaults — change before any real deployment).
 - MinIO: S3 API on `localhost:9000`, web console on `localhost:9001`.
 
+## Terraform (PoC infrastructure)
+
+`/terraform/` provisions the PoC runtime on Timeweb Cloud (ADR-002, Option
+D+A): one MSK-50-shape VPS, firewall (80/443/22), daily disk autobackups, S3
+media bucket + `assets` subdomain with SSL, and DNS records in the
+Timeweb-managed `compmasone.ru` zone. App code, `.env`, and migrations are
+NOT managed by Terraform.
+
+Prerequisites: Terraform `>= 1.5` and a Timeweb API token with Telegram
+delete-confirmation disabled.
+
+```bash
+export TWC_TOKEN=...   # never commit this value
+cd terraform
+terraform init
+terraform plan         # review: 1 VPS + firewall + 3 rules + backup schedule + bucket + subdomain + 3 DNS records
+terraform apply
+terraform output       # map S3_* into .env — see ENVIRONMENT.md
+```
+
+Notes:
+
+- State is local (`terraform.tfstate`, gitignored). Shared/S3 backend is
+  deferred to post-PoC.
+- `terraform.tfvars` is gitignored; defaults in `variables.tf` already match
+  the PoC (`compmasone.ru`, MSK-50 shape, 10 GB hot S3). Copy
+  `terraform.tfvars.example` only to override (e.g. `ssh_keys_ids`).
+- Restrict `ssh_allowed_cidr` to your IP after first login.
+- `terraform destroy` removes the VPS, bucket, and DNS records — snapshots /
+  `pg_dump` archives in S3 go with the bucket. Back up first.
+
 ## Git workflow
 
 Never commit to `main` directly. Create a feature branch and open a pull

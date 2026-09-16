@@ -1,0 +1,6 @@
+# Optional overrides — defaults in variables.tf already match the PoC.
+# Usage: cp terraform.tfvars.example terraform.tfvars   (terraform.tfvars is gitignored)
+# NEVER put TWC_TOKEN or any secret here — TWC_TOKEN comes from the environment.
+
+# ssh_keys_ids   = [123456]            # pre-created in Timeweb panel → SSH keys
+# ssh_allowed_cidr = "203.0.113.10/32" # restrict SSH once your IP is known
