@@ -32,24 +32,26 @@ function matchRoute(urlPath) {
   const path = urlPath.split("?")[0];
 
   for (const route of routes) {
-    const paramNames = [];
-    const pattern = route.path
-      .replace(/\/:[^/]+/g, (match) => {
-        paramNames.push(match.slice(2));
-        return "/([^/]+)";
-      })
-      .replace(/\//g, "\\/");
+    // Structural match: split both pattern and path on "/" and compare
+    // segment-by-segment. No regex is built from the pattern, so there is
+    // no escaping surface at all (CodeQL js/incomplete-sanitization).
+    const patternSegments = route.path.split("/");
+    const pathSegments = path.split("/");
+    if (patternSegments.length !== pathSegments.length) continue;
 
-    const regex = new RegExp(`^${pattern}$`);
-    const match = path.match(regex);
-
-    if (match) {
-      const params = {};
-      paramNames.forEach((name, i) => {
-        params[name] = decodeURIComponent(match[i + 1]);
-      });
-      return { name: route.name, params };
+    const params = {};
+    let matched = true;
+    for (let i = 0; i < patternSegments.length; i++) {
+      const patternSeg = patternSegments[i];
+      const pathSeg = pathSegments[i];
+      if (patternSeg.startsWith(":")) {
+        params[patternSeg.slice(1)] = decodeURIComponent(pathSeg);
+      } else if (patternSeg !== pathSeg) {
+        matched = false;
+        break;
+      }
     }
+    if (matched) return { name: route.name, params };
   }
 
   return { name: "home", params: {} };

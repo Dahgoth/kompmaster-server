@@ -35,6 +35,35 @@ describe("router.matchRoute", () => {
     });
   });
 
+  it("does not treat regex metacharacters in the path as patterns", () => {
+    // "." in "/catalog" must match a literal dot only: "/catalogX" and
+    // "/catalog." must NOT match the /catalog route (old regex-builder
+    // bug: unescaped "." acted as a wildcard).
+    assert.deepEqual(matchRoute("/catalogX"), { name: "home", params: {} });
+    assert.deepEqual(matchRoute("/catalog."), { name: "home", params: {} });
+  });
+
+  it("matches params containing backslashes and dots literally", () => {
+    // decodeURIComponent("%5C") === "\\" — must round-trip as data, never
+    // as an escape for the matcher itself.
+    assert.deepEqual(matchRoute("/product/a%5Cb"), {
+      name: "product",
+      params: { id: "a\\b" },
+    });
+    assert.deepEqual(matchRoute("/category/my.cat"), {
+      name: "category",
+      params: { slug: "my.cat" },
+    });
+  });
+
+  it("requires exact segment counts (no prefix matching)", () => {
+    assert.deepEqual(matchRoute("/category/gpus/extra"), {
+      name: "home",
+      params: {},
+    });
+    assert.deepEqual(matchRoute("/category"), { name: "home", params: {} });
+  });
+
   it("keeps every route name unique", () => {
     const names = routes.map((r) => r.name);
     assert.equal(new Set(names).size, names.length);
