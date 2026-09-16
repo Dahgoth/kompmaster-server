@@ -7,4 +7,70 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
 done
+
+# Path-aware checks: only run the suites whose area changed in the pushed
+# commits. Resolves the push range per ref line; falls back to the upstream
+# merge-base when the remote side is unknown (new branch).
+ranges=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ -z "$remote_sha" ] || [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    base=$(git merge-base HEAD "$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo HEAD)" 2>/dev/null || echo "")
+    if [ -n "$base" ]; then
+      ranges="$ranges $base...$local_sha"
+    fi
+  else
+    ranges="$ranges $remote_sha...$local_sha"
+  fi
+done
+
+# Pre-push stdin is consumed by the loop above; re-read via stored ranges.
+# (If we are here, at least one range check passed the main-branch guard.)
+if [ -z "$ranges" ]; then
+  echo "pre-push: no commit range detected, running all checks."
+  ranges="HEAD"
+fi
+
+# shellcheck disable=SC2086
+changed=$(git diff --name-only $ranges 2>/dev/null || git diff --name-only HEAD 2>/dev/null || true)
+
+has_backend=false
+has_frontend=false
+has_terraform=false
+
+for f in $changed; do
+  case "$f" in
+    src/*|tests/*|migrations/*|scripts/*|package.json|package-lock.json|docker-compose.yml|Caddyfile|.env.example|public/*|seed.json)
+      has_backend=true ;;
+    terraform/*|frontend/terraform/*)
+      has_terraform=true ;;
+    frontend/*|DESIGN.md)
+      has_frontend=true ;;
+  esac
+done
+
+if [ "$has_backend" = false ] && [ "$has_frontend" = false ] && [ "$has_terraform" = false ]; then
+  echo "pre-push: docs-only change, running docs-in-sync check only."
+fi
+
+echo "pre-push: docs-in-sync check..."
+node scripts/check-docs.js $changed || exit 1
+
+if [ "$has_backend" = true ]; then
+  echo "pre-push: backend files changed — running backend tests..."
+  npm test || exit 1
+else
+  echo "pre-push: no backend changes — skipping backend tests."
+fi
+
+if [ "$has_frontend" = true ]; then
+  echo "pre-push: frontend files changed — running frontend tests..."
+  npm run test:frontend || exit 1
+else
+  echo "pre-push: no frontend changes — skipping frontend tests."
+fi
+
+if [ "$has_terraform" = true ]; then
+  echo "pre-push: terraform files changed — no .tf toolchain yet (see terraform/README.md)."
+fi
+
 exit 0

@@ -2,7 +2,7 @@ const XLSX = require("xlsx");
 
 const NAME_HEADERS = ["наименование", "название", "товар", "модель"];
 const PRICE_HEADERS = ["цена", "стоимость", "прайс"];
-const STOCK_HEADERS = ["количество", "остаток", "кол-во", "наличие"];
+const STOCK_HEADERS = ["количество", "остаток", "кол во", "наличие"];
 
 function normalize(v) {
   return String(v ?? "")
@@ -88,7 +88,7 @@ function parsePriceFile(buffer, originalName) {
       const row = matrix[r] || [];
       const name = String(row[nameCol] ?? "").trim();
       if (!name) continue;
-      if (headerLooksLike(name, NAME_HEADERS)) continue; // повторный заголовок внутри длинного листа
+      if (NAME_HEADERS.includes(normalize(name))) continue; // повторный заголовок внутри длинного листа (строгое совпадение: товары вида "Модель XYZ" — не заголовки)
       const rawStock = String(row[stockCol] ?? "").trim();
       const price = parseNumericPrice(row[priceCol]);
       const available = parseNumericStock(row[stockCol]);

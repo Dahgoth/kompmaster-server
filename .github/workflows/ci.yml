@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  # Always runs: cheap guard that the docs-in-sync hard rule holds for the
+  # pushed change set (AGENTS.md §6). Scopes itself via `git diff`, so it
+  # costs ~1s and never needs path filters.
+  docs-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Docs-in-sync check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node scripts/check-docs.js --base "${{ github.event.pull_request.base.sha }}"
+          else
+            node scripts/check-docs.js --base "${{ github.event.before }}"
+          fi
+
+  commitlint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run lint:commit
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'tests/**'
+              - 'migrations/**'
+              - 'scripts/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'docker-compose.yml'
+              - 'Caddyfile'
+              - '.env.example'
+              - 'public/**'
+              - 'seed.json'
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.backend == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        if: steps.changes.outputs.backend == 'true'
+      - name: Syntax check (backend JS files in this change set)
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          base="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+          files=$(git diff --name-only "$base"...HEAD -- 'src/**/*.js' 'tests/**/*.js' 'scripts/**/*.js' || true)
+          if [ -n "$files" ]; then
+            for f in $files; do node --check "$f"; done
+          fi
+      - run: npm test
+        if: steps.changes.outputs.backend == 'true'
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - '!frontend/terraform/**'
+              - 'DESIGN.md'
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.frontend == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        if: steps.changes.outputs.frontend == 'true'
+        working-directory: frontend
+      - run: npm test
+        if: steps.changes.outputs.frontend == 'true'
+        working-directory: frontend
+      - run: npm run build
+        if: steps.changes.outputs.frontend == 'true'
+        working-directory: frontend
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            terraform:
+              - 'terraform/**'
+              - 'frontend/terraform/**'
+      - name: Terraform placeholder
+        if: steps.changes.outputs.terraform == 'true'
+        run: |
+          echo "terraform/ changes detected but no .tf files exist yet."
+          echo "See terraform/README.md — add fmt/validate/tflint here when infra lands."
+          test -z "$(git ls-files 'terraform/**/*.tf' 'frontend/terraform/**/*.tf')"

@@ -11,6 +11,7 @@ async function hashPassword(plain) {
 
 async function verifyPassword(plain, hash) {
   if (!hash) return false;
+  if (typeof plain !== "string" || !plain) return false;
   return bcrypt.compare(plain, hash);
 }
 

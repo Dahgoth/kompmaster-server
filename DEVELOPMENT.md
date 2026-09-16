@@ -102,8 +102,46 @@ pm2 startup   # выполните команду, которую он пока�
 | `npm start`             | Run the server                                   |
 | `npm run dev`           | Run with file watching                           |
 | `npm run migrate`       | Apply pending `migrations/*.sql`                 |
+| `npm test`              | Run backend tests (`node --test`)                |
+| `npm run test:frontend` | Run frontend tests                               |
 | `npm run lint:commit`   | Validate the most recent commit message          |
 | `docker compose up -d postgres minio` | Start local Postgres + MinIO only; app runs via PM2 (`npm start`) |
+
+## Testing
+
+Tests use the built-in `node:test` runner — no extra dependencies.
+
+- Backend: `tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
+  null-safety, JWT round-trips and admin-panel flag rejection, price-import
+  header variants and duplicate detection, the fail-closed `FRONTEND_ORIGIN`
+  allowlist, and `requireRole` 403 behavior.
+- Frontend: `frontend/tests/*.test.js` (ESM). Covers `matchRoute` param
+  matching, no-Vite `apiBase` fallback, escaping/formatting helpers, and
+  category/payment default consistency.
+- Run both suites before committing: `npm test` and `npm run test:frontend`.
+  The Husky `pre-push` hook runs only the suites whose area changed in the
+  pushed commits, plus `node scripts/check-docs.js`; CI
+  (`.github/workflows/ci.yml`) runs path-filtered `backend` / `frontend` /
+  `terraform` jobs plus an always-on `docs-sync` job and commitlint on every
+  push and PR.
+
+## Docs-in-sync enforcement
+
+`scripts/check-docs.js` encodes the CONTRIBUTING docs table as path rules and
+fails when a required doc is missing from the change set:
+
+```bash
+node scripts/check-docs.js --staged      # what the pre-push hook checks
+node scripts/check-docs.js --base main   # what CI checks on a PR branch
+node scripts/check-docs.js <files...>    # ad-hoc check
+```
+
+Rule summary: env/config surface → `ENVIRONMENT.md`; workflow/tooling or any
+code change → `DEVELOPMENT.md`; visual surface (`public/`, frontend
+styles/components/pages, content defaults) → `DESIGN.md`; route/page/public
+changes → `CHANGELOG.md` (`[Unreleased]` must be non-empty); any
+`frontend/**` change → `frontend/README.md`; any `terraform/**` change →
+`terraform/README.md`. Editing a required doc satisfies its own rule.
 
 ## Entry points
 
