@@ -18,20 +18,24 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   fi
 done < "$refs_file"
 
-# Path-aware checks: only run the suites whose area changed in the pushed
-# commits. Resolves the push range per ref line; a new branch (zero remote
-# SHA) falls back to the merge-base with origin/main so the whole PR-scoped
-# change set is evaluated, matching the CI docs-sync semantics.
+# Path-aware checks: only run the suites whose area changed. The scope is
+# PR-scoped, not push-scoped: every non-main ref is diffed against the
+# merge-base with origin/main, matching the CI docs-sync semantics ("docs
+# updated in the same pull request"). Using only the push range here would
+# re-demand docs that an earlier commit on the same branch already updated.
 ranges=""
 while read -r local_ref local_sha remote_ref remote_sha; do
   [ -z "$local_sha" ] && continue
   if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
     continue # branch deletion
   fi
-  if [ -z "$remote_sha" ] || [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
-    base=$(git merge-base "$local_sha" origin/main 2>/dev/null || echo "")
-    [ -n "$base" ] && ranges="$ranges $base..$local_sha"
-  else
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    continue # main is already blocked above; never diff main against itself
+  fi
+  base=$(git merge-base "$local_sha" origin/main 2>/dev/null || echo "")
+  if [ -n "$base" ]; then
+    ranges="$ranges $base..$local_sha"
+  elif [ -n "$remote_sha" ] && [ "$remote_sha" != "0000000000000000000000000000000000000000" ]; then
     ranges="$ranges $remote_sha..$local_sha"
   fi
 done < "$refs_file"

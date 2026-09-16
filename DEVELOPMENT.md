@@ -154,8 +154,10 @@ enforcement points diff the **whole branch against `origin/main`**
   *not* use `github.event.before`, which only covers the most recent push and
   would re-demand docs an earlier commit on the same branch already updated.
 - **Husky `pre-push`** — buffers the ref lines git passes on stdin into a
-  temp file, then resolves `<remote-sha>..<local-sha>` per ref, falling back
-  to the `origin/main` merge-base for a new branch.
+  temp file, then diffs every non-main ref against the merge-base with
+  `origin/main` (same PR scope as CI). If a range cannot be resolved it
+  falls back to the full branch diff, then to all tracked files — i.e. it
+  fails safe by running *everything*, never by skipping.
 
 > **History (bug fixed 2026-09-16):** the first `pre-push` revision consumed
 > stdin in its main-branch guard loop, so the range-resolution loop read
