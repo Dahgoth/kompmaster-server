@@ -60,6 +60,10 @@ sudo -u postgres psql -c "CREATE DATABASE kompmaster OWNER kompmaster;"
 docker compose up -d postgres minio
 ```
 
+> **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
+> Production app deployment uses PM2 (`npm start`), not Docker.
+> The archived [Docker Evaluation](docs/archive/DOCKER_EVALUATION.md) documents the full rationale.
+
 ## 2. Настройка проекта
 
 ```bash

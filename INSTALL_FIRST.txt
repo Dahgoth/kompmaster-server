@@ -29,13 +29,15 @@ COMPMASTERONE — ГОТОВЫЙ АРХИВ ДЛЯ УСТАНОВКИ
 4. Направить A-запись домена на IP VPS.
 5. Открыть 80/443.
 6. Запустить:
-   docker compose up -d --build
+    pm2 start src/index.js --name kompmaster-api
 7. Проверить:
-   docker compose ps
-   curl https://ВАШ-ДОМЕН/api/health
+    pm2 status
+    curl https://ВАШ-ДОМЕН/api/health
 
 ВАЖНО:
-- не удалять Docker volumes pgdata и uploads при обновлениях;
-- .env не публиковать;
-- перед обновлением делать backup PostgreSQL и uploads;
-- инструкции подробнее: DEPLOY.md и UPDATE.md.
+ - не удалять базу данных и загруженные файлы при обновлениях;
+ - .env не публиковать;
+ - перед обновлением делать backup PostgreSQL;
+ - инструкции подробнее: DEPLOY.md и UPDATE.md.
+
+Docker Compose используется только для локальной разработки (PostgreSQL + MinIO).
