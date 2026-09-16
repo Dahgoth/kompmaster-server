@@ -61,7 +61,7 @@ Deferral unblocks ADR 001 pure C + modular canonical + RF-only HA without waitin
 
 > **Status:** DRAFT — requires maintainer approval before adoption. Refer to `docs/research/2026-09-15-poc-architecture-hosting.md` for full analysis.
 
-**Summary:** The PoC/MVP launch (3–6 month lifetime, ≤2–5,000 ₽/mo budget, ad-campaign burst tolerance) re-scopes the deployment topology to a **single VPS + pure C CDN architecture** rather than full HA. Chosen plan: Option D+A — Timeweb MSK-50 (1,080 ₽) + Timeweb S3 (79 ₽) + CDN cache headers on catalog reads, total ~1,159–1,379 ₽/mo.
+**Summary:** The PoC/MVP launch (3–6 month lifetime, ≤2–5,000 ₽/mo budget, ad-campaign burst tolerance) re-scopes the deployment topology to a **single VPS + pure C CDN architecture** rather than full HA. Chosen plan: Option D+A — **Timeweb Cloud MSK-50** (1,080 ₽/mo) + **Timeweb S3** (79 ₽/10GB) + CDN cache headers on catalog reads, total ~1,159–1,379 ₽/mo. **Infrastructure provisioned via Terraform** using [Timeweb Cloud Terraform provider](https://github.com/timeweb-cloud/terraform-provider-timeweb-cloud) ([docs](https://timeweb.cloud/docs/terraform)).
 
 **What's sacrificed/postponed (all explicitly permitted by PO):**
 - **SMS phone confirmation** — skip or optional; email/Telegram for auth

@@ -182,6 +182,16 @@ For the one-time 500,000₽ ad campaign (60–80+ RPS burst, hours-long):
 
 ---
 
+## Decisions Confirmed 2026-09-16
+
+- **Hosting provider:** **Timeweb Cloud MSK-50** — confirmed per maintainer 2026-09-16.
+- **IaC:** **Terraform** with [Timeweb Cloud Terraform provider](https://github.com/timeweb-cloud/terraform-provider-timeweb-cloud) ([docs](https://timeweb.cloud/docs/terraform)).
+- **Domain:** to be provided (needed for `FRONTEND_ORIGIN` CORS allowlist, TLS, DNS).
+- **Payments/fiscalization:** deferred to Phase 2 (checkout = manual handoff; Avito/Ozon absorb transactions).
+- **SMS:** deferred (Telegram/email for auth).
+
+---
+
 ## Proposed ADR Amendments
 
 ### Amendment for ADR 001 (DRAFT — PENDING MAINTAINER APPROVAL)
