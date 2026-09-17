@@ -15,7 +15,9 @@ export async function renderFaq() {
         <p class="section-subtitle">Ответы на самые популярные вопросы о товарах, доставке и оплате.</p>
 
         <div class="faq-list">
-          ${items.map((item) => `
+          ${items
+            .map(
+              (item) => `
             <div class="faq-item">
               <div class="faq-item__question" onclick="window.toggleFaq(this)">
                 ${escapeHtml(item.q)}
@@ -25,7 +27,9 @@ export async function renderFaq() {
                 ${escapeHtml(item.a).replace(/\\n\\n/g, "<br><br>")}
               </div>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
       </div>
     </section>

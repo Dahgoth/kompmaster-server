@@ -3,9 +3,8 @@
  * Renders the site header with: contact info, navigation, cart, auth buttons
  */
 
-import { getState, getCartCount, getUser } from "../store.js";
-import { config } from "../config.js";
-import { escapeHtml, formatPrice } from "../utils.js";
+import { getCartCount, getUser } from "../store.js";
+import { escapeHtml, showEl } from "../utils.js";
 
 function renderContactRow() {
   return `
@@ -47,7 +46,7 @@ function renderTopBar() {
   `;
 }
 
-export function renderHeader(currentRoute = "home") {
+export function renderHeader(_currentRoute = "home") {
   const header = document.querySelector(".site-header");
   if (!header) return;
 

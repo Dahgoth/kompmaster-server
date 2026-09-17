@@ -3,7 +3,7 @@
  */
 
 import { api } from "../api.js";
-import { config, setAuthToken, setStoredUser } from "../config.js";
+import { setAuthToken, setStoredUser } from "../config.js";
 import { showPopup } from "../store.js";
 
 export function initAuthHandlers() {
@@ -112,5 +112,9 @@ async function handleAuthSubmit(formData) {
   }
 }
 
-function showEl(el) { el.classList.remove("hidden"); }
-function hideEl(el) { el.classList.add("hidden"); }
+function showEl(el) {
+  el.classList.remove("hidden");
+}
+function hideEl(el) {
+  el.classList.add("hidden");
+}

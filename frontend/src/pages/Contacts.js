@@ -2,7 +2,7 @@
  * Contacts page
  */
 
-import { contacts, deliveryInfo } from "../data/content.js";
+import { contacts } from "../data/content.js";
 import { paymentSettings } from "../data/payment.js";
 import { escapeHtml } from "../utils.js";
 
@@ -41,11 +41,15 @@ export async function renderContacts() {
           </div>
         </div>
 
-        ${paymentSettings.mode === "manual" ? `
+        ${
+          paymentSettings.mode === "manual"
+            ? `
           <div class="notice notice--info" style="margin-top:28px;">
             <b>Оплата товара.</b> ${escapeHtml(paymentSettings.manualPageText)}
           </div>
-        ` : ""}
+        `
+            : ""
+        }
 
         <div class="map-wrapper" style="margin-top:28px;">
           <div class="img-placeholder" style="width:100%;height:100%;">

@@ -2,7 +2,7 @@
  * CartWatcher — initializes cart-related UI watchers
  */
 
-import { subscribe, getCartCount, getCartTotal } from "../store.js";
+import { subscribe, getCartCount } from "../store.js";
 
 export function initCartWatcher() {
   updateCartUI();

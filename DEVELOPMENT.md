@@ -129,8 +129,10 @@ The repo is a **pnpm workspace** with two workspace packages:
 | Frontend | `frontend/package.json` | mirrors root | — |
 
 - The root `package.json` (name `kompmaster`, private) holds the shared
-  `version`, the commitlint/Husky devDependencies, and workspace scripts
-  (`start`/`dev`/`migrate`/`test`/`test:frontend`/`build:frontend`/
+  `version`, the commitlint/Husky devDependencies, the ESLint/Prettier
+  devDependencies, and workspace scripts
+  (`start`/`dev`/`migrate`/`test`/`test:frontend`/`build:frontend`/`lint`/
+  `lint:backend`/`lint:frontend`/`format`/`format:check`/
   `version:check`/`version:sync`/`lint:commit`).
 - `pnpm-workspace.yaml` at the root declares `packages: [backend, frontend]`
   and `allowBuilds: [esbuild]`.
@@ -167,6 +169,35 @@ version. `backend/package.json` and `frontend/package.json` must mirror it.
 > original `npm` commands they were written with; they are dated snapshots and
 > are intentionally not rewritten.
 
+## Linting and formatting
+
+The workspace enforces code style and basic bug detection with ESLint (flat
+config, `eslint.config.js`) and Prettier (`.prettierrc.json`), plus a shared
+`.editorconfig`. Both tools live in the **root** `devDependencies` — there is
+one config for the whole workspace, and both apps are linted from repo-root
+scripts.
+
+- `pnpm run lint` — run everything: `lint:backend` + `lint:frontend` +
+  `format:check`.
+- `pnpm run lint:backend` — ESLint over `backend/**` (CommonJS, Node globals)
+  and `scripts/**`.
+- `pnpm run lint:frontend` — ESLint over `frontend/**` (ESM, browser globals).
+- `pnpm run format` — rewrite files with Prettier; `pnpm run format:check` —
+  verify only (used by CI). See `.prettierignore` for what is excluded
+  (Markdown/HTML/YAML/Terraform, `docs/`, build output, and the six
+  ADR-001-quarantined legacy ESM files).
+
+Rule scope is deliberately minimal: `eslint:recommended` equivalents (parse
+errors, `no-undef`, unused vars, dead logic) plus `argsIgnorePattern: "^_"`
+and `allowEmptyCatch`. Style is fully delegated to Prettier — do not add
+stylistic rules to `eslint.config.js`. CI runs `lint:backend` in the `backend`
+job and `lint:frontend` in the `frontend` job; the shared config files
+(`eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig`)
+are part of both jobs' path filters, so config changes re-trigger linting.
+
+Run `pnpm run lint && pnpm run format` before committing; CI fails on lint or
+formatting errors.
+
 ## Common commands
 
 | Command                 | Description                                      |
@@ -178,6 +209,10 @@ version. `backend/package.json` and `frontend/package.json` must mirror it.
 | `pnpm test:backend`     | Run backend tests (`node --test`, `node:backend`) |
 | `pnpm test:frontend`    | Run frontend tests (`node:frontend`)             |
 | `pnpm build:frontend`   | Build the storefront (`pnpm --filter kompmaster-frontend build`) |
+| `pnpm run lint`         | ESLint (backend + frontend) and Prettier check   |
+| `pnpm run lint:backend` | ESLint over `backend/**` + `scripts/**`          |
+| `pnpm run lint:frontend`| ESLint over `frontend/**`                        |
+| `pnpm run format`       | Rewrite files with Prettier (`--check` variant: `format:check`) |
 | `pnpm version:check`    | Assert backend/frontend versions mirror root (`node scripts/check-versions.js`) |
 | `pnpm version:sync`     | Write root version into both apps (`node scripts/sync-versions.js`) |
 | `pnpm run lint:commit`  | Validate the most recent commit message          |
@@ -194,7 +229,14 @@ this section is the detailed reference.
 - Backend: `backend/tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
   null-safety, JWT round-trips and admin-panel flag rejection, price-import
   header variants and duplicate detection, the fail-closed `FRONTEND_ORIGIN`
-  allowlist, and `requireRole` 403 behavior.
+  allowlist, `requireRole` 403 behavior, and the rate limiters
+  (Authorization-header keying, brute-force blocking). Expensive endpoints
+  are rate-limited via `backend/src/middleware/rateLimit.js`
+  (`adminPanelVerifyLimiter`, `adminLimiter`, `orderCreateLimiter`) — new
+  admin routes must place the limiter **first** in the route chain, before
+  `requireAuth` (CodeQL models every middleware as a route handler and
+  requires the limiter to precede all of them; `js/missing-rate-limiting`
+  is enforced in CI).
 - Frontend: `frontend/tests/*.test.js` (ESM). Covers `matchRoute` param
   matching, no-Vite `apiBase` fallback, escaping/formatting helpers, and
   category/payment default consistency.
@@ -205,7 +247,9 @@ this section is the detailed reference.
   plus `node scripts/check-versions.js` and `node scripts/check-docs.js`.
   CI (`.github/workflows/ci.yml`) runs path-filtered `backend` / `frontend` /
   `terraform` jobs plus always-on `docs-sync` and `versions` jobs and
-  commitlint on every push and PR. The `backend` job filters on `backend/**`
+  commitlint on every push and PR; the `backend` and `frontend` jobs also run
+  ESLint (`pnpm run lint:backend` / `lint:frontend`) before their suites.
+  The `backend` job filters on `backend/**`
   plus the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, and
   `scripts/**`; the `frontend` job runs `pnpm --filter kompmaster-frontend
   test|build`; the `terraform` job runs `terraform fmt -check -recursive` and

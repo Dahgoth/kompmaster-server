@@ -7,16 +7,13 @@ import { escapeHtml, formatPrice, formatDate } from "../utils.js";
 
 export async function renderOrders() {
   let orders = [];
-  let loading = true;
 
   try {
     const resp = await api.get("/orders/my", { auth: true });
     if (resp.ok && resp.data) {
       orders = resp.data;
     }
-  } catch {} finally {
-    loading = false;
-  }
+  } catch {}
 
   if (orders.length === 0) {
     return `
@@ -37,7 +34,9 @@ export async function renderOrders() {
       <div class="shell">
         <h1 class="section-title">Мои заказы</h1>
         <div class="orders-list">
-          ${orders.map((order) => `
+          ${orders
+            .map(
+              (order) => `
             <div class="order-card">
               <div class="order-card__header">
                 <div class="order-card__num">Заказ № ${escapeHtml(order.order_number || order.id)}</div>
@@ -45,9 +44,16 @@ export async function renderOrders() {
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div class="order-card__items">
-                  ${order.items?.slice(0, 5).map((item) => `
+                  ${
+                    order.items
+                      ?.slice(0, 5)
+                      .map(
+                        (item) => `
                     <div style="font-size:12px;color:var(--muted);">${escapeHtml(item.name)} × ${item.quantity}</div>
-                  `).join("") || ""}
+                  `,
+                      )
+                      .join("") || ""
+                  }
                 </div>
                 <div style="text-align:right;">
                   <div style="font-weight:700;">${formatPrice(order.total)}</div>
@@ -58,7 +64,9 @@ export async function renderOrders() {
                 <a href="/order/${escapeHtml(order.id)}" class="text-pink">Подробнее →</a>
               </div>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
       </div>
     </section>

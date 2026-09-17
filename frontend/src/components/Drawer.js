@@ -4,6 +4,7 @@
 
 import { defaultCategories } from "../data/categories.js";
 import { siteContent } from "../data/content.js";
+import { hideEl } from "../utils.js";
 
 export function renderDrawer() {
   const drawer = document.getElementById("drawer");
@@ -21,18 +22,20 @@ export function renderDrawer() {
       </button>
     </div>
     <nav class="drawer__nav">
-      ${topLevel.map((c) => {
-        if (c.kind === "group") {
-          const children = groupCategories.filter((ch) => ch.parentId === c.id);
-          return `
+      ${topLevel
+        .map((c) => {
+          if (c.kind === "group") {
+            const children = groupCategories.filter((ch) => ch.parentId === c.id);
+            return `
             <details class="drawer-group">
               <summary class="drawer-link">${c.name} <span>▼</span></summary>
               ${children.map((ch) => `<a href="/category/${ch.id}" class="drawer-link" style="padding-left:24px;">${ch.name}</a>`).join("")}
             </details>
           `;
-        }
-        return `<a href="/category/${c.id}" class="drawer-link">${c.name}</a>`;
-      }).join("")}
+          }
+          return `<a href="/category/${c.id}" class="drawer-link">${c.name}</a>`;
+        })
+        .join("")}
     </nav>
     <div class="drawer__bottom">
       <div class="drawer-warranty">

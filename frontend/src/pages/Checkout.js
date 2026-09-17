@@ -2,8 +2,7 @@
  * Checkout page — order form with delivery and payment selection
  */
 
-import { getState, clearCart, getCartTotal, getCartCount, setUser } from "../store.js";
-import { api } from "../api.js";
+import { getState, getCartTotal, getCartCount } from "../store.js";
 import { paymentSettings } from "../data/payment.js";
 import { escapeHtml, formatPrice } from "../utils.js";
 import { deliveryInfo } from "../data/content.js";
@@ -73,26 +72,34 @@ export async function renderCheckout() {
             <div class="form-block">
               <h2 style="font-size:18px;font-weight:750;margin-bottom:18px;">Доставка</h2>
               <div class="delivery-grid">
-                ${deliveryMethods.map((m, i) => `
+                ${deliveryMethods
+                  .map(
+                    (m, i) => `
                   <label class="delivery-option" onclick="window.selectDelivery('${escapeHtml(m)}')">
                     <input type="radio" name="delivery" value="${escapeHtml(m)}" style="display:none;">
                     <div class="delivery-option__title">${escapeHtml(m)}</div>
                     <div class="delivery-option__price">от ${formatPrice(500 + i * 100)}</div>
                   </label>
-                `).join("")}
+                `,
+                  )
+                  .join("")}
               </div>
             </div>
 
             <div class="form-block">
               <h2 style="font-size:18px;font-weight:750;margin-bottom:18px;">Оплата</h2>
               <div class="payment-grid">
-                ${paymentSettings.mode === "manual" ? `
+                ${
+                  paymentSettings.mode === "manual"
+                    ? `
                   <label class="payment-option active" onclick="window.selectPayment('manual')">
                     <input type="radio" name="payment" value="manual" checked style="display:none;">
                     <div class="payment-option__label">Связаться с менеджером</div>
                     <div class="payment-option__price" style="font-size:12px;color:var(--muted);">Ручная оплата через Telegram</div>
                   </label>
-                ` : ""}
+                `
+                    : ""
+                }
               </div>
             </div>
 
@@ -103,12 +110,16 @@ export async function renderCheckout() {
 
           <div class="order-summary">
             <h3 style="font-size:16px;font-weight:750;margin-bottom:16px;">Ваш заказ</h3>
-            ${cart.map((item) => `
+            ${cart
+              .map(
+                (item) => `
               <div class="summary-row">
                 <span>${escapeHtml(item.name)} × ${item.quantity}</span>
                 <span>${formatPrice(item.price * item.quantity)}</span>
               </div>
-            `).join("")}
+            `,
+              )
+              .join("")}
             <div class="summary-row">
               <span>Доставка</span>
               <span>—</span>

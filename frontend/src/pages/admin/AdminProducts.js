@@ -22,9 +22,12 @@ export async function renderAdminProducts() {
         </button>
       </div>
 
-      ${products.length === 0 ? `
+      ${
+        products.length === 0
+          ? `
         <p style="color:var(--muted);">Нет товаров</p>
-      ` : `
+      `
+          : `
         <table class="admin-table">
           <thead>
             <tr>
@@ -32,7 +35,9 @@ export async function renderAdminProducts() {
             </tr>
           </thead>
           <tbody>
-            ${products.map((p) => `
+            ${products
+              .map(
+                (p) => `
               <tr>
                 <td>${escapeHtml(String(p.id).slice(0, 8))}</td>
                 <td>${escapeHtml(p.name || "")}</td>
@@ -44,10 +49,13 @@ export async function renderAdminProducts() {
                   </div>
                 </td>
               </tr>
-            `).join("")}
+            `,
+              )
+              .join("")}
           </tbody>
         </table>
-      `}
+      `
+      }
     </div>
   `;
 }

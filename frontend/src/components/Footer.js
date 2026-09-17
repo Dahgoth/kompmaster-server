@@ -3,11 +3,10 @@
  * Renders site footer with category links, menu links, and copyright
  */
 
-import { getState } from "../store.js";
 import { contacts, siteContent } from "../data/content.js";
 import { menuLabels, menuVisibility, menuOrder, defaultCategories } from "../data/categories.js";
 
-export function renderFooter(currentRoute = "home") {
+export function renderFooter(_currentRoute = "home") {
   const footer = document.querySelector(".footer");
   if (!footer) return;
 
@@ -37,7 +36,10 @@ export function renderFooter(currentRoute = "home") {
         </div>
         <div>
           <div class="footer-title">Категории</div>
-          ${visibleCategories.slice(0, 8).map((c) => `<a href="/category/${c.id}">${c.name}</a>`).join("")}
+          ${visibleCategories
+            .slice(0, 8)
+            .map((c) => `<a href="/category/${c.id}">${c.name}</a>`)
+            .join("")}
           <a href="/catalog">Все категории →</a>
         </div>
         <div>

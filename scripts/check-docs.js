@@ -21,23 +21,27 @@ const isBackendCode = (f) =>
   f.startsWith("backend/tests/") ||
   f.startsWith("backend/migrations/");
 const isBackendWorkflowFile = (f) =>
-  ["package.json", "backend/package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "docker-compose.yml", "Caddyfile"].includes(f) ||
+  [
+    "package.json",
+    "backend/package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "docker-compose.yml",
+    "Caddyfile",
+  ].includes(f) ||
   f.startsWith("scripts/") ||
   f.startsWith("backend/scripts/");
-const isFrontendCode = (f) =>
-  f.startsWith("frontend/") && !f.startsWith("frontend/terraform/");
+const isFrontendCode = (f) => f.startsWith("frontend/") && !f.startsWith("frontend/terraform/");
 const isFrontendWorkflowFile = (f) =>
   ["frontend/package.json", "frontend/vite.config.js"].includes(f);
-const isTerraformCode = (f) =>
-  f.startsWith("terraform/") || f.startsWith("frontend/terraform/");
+const isTerraformCode = (f) => f.startsWith("terraform/") || f.startsWith("frontend/terraform/");
 const isRoute = (f) => f.startsWith("backend/src/routes/");
 const isFrontendPage = (f) =>
   f.startsWith("frontend/src/pages/") ||
   f.startsWith("frontend/src/components/") ||
   f === "frontend/index.html";
 const isFrontendStyle = (f) =>
-  f.startsWith("frontend/src/styles/") ||
-  f === "frontend/src/data/content.js";
+  f.startsWith("frontend/src/styles/") || f === "frontend/src/data/content.js";
 
 const ENV_FILES = new Set([
   "backend/src/config.js",
@@ -80,7 +84,7 @@ function classify(files) {
         isFrontendWorkflowFile(f) ||
         f === ".husky/pre-push" ||
         f === ".github/workflows/ci.yml" ||
-        f === "scripts/check-docs.js"
+        f === "scripts/check-docs.js",
     ) ||
     backendTouched ||
     frontendTouched ||
@@ -90,10 +94,7 @@ function classify(files) {
   }
 
   // UX/visual surface -> DESIGN.md
-  if (
-    files.some((f) => isFrontendStyle(f) || isFrontendPage(f)) ||
-    touched.has("DESIGN.md")
-  ) {
+  if (files.some((f) => isFrontendStyle(f) || isFrontendPage(f)) || touched.has("DESIGN.md")) {
     need.add("DESIGN.md");
   }
 

@@ -12,6 +12,7 @@ const {
   registerLimiter,
   smsLimiter,
   passwordResetLimiter,
+  adminPanelVerifyLimiter,
 } = require("../middleware/rateLimit");
 
 const router = express.Router();
@@ -31,13 +32,14 @@ router.post("/register", registerLimiter, async (req, res) => {
   }
   const key = canonicalLogin(login);
   const existing = await db.query("SELECT id FROM users WHERE login = $1", [key]);
-  if (existing.rows.length) return res.status(409).json({ error: "Такой аккаунт уже зарегистрирован" });
+  if (existing.rows.length)
+    return res.status(409).json({ error: "Такой аккаунт уже зарегистрирован" });
 
   const passwordHash = await hashPassword(password);
   const { rows } = await db.query(
     `INSERT INTO users (login, password_hash, display_name, privacy_accepted_at)
      VALUES ($1, $2, $3, now()) RETURNING id, login, role, display_name`,
-    [key, passwordHash, displayName || null]
+    [key, passwordHash, displayName || null],
   );
   const user = rows[0];
   res.json({ token: signToken(user), user });
@@ -68,7 +70,7 @@ router.post("/phone/request", smsLimiter, async (req, res) => {
   await db.query(
     `INSERT INTO phone_verifications (phone, code_hash, expires_at)
      VALUES ($1, $2, now() + interval '5 minutes')`,
-    [phone, codeHash]
+    [phone, codeHash],
   );
   await sendSms(phone, `КомпМастер: код подтверждения ${code}`);
   res.json({ ok: true });
@@ -81,19 +83,25 @@ router.post("/phone/confirm", async (req, res) => {
     `SELECT * FROM phone_verifications
      WHERE phone = $1 AND expires_at > now()
      ORDER BY created_at DESC LIMIT 1`,
-    [phone]
+    [phone],
   );
   const record = rows[0];
   if (!record) return res.status(400).json({ error: "Код не найден или истёк, запросите новый" });
-  if (record.attempts >= 5) return res.status(429).json({ error: "Слишком много попыток, запросите новый код" });
+  if (record.attempts >= 5)
+    return res.status(429).json({ error: "Слишком много попыток, запросите новый код" });
 
   const codeHash = crypto.createHash("sha256").update(code).digest("hex");
   if (codeHash !== record.code_hash) {
-    await db.query("UPDATE phone_verifications SET attempts = attempts + 1 WHERE id = $1", [record.id]);
+    await db.query("UPDATE phone_verifications SET attempts = attempts + 1 WHERE id = $1", [
+      record.id,
+    ]);
     return res.status(400).json({ error: "Неверный код" });
   }
   if (req.user) {
-    await db.query("UPDATE users SET phone = $1, phone_verified_at = now() WHERE id = $2", [phone, req.user.id]);
+    await db.query("UPDATE users SET phone = $1, phone_verified_at = now() WHERE id = $2", [
+      phone,
+      req.user.id,
+    ]);
   }
   res.json({ ok: true, phone });
 });
@@ -109,7 +117,7 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
     const token = crypto.randomBytes(32).toString("hex");
     await db.query(
       `INSERT INTO password_resets (token, user_id, expires_at) VALUES ($1, $2, now() + interval '1 hour')`,
-      [token, user.id]
+      [token, user.id],
     );
     const resetUrl = `${config.frontendCanonicalOrigin}/reset-password?token=${token}`;
     await sendPasswordResetEmail(user.login, resetUrl);
@@ -124,26 +132,35 @@ router.post("/reset-password", async (req, res) => {
   }
   const { rows } = await db.query(
     "SELECT * FROM password_resets WHERE token = $1 AND used_at IS NULL AND expires_at > now()",
-    [token]
+    [token],
   );
   const record = rows[0];
   if (!record) return res.status(400).json({ error: "Ссылка недействительна или устарела" });
 
   const passwordHash = await hashPassword(newPassword);
-  await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [passwordHash, record.user_id]);
+  await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [
+    passwordHash,
+    record.user_id,
+  ]);
   await db.query("UPDATE password_resets SET used_at = now() WHERE token = $1", [token]);
   res.json({ ok: true });
 });
 
 // ---- Второй пароль входа в саму админ-панель ----
 
-router.post("/admin-panel/verify", requireAuth, requireRole(["admin", "manager"]), async (req, res) => {
-  const { password } = req.body || {};
-  if (password !== config.adminPanelPassword) {
-    return res.status(401).json({ error: "Неверный код доступа" });
-  }
-  res.json({ adminPanelToken: signAdminPanelToken(req.user) });
-});
+router.post(
+  "/admin-panel/verify",
+  adminPanelVerifyLimiter,
+  requireAuth,
+  requireRole(["admin", "manager"]),
+  async (req, res) => {
+    const { password } = req.body || {};
+    if (password !== config.adminPanelPassword) {
+      return res.status(401).json({ error: "Неверный код доступа" });
+    }
+    res.json({ adminPanelToken: signAdminPanelToken(req.user) });
+  },
+);
 
 router.get("/me", requireAuth, async (req, res) => {
   res.json({ user: req.user });

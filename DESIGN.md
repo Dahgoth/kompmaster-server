@@ -175,3 +175,11 @@ product chrome.
 - Depend on color alone to convey state.
 - Use monospace or another font family for UI copy.
 - Add casual/bouncy animation.
+
+## Code style
+
+This document governs the visual contract above, not code formatting. Code
+formatting is enforced by Prettier and ESLint at the workspace root — see
+`DEVELOPMENT.md` §Linting and formatting. Formatting-only commits must not
+change rendered markup, styling, or behavior; visually meaningful changes
+must follow the contract above and be documented here.

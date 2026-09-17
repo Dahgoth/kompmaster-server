@@ -26,13 +26,9 @@ const mismatches = manifests
 if (mismatches.length > 0) {
   console.error(`[version:check] root package.json version is ${expected}`);
   for (const m of mismatches) {
-    console.error(
-      `[version:check] ${m.label} (${path.relative(root, m.file)}) is ${m.version}`
-    );
+    console.error(`[version:check] ${m.label} (${path.relative(root, m.file)}) is ${m.version}`);
   }
-  console.error(
-    "[version:check] run `pnpm run version:sync` after bumping the root version."
-  );
+  console.error("[version:check] run `pnpm run version:sync` after bumping the root version.");
   process.exit(1);
 }
 

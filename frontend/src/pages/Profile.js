@@ -2,7 +2,7 @@
  * Profile page
  */
 
-import { getState, setUser } from "../store.js";
+import { getState } from "../store.js";
 import { escapeHtml } from "../utils.js";
 
 export async function renderProfile() {

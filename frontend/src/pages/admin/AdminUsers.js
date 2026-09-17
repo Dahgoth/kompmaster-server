@@ -19,14 +19,18 @@ export async function renderAdminUsers() {
           <tr><th>ID</th><th>E-mail</th><th>Имя</th><th>Роль</th></tr>
         </thead>
         <tbody>
-          ${users.map((u) => `
+          ${users
+            .map(
+              (u) => `
             <tr>
               <td>${u.id}</td>
               <td>${u.email}</td>
               <td>${u.name || ""}</td>
               <td>${u.role}</td>
             </tr>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </tbody>
       </table>
     </div>

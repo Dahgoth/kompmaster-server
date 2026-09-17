@@ -4,8 +4,12 @@ const assert = require("node:assert/strict");
 process.env.JWT_SECRET = "test-secret-for-tdd-framework";
 process.env.FRONTEND_ORIGIN = "https://compmasone.ru";
 
-const { signToken, verifyToken, signAdminPanelToken, verifyAdminPanelToken } =
-  require("../src/utils/jwt");
+const {
+  signToken,
+  verifyToken,
+  signAdminPanelToken,
+  verifyAdminPanelToken,
+} = require("../src/utils/jwt");
 
 describe("jwt user tokens", () => {
   it("round-trips sub/login/role", () => {

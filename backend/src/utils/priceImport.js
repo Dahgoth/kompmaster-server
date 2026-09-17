@@ -22,18 +22,30 @@ function headerLooksLike(value, aliases) {
 // Именно на этом мы ловили баг в клиентской версии (Number("")===0 в JS) —
 // здесь то же самое правило соблюдено явно.
 function parseNumericStock(value) {
-  if (typeof value === "number") return Number.isFinite(value) ? Math.max(0, Math.round(value)) : NaN;
+  if (typeof value === "number")
+    return Number.isFinite(value) ? Math.max(0, Math.round(value)) : NaN;
   const raw = String(value ?? "").trim();
   if (!raw) return NaN;
-  const n = Number(raw.replace(/\u00a0/g, "").replace(/\s+/g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
+  const n = Number(
+    raw
+      .replace(/\u00a0/g, "")
+      .replace(/\s+/g, "")
+      .replace(",", ".")
+      .replace(/[^\d.-]/g, ""),
+  );
   return Number.isFinite(n) ? Math.max(0, Math.round(n)) : NaN;
 }
 
 function parseNumericPrice(value) {
   if (typeof value === "number") return Number.isFinite(value) ? Math.max(0, value) : NaN;
-  let s = String(value ?? "").replace(/\u00a0/g, " ").trim();
+  let s = String(value ?? "")
+    .replace(/\u00a0/g, " ")
+    .trim();
   if (!s) return NaN;
-  s = s.replace(/[₽рPpРRrУуБбЛл]/g, "").replace(/\s+/g, "").trim();
+  s = s
+    .replace(/[₽рPpРRrУуБбЛл]/g, "")
+    .replace(/\s+/g, "")
+    .trim();
   const commas = (s.match(/,/g) || []).length;
   const dots = (s.match(/\./g) || []).length;
   if (commas === 1 && dots === 0) {
@@ -48,7 +60,9 @@ function findHeaderRow(matrix) {
   const limit = Math.min(matrix.length, 30);
   for (let r = 0; r < limit; r++) {
     const row = matrix[r] || [];
-    let nameCol = -1, priceCol = -1, stockCol = -1;
+    let nameCol = -1,
+      priceCol = -1,
+      stockCol = -1;
     row.forEach((cell, i) => {
       if (nameCol < 0 && headerLooksLike(cell, NAME_HEADERS)) nameCol = i;
       else if (priceCol < 0 && headerLooksLike(cell, PRICE_HEADERS)) priceCol = i;
@@ -66,7 +80,7 @@ function findHeaderRow(matrix) {
  * { rows: [{name, price, available}], sheetName, skipped, blankStock }
  * Перебирает все листы книги, использует первый, где нашлись все 3 столбца.
  */
-function parsePriceFile(buffer, originalName) {
+function parsePriceFile(buffer, _originalName) {
   const wb = XLSX.read(buffer, { type: "buffer", codepage: 65001 });
   const errors = [];
   for (const sheetName of wb.SheetNames) {
@@ -83,7 +97,8 @@ function parsePriceFile(buffer, originalName) {
     }
     const { headerRow, nameCol, priceCol, stockCol } = found;
     const rows = [];
-    let skipped = 0, blankStock = 0;
+    let skipped = 0,
+      blankStock = 0;
     for (let r = headerRow + 1; r < matrix.length; r++) {
       const row = matrix[r] || [];
       const name = String(row[nameCol] ?? "").trim();
@@ -105,7 +120,7 @@ function parsePriceFile(buffer, originalName) {
   }
   throw new Error(
     "Не удалось определить таблицу прайса. Нужны столбцы «Наименование/Название», «Цена» и «Количество/Остаток». " +
-      (errors.length ? "Найдено: " + errors.join("; ") : "")
+      (errors.length ? "Найдено: " + errors.join("; ") : ""),
   );
 }
 
@@ -115,9 +130,13 @@ function findDuplicateNames(rows) {
     const key = normalize(r.name);
     seen.set(key, (seen.get(key) || 0) + 1);
   });
-  let groups = 0, extra = 0;
+  let groups = 0,
+    extra = 0;
   seen.forEach((count) => {
-    if (count > 1) { groups++; extra += count - 1; }
+    if (count > 1) {
+      groups++;
+      extra += count - 1;
+    }
   });
   return { groups, extra };
 }

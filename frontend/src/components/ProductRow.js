@@ -20,9 +20,10 @@ export function renderProductRow(product) {
         <div class="product-row__specs">${renderSpecs(product.specs || product.attributes)}</div>
         <div class="product-row__price">${formatPrice(price)}</div>
         <div class="product-row__btns">
-          ${inStock
-            ? `<button class="btn btn--primary btn--small" onclick="window.addToCart('${escapeHtml(product.id)}')">В корзину</button>`
-            : `<button class="btn btn--secondary btn--small" disabled>Нет в наличии</button>`
+          ${
+            inStock
+              ? `<button class="btn btn--primary btn--small" onclick="window.addToCart('${escapeHtml(product.id)}')">В корзину</button>`
+              : `<button class="btn btn--secondary btn--small" disabled>Нет в наличии</button>`
           }
         </div>
       </div>
@@ -33,5 +34,7 @@ export function renderProductRow(product) {
 function renderSpecs(specs) {
   if (!specs || typeof specs !== "object") return "";
   const entries = Object.entries(specs).slice(0, 3);
-  return entries.map(([key, val]) => `<span>${escapeHtml(key)}: ${escapeHtml(String(val))}</span>`).join("");
+  return entries
+    .map(([key, val]) => `<span>${escapeHtml(key)}: ${escapeHtml(String(val))}</span>`)
+    .join("");
 }

@@ -79,10 +79,11 @@ export function initRouter(callback) {
   });
 
   document.addEventListener("click", (e) => {
-    const link = e.target.closest('a[href]');
+    const link = e.target.closest("a[href]");
     if (!link) return;
     const href = link.getAttribute("href");
-    if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+    if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:"))
+      return;
     if (href.startsWith("/")) {
       e.preventDefault();
       navigateTo(href);

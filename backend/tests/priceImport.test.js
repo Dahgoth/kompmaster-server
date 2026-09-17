@@ -12,16 +12,13 @@ function makeWorkbook(headers, rows) {
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   return XLSX.write(
     { SheetNames: ["S1"], Sheets: { S1: ws } },
-    { type: "buffer", bookType: "xlsx" }
+    { type: "buffer", bookType: "xlsx" },
   );
 }
 
 describe("priceImport.parsePriceFile", () => {
   it("parses a minimal valid sheet", () => {
-    const buf = makeWorkbook(
-      ["Название", "Цена", "Остаток"],
-      [["Ноутбук Acer", "100000", "5"]]
-    );
+    const buf = makeWorkbook(["Название", "Цена", "Остаток"], [["Ноутбук Acer", "100000", "5"]]);
     const result = parsePriceFile(buf, "price.xlsx");
     assert.equal(result.sheetName, "S1");
     assert.equal(result.rows.length, 1);
@@ -31,10 +28,7 @@ describe("priceImport.parsePriceFile", () => {
   });
 
   it("detects the 'кол-во' header variant (matches STOCK_HEADERS alias)", () => {
-    const buf = makeWorkbook(
-      ["Название", "Цена", "Кол-во"],
-      [["Ноутбук Acer", "100000", "5"]]
-    );
+    const buf = makeWorkbook(["Название", "Цена", "Кол-во"], [["Ноутбук Acer", "100000", "5"]]);
     const result = parsePriceFile(buf, "price.xlsx");
     assert.equal(result.rows.length, 1);
     assert.equal(result.rows[0].available, 5);
@@ -48,7 +42,7 @@ describe("priceImport.parsePriceFile", () => {
         // product row and must be parsed, not skipped as a repeated header.
         ["Модель XYZ-100", "5000", "3"],
         ["Ноутбук Acer", "100000", "5"],
-      ]
+      ],
     );
     const result = parsePriceFile(buf, "price.xlsx");
     const names = result.rows.map((r) => r.name);

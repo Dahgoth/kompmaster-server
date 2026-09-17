@@ -35,6 +35,21 @@ The equivalent `pnpm run dev`, `pnpm run test`, `pnpm run build`, and
 `pnpm run preview` commands continue to work from `frontend/`. The root also
 provides `pnpm build:frontend` as a convenience alias for the filtered build.
 
+## Linting
+
+The frontend is linted by the workspace-root ESLint flat config
+(`eslint.config.js` — ESM, browser globals) and formatted by the root
+Prettier config (`.prettierrc.json`). Run from the repository root:
+
+```bash
+pnpm run lint:frontend   # ESLint over frontend/
+pnpm run format          # Prettier rewrite (format:check verifies only)
+```
+
+`pnpm run lint` (root) covers both apps plus the Prettier check; CI runs
+`lint:frontend` in the `frontend` job before tests and build. The `lint`
+script inside `frontend/package.json` delegates to the workspace root.
+
 ## Deployment
 
 Production remains a static artifact on Timeweb S3 website hosting with the CDN

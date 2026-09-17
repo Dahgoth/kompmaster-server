@@ -3,8 +3,12 @@
  */
 
 import { api } from "../api.js";
-import { renderProductCard, renderCategoryCard, renderPagination, renderSkeleton } from "../components/index.js";
-import { defaultCategories } from "../data/categories.js";
+import {
+  renderProductCard,
+  renderCategoryCard,
+  renderPagination,
+  renderSkeleton,
+} from "../components/index.js";
 
 export async function renderCatalog(params = {}) {
   const { slug } = params;
@@ -36,12 +40,14 @@ export async function renderCatalog(params = {}) {
     if (catResp.ok && catResp.data) {
       categories = catResp.data;
     }
-  } catch (err) {
+  } catch {
     loading = false;
   }
 
   const subCategories = categories.filter(
-    (c) => category && (c.parent_id === category.id || c.parentId === category.id || c.id === category.id)
+    (c) =>
+      category &&
+      (c.parent_id === category.id || c.parentId === category.id || c.id === category.id),
   );
 
   const title = category ? category.name : "Каталог товаров";
@@ -58,16 +64,21 @@ export async function renderCatalog(params = {}) {
         <h1 class="section-title">${title}</h1>
         <p class="section-subtitle">${description}</p>
 
-        ${subCategories.length > 0 ? `
+        ${
+          subCategories.length > 0
+            ? `
           <div class="categories-grid" style="margin-bottom:38px;">
             ${subCategories.map((c) => renderCategoryCard(c)).join("")}
           </div>
-        ` : ""}
+        `
+            : ""
+        }
 
         <div class="product-grid">
-          ${loading
-            ? [1, 2, 3, 4, 5, 6].map(() => renderSkeleton("image", "100%", "280px")).join("")
-            : products.map((p) => renderProductCard(p)).join("")
+          ${
+            loading
+              ? [1, 2, 3, 4, 5, 6].map(() => renderSkeleton("image", "100%", "280px")).join("")
+              : products.map((p) => renderProductCard(p)).join("")
           }
         </div>
 
