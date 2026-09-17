@@ -23,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (BOM → strict UTF-8 → windows-1251) instead of relying on the parser's
   internal codepage option, which stopped working in SheetJS 0.20.x and
   would mojibake Cyrillic headers in windows-1251 CSV exports from Excel/1C.
-
-### Changed
 - Removed the ADR-001 quarantined legacy family after recording its behavior
   in the ADR 001 §1b audit annex: `backend/src/{auth,mail,sheets}.js`,
   `backend/src/payment-adapters/`, `backend/src/schema.sql`,
