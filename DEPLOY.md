@@ -55,7 +55,8 @@ nano backend/.env
   используется в ссылках восстановления пароля: `https://www.compmasone.ru,https://compmasone.ru`)
 - `JWT_SECRET`
 - `DATABASE_URL` (пароль совпадает с `POSTGRES_PASSWORD`)
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` (бутстрап админа, см. `backend/scripts/reset-admin.js`)
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` (бутстрап админа; применяется миграциями
+  через `pnpm run migrate`, см. `DEVELOPMENT.md`)
 
 Для случайного секрета можно выполнить:
 

@@ -5,12 +5,6 @@
 // real bugs (parse errors, undefined variables, unused vars) while style is
 // fully delegated to Prettier (.prettierrc.json). Keep it that way — do not
 // add stylistic rules here.
-//
-// Excluded (ADR 001 legacy quarantine — ESM-syntax files that cannot run
-// under the backend's CommonJS runtime; kept frozen, see .prettierignore):
-//   backend/src/mail.js, backend/src/auth.js, backend/src/sheets.js,
-//   backend/src/payment-adapters/index.js,
-//   backend/scripts/init-db.js, backend/scripts/reset-admin.js
 
 "use strict";
 
@@ -25,28 +19,9 @@ const sharedRules = {
   "no-empty": ["error", { allowEmptyCatch: true }],
 };
 
-// ADR 001 legacy quarantine — mirrored in .prettierignore; when adding a
-// file here, add it there too.
-const legacyBackendFiles = [
-  "backend/src/mail.js",
-  "backend/src/auth.js",
-  "backend/src/sheets.js",
-  "backend/src/payment-adapters/index.js",
-  "backend/scripts/init-db.js",
-  "backend/scripts/reset-admin.js",
-];
-
 module.exports = [
   {
-    ignores: [
-      "**/node_modules/",
-      "**/dist/",
-      "docs/",
-      "uploads/",
-      "terraform/",
-      ".kilo/",
-      ...legacyBackendFiles,
-    ],
+    ignores: ["**/node_modules/", "**/dist/", "docs/", "uploads/", "terraform/", ".kilo/"],
   },
 
   // Backend (CommonJS) + repo-level tooling scripts

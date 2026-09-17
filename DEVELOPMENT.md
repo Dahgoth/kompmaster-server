@@ -9,9 +9,8 @@ local environment.
 KompMaster is a pnpm workspace with a Node.js/Express backend (`backend/`,
 package `kompmaster-server`) that serves the `/api/*` REST API, and a static
 storefront (`frontend/`) built separately for S3 + CDN. The backend talks to
-PostgreSQL for data and an S3-compatible store for photos. The active entry
-point is `backend/src/index.js` (see [Entry points](#entry-points)). The legacy
-single-file storefront is archived under `docs/legacy/public/`.
+PostgreSQL for data and an S3-compatible store for photos. The only entry
+point is `backend/src/index.js` (see [Entry points](#entry-points)).
 
 ## Prerequisites
 
@@ -201,8 +200,7 @@ scripts.
 - `pnpm run lint:frontend` — ESLint over `frontend/**` (ESM, browser globals).
 - `pnpm run format` — rewrite files with Prettier; `pnpm run format:check` —
   verify only (used by CI). See `.prettierignore` for what is excluded
-  (Markdown/HTML/YAML/Terraform, `docs/`, build output, and the six
-  ADR-001-quarantined legacy ESM files).
+  (Markdown/HTML/YAML/Terraform, `docs/`, build output).
 
 Rule scope is deliberately minimal: `eslint:recommended` equivalents (parse
 errors, `no-undef`, unused vars, dead logic) plus `argsIgnorePattern: "^_"`
@@ -320,22 +318,16 @@ enforcement points diff the **whole branch against `origin/main`**
 
 ## Entry points
 
-There are two server implementations in `backend/src/`, and they are **not** identical:
+There is exactly **one** server implementation, `backend/src/index.js`:
 
-| File             | Module style | Run via             | Notes                                   |
-| ---------------- | ------------ | ------------------- | --------------------------------------- |
-| `backend/src/index.js`   | CommonJS     | `pnpm start` / `pnpm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`. |
-| — | — | — | `docs/legacy/server.js` — archived legacy ESM monolith, cannot boot. See ADR 001 §1. |
+| File                   | Module style | Run via                       | Notes                                                                  |
+| ---------------------- | ------------ | ----------------------------- | ---------------------------------------------------------------------- |
+| `backend/src/index.js` | CommonJS     | `pnpm start` / `pnpm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`.  |
 
-Treat `backend/src/index.js` as the source of truth. If you touch one entry point,
-verify you do not need the same change in the other, and flag the discrepancy
-in your pull request. (`ENVIRONMENT.md` documents the env-var differences
-between the two.)
-
-> **Note on `docs/legacy/server.js`:** Former legacy ESM entry that cannot boot under
-> the current CommonJS runtime. It is quarantined as inspiration-only per ADR 001.
-> Moved out of `backend/src/` to prevent confusion with the canonical entry. See
-> `docs/archive/DOCKER_EVALUATION.md`.
+The former legacy ESM monolith (`docs/legacy/server.js` + `docs/legacy/public/`)
+was removed from the repository on 2026-09-17 after ADR 001 §1b-audit annex
+captured its behavior. If you need its historical behavior, consult the annex
+or git history (`git log --follow docs/legacy/`).
 
 ## Docker-based setup (databases only)
 
@@ -404,8 +396,9 @@ commit conventions.
 
 ### `node --check` / startup fails with missing module
 
-Make sure you ran `pnpm install`. If a module still cannot be resolved, you may
-be running the legacy `docs/legacy/server.js` entry — switch to `pnpm start`.
+Make sure you ran `pnpm install`. If a module still cannot be resolved, check
+that you are starting the canonical entry (`pnpm start`), not a stray copy of
+an old file.
 
 ### `JWT_SECRET` not set
 
@@ -431,8 +424,8 @@ Confirm `DATABASE_URL` matches the credentials in `docker-compose.yml`
 ### Port already in use
 
 The active entry point uses `PORT` (default `4000`). Set `PORT` in
-`backend/.env` to change it. Note: the legacy entry at `docs/legacy/server.js` used port
-`3000` (see `docs/archive/DOCKER_EVALUATION.md`); the canonical port is now `4000`.
+`backend/.env` to change it. (The removed legacy entry used port `3000`; the
+canonical port is `4000`.)
 
 ### Migration fails partway
 

@@ -3,15 +3,17 @@
 > **Rebuild in progress (2026-09-16, `frontend/` branch):** the storefront is
 > being rebuilt as a static Vite + vanilla-ESM app in `frontend/` (see
 > `frontend/PLAN.md` and `frontend/README.md`), deployed to S3+CDN per
-> ADR 001 §1a. Until the rebuild lands, this document still describes the
-> legacy single-file `docs/legacy/public/index.html` below. The rebuilt tokens, layout,
-> and components in `frontend/src/styles/` and `frontend/src/components/`
-> are extracted from that legacy file and intentionally match it, so this
-> contract applies to both surfaces during the transition.
+> ADR 001 §1a. The legacy single-file storefront
+> (`docs/legacy/public/index.html`) that this document was originally derived
+> from was removed from the repository on 2026-09-17 (ADR 001 §1b-audit
+> annex). The rebuilt tokens, layout, and components in `frontend/src/styles/`
+> and `frontend/src/components/` were extracted from that legacy file and
+> intentionally match it, so the contract below applies to the rebuilt
+> storefront; `git history` retains the legacy source.
 
 This document is the UX/UI contract for the KompMaster storefront. The front
-end lives in a single file, `docs/legacy/public/index.html`, and is served directly by the
-backend. Any change to visuals, layout, motion, or voice must keep this
+end lives in `frontend/` (Vite build, deployed to S3 + CDN; ADR 003). Any
+change to visuals, layout, motion, or voice must keep this
 document in sync (see `CONTRIBUTING.md`).
 
 ## Overview

@@ -220,6 +220,24 @@ Hybrid B-light / A (keep legacy or shim) explicitly rejected as half-measure for
 
 Scope: `src/auth.js` cookie flow, `mail.js`/`sheets.js` Sheets, `payment-adapters/` plugin concept, `src/schema.sql` vs `001_init.sql` structural diff, `public/index.html`+`server-bridge.js` contract, `seed.json`/`site_state`, `scripts/init-db.js`/`reset-admin.js` ops scripts. Deliverable: annex table mapping legacy behavior → disposition (drop / re-implement on modular API / discard). Owner: propose @annatchijova draft + @Dahgoth approval, timeline 3–5 days, **does not block** Dockerfile/Caddyfile/port fix.
 
+> **Delivered 2026-09-17** — see §1b-audit annex below. The quarantined family
+> was removed from the repository after the annex captured its behavior; the
+> quarantines in `eslint.config.js` / `.prettierignore` were dropped with it.
+
+##### 1b-audit annex — legacy behavior → disposition (delivered 2026-09-17)
+
+| Legacy artifact | Behavior captured | Canonical equivalent | Disposition |
+| --- | --- | --- | --- |
+| `src/auth.js` (`backend/src/`) | `km_auth` httpOnly cookie (30 d, `sameSite: lax`) holding a JWT signed with `issuer: 'compmasterone'`; login normalization (email vs phone) | `backend/src/middleware/auth.js` + `routes/auth.js` — Bearer JWT with role from DB; the cookie flow is deliberately **not** carried over (§1a: Bearer replaces `km_auth` + CSRF) | **Drop — superseded** (A1) |
+| `src/mail.js` | `nodemailer.createTransport` from `SMTP_*` env | `backend/src/utils/email.js` (same transport shape) | **Drop — superseded** |
+| `src/sheets.js` | Google Sheets read via service account (`GOOGLE_SERVICE_ACCOUNT_JSON`), RU header-alias detection (`наимен/цена/колич`) → product rows — the ancestor of price import | `backend/src/utils/priceImport.js` — file-upload import instead of a live sheet | **Drop** — if live Sheets sync is ever needed, re-implement as an idempotent job (§4), never a resident timer (A5) |
+| `src/payment-adapters/index.js` | Empty adapter registry concept (`registerPaymentAdapter`) | ADR 002 — narrow primary/fallback gateways; generic webhook + `payment_webhook_events` in `migrations/` | **Drop — superseded by ADR 002** (A6) |
+| `src/schema.sql` | Conflicting pre-workspace schema lineage (`users`/`products`/…, pgcrypto) | `backend/migrations/001_init.sql` + `src/migrate.js` runner (canonical lineage, A3) | **Drop — superseded** |
+| `backend/seed.json` | `site_state` snapshot data for the legacy monolith; referenced nowhere in canonical code | none — seeded content now flows through migrations/admin API | **Drop — fossil data** |
+| `src/importFromBeta.js` | One-off beta → v1 product migration CLI (old-id map), self-contained, unreferenced | one-time migration, already performed | **Drop** |
+| `docs/legacy/server.js` + `docs/legacy/public/` (`index.html` + `server-bridge.js`) | Cookie-auth monolith API + 540 KB embedded storefront | Modular `/api/*` routers (`src/index.js`) + standalone Vite storefront (§1a, ADR 003) | **Drop — superseded** (A2, A4) |
+| `scripts/init-db.js`, `scripts/reset-admin.js` | One-line **ESM** scripts importing `initSchema` from `../src/db.js` — never runnable under the CommonJS runtime (the very reason they were quarantined); DB init is canonical via `src/migrate.js` + migrations | `src/migrate.js`; admin bootstrap via migrations/`ADMIN_*` env | **Drop** — re-implement an admin-reset helper in CommonJS only if the ops need returns |
+
 ### 2. PostgreSQL as contract — RF-only HA (supersedes Group B7 dual-track)
 
 - App depends on **PostgreSQL + transactional provider**, **HA from day one, cheapest HA**.
@@ -345,7 +363,7 @@ Concrete vendor pricing (Timeweb vs Yandex) deferred to ADR 002; order-of-magnit
 
 ## Consequences
 
-**Positive:** single source of truth, Dockerfile unblocked (inspiration-only audit non-blocking), pure C isolates FE/BE origins (strict CORS/CSP, CDN cache, stateless HA), RF-only compliance, corrected presigned/OFD/fiscalization flows, 5k WAU HA cheapest with concrete SLOs/traffic model.
+**Positive:** single source of truth, Dockerfile unblocked (inspiration-only audit non-blocking), pure C isolates FE/BE origins (strict CORS/CSP, CDN cache, stateless HA), RF-only compliance, corrected presigned/OFD/fiscalization flows, 5k WAU HA cheapest with concrete SLOs/traffic model. **2026-09-17:** the quarantined legacy family was deleted after the §1b audit annex captured its behavior — no dead code, no lint exclusions, `backend/` contains only the canonical core.
 
 **Cost:** new FE build required (pure C), fiscalization async domain (gateway→KKT→OFD retry via `receipt_key`), distributed limiter + advisory lock required before HA, hosting+fiscal choice deferred to ADR 002.
 
