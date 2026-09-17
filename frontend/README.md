@@ -22,11 +22,20 @@ npm run preview
 
 ## Deployment
 
+Static artifact on Timeweb S3 website hosting (+ CDN attached manually) —
+infrastructure is provisioned by the backend repo's `terraform/` (see
+`terraform/README.md` there):
+
 ```bash
-npm run build
-# Upload dist/ to S3/CloudFront
-# See terraform/ for infrastructure
+VITE_API_BASE=https://api.compmasone.ru/api npm run build
+aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend-bucket> --delete
 ```
+
+- Storefront is canonical at `https://www.compmasone.ru`; the apex
+  `compmasone.ru` 301-redirects to it (Timeweb DNS forbids apex CNAME).
+- The S3 website config maps 404 → `index.html`, so path-based deep links
+  (`/catalog`, `/admin`) boot the SPA directly.
+- Purge CDN cache after each deploy once the CDN resource is attached.
 
 ## Key Decisions
 

@@ -2,12 +2,18 @@
 
 ## 1. DNS
 
-У регистратора домена создайте A-запись:
+DNS создается автоматически через Terraform (`terraform/`) — см.
+[terraform/README.md](terraform/README.md). Итоговая топология:
 
-- имя: `@`
-- значение: IPv4 вашего VPS
+| Имя | Тип | Значение | Назначение |
+| --- | --- | --- | --- |
+| `@` | A | IPv4 VPS | 301-редирект на `www` (Caddy) |
+| `www` | CNAME | `s3.timeweb.com` | Статический фронтенд (S3-сайт + SSL) |
+| `api` | A | IPv4 VPS | API (Caddy → 127.0.0.1:PORT) |
+| `assets` | CNAME | `s3.timeweb.com` | Медиа-бакет (фото товаров) |
 
-При желании добавьте `www` как CNAME на основной домен.
+Канонический адрес магазина — `https://www.compmasone.ru` (Timeweb DNS не
+позволяет CNAME на апексе, поэтому апекс редиректит на `www`).
 
 ## 2. Установка сервера
 
@@ -39,11 +45,11 @@ nano .env
 
 Обязательно замените:
 
-- `DOMAIN`
+- `FRONTEND_ORIGIN` (разрешённые источники магазина; **первый** — канонический,
+  используется в ссылках восстановления пароля: `https://www.compmasone.ru,https://compmasone.ru`)
 - `JWT_SECRET`
 - `DATABASE_URL` (пароль совпадает с `POSTGRES_PASSWORD`)
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` (бутстрап админа, см. `scripts/reset-admin.js`)
 
 Для случайного секрета можно выполнить:
 
@@ -74,17 +80,36 @@ pm2 logs kompmaster-api
 
 После того как DNS указывает на сервер, Caddy сам выпустит HTTPS-сертификат.
 
+### Caddy: переменные окружения
+
+`Caddyfile` использует `{$DOMAIN}` и `{$PORT}` (с дефолтами PoC:
+`compmasone.ru`, `4000`). Пакет Caddy для Debian/Ubuntu читает
+`/etc/default/caddy`, поэтому задайте переменные там:
+
+```bash
+sudo apt-get install -y caddy
+sudo cp Caddyfile /etc/caddy/Caddyfile
+printf 'DOMAIN=compmasone.ru\nPORT=4000\n' | sudo tee -a /etc/default/caddy
+sudo systemctl restart caddy
+sudo systemctl status caddy --no-pager
+```
+
+Caddy обслуживает два хоста: `compmasone.ru` (301 → `https://www.compmasone.ru`)
+и `api.compmasone.ru` (reverse_proxy на `127.0.0.1:4000`). Статический
+фронтенд отдаётся S3/CDN, не Caddy (см. `terraform/README.md`).
+
 Проверка:
 
 ```bash
-curl https://ВАШ-ДОМЕН/api/health
+curl https://api.compmasone.ru/api/health
+curl -I https://compmasone.ru        # 301 → https://www.compmasone.ru
 ```
 
 ## 6. Админка
 
 Откройте:
 
-`https://ВАШ-ДОМЕН/#admin`
+`https://www.compmasone.ru/admin`
 
 Используйте `ADMIN_EMAIL` и `ADMIN_PASSWORD` из `.env`.
 

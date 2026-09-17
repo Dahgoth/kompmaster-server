@@ -25,10 +25,15 @@ noted in [Legacy entry point](#legacy-entry-point).
   Default `development`. In production, missing `JWT_SECRET` is fatal.
 - `PORT` — HTTP port for the API. Default `4000`.
 - `FRONTEND_ORIGIN` — allowed CORS origin(s), comma-separated for multi-origin
-  (e.g. `https://compmasone.ru`). Used for the browser app and for building
-  password-reset links. **Required.** Wildcard `*` is rejected at startup
-  (fail-closed); server requests without `Origin` (curl, health checks) are
-  still allowed. An explicitly empty value also fails closed (the dev default
+  (e.g. `https://www.compmasone.ru,https://compmasone.ru`). Used for the
+  browser app and for building password-reset links. **Required.** Wildcard
+  `*` is rejected at startup (fail-closed); server requests without `Origin`
+  (curl, health checks) are still allowed. **The first listed origin is
+  canonical** (`config.frontendCanonicalOrigin`) and is the base for outbound
+  links — list the canonical storefront first. The PoC default (when unset)
+  is `www` then apex, because the apex 301-redirects to `www` (see
+  `terraform/`). Never interpolate the whole comma-joined allowlist into a
+  URL. An explicitly empty value also fails closed (the dev default
   applies only when the variable is unset).
 
 ### Database
@@ -112,3 +117,46 @@ notifications are logged to the console instead of sent.
 
 If you work on the legacy entry, keep `ENVIRONMENT.md` in sync with any
 variable you add or rename.
+
+## Terraform (Timeweb Cloud PoC infra)
+
+Infrastructure in `/terraform/` (ADR-002, Option D+A — Option B topology) is
+provisioned with the Timeweb Terraform provider; see
+[`terraform/README.md`](terraform/README.md) for the stack and CDN notes:
+
+- `TWC_TOKEN` — Timeweb API token (panel → API keys). **Environment only,
+  never in `.tfvars` or `.env`.** The token must have Telegram
+  delete-confirmation disabled (provider requirement). `[SECRET]`
+
+After `terraform apply`, map outputs into `.env`:
+
+| Terraform output | `.env` variable |
+|---|---|
+| `s3_hostname` | `S3_ENDPOINT=https://<hostname>` |
+| `s3_bucket_name` (or `s3_bucket_full_name` if the S3 API rejects the short name) | `S3_BUCKET` |
+| `s3_access_key` | `S3_ACCESS_KEY` `[SECRET]` |
+| `s3_secret_key` | `S3_SECRET_KEY` `[SECRET]` |
+| `s3_public_url` | `S3_PUBLIC_URL` |
+| `server_ipv4` | Informational (DNS `@`/`api` A-records already point here) |
+| `api_url` | Bake `VITE_API_BASE=<api_url>/api` into the frontend build |
+| `frontend_url` | Canonical storefront (include in `FRONTEND_ORIGIN`) |
+
+`DATABASE_URL` still targets PostgreSQL on the VPS itself (embedded/Docker),
+not a managed cluster — Terraform does not output it. Set
+`FRONTEND_ORIGIN=https://www.compmasone.ru,https://compmasone.ru` (canonical
+`www` first; the apex redirects to it); payment/SMS variables stay empty at
+PoC launch (manual checkout, Telegram/e-mail only).
+
+On the VPS, Caddy reads `DOMAIN` and `PORT` from its environment — the
+Debian/Ubuntu package loads `/etc/default/caddy` (see `DEPLOY.md` §5). The
+`Caddyfile` carries PoC defaults (`compmasone.ru`, `4000`) so an unset `DOMAIN`
+cannot produce an empty site address.
+
+Frontend build output (`frontend/dist`) is deployed to the `kompmaster-frontend`
+bucket via S3 sync (credentials from `frontend_access_key`/`frontend_secret_key`
+outputs) — see `terraform/README.md §Deploying the storefront`. When the CDN is
+attached, flip `frontend_cdn_enabled = true` + `frontend_cdn_cname` in
+`terraform.tfvars` and re-apply (Terraform keeps owning the `www` CNAME — no
+manual DNS edits). Where to *store* all of these credentials (gitignored
+`terraform/secrets/` files, password manager, VPS `.env`) and how to rotate
+them: `terraform/RUNBOOK.md`.

@@ -17,3 +17,18 @@ uploads/
 
 # Kilo editor config
 .kilo/kilo.jsonc
+
+# Terraform (PoC infra in /terraform; state and secrets stay local)
+.terraform/
+terraform/secrets/
+*.tfstate
+*.tfstate.*
+*.tfplan
+terraform.tfvars
+*.auto.tfvars
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

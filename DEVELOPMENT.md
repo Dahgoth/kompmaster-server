@@ -197,6 +197,46 @@ with local volumes:
   (dev-only defaults — change before any real deployment).
 - MinIO: S3 API on `localhost:9000`, web console on `localhost:9001`.
 
+## Terraform (PoC infrastructure)
+
+`/terraform/` provisions the PoC runtime on Timeweb Cloud (ADR-002, Option
+D+A) for **Option B**: one MSK-50-shape VPS running the API only, daily disk
+autobackups, two S3 buckets (media + static storefront with website hosting),
+and DNS records in the Timeweb-managed `compmasone.ru` zone. App code, `.env`,
+and migrations are NOT managed by Terraform. Full stack details live in
+[`terraform/README.md`](terraform/README.md).
+
+```bash
+export TWC_TOKEN=...   # never commit this value
+cd terraform
+terraform init
+terraform plan         # 1 VPS + firewall + backups + 2 buckets + 4 DNS records
+terraform apply
+terraform output       # map S3_* into .env — see ENVIRONMENT.md
+```
+
+Notes:
+
+- Storefront is canonical on `https://www.compmasone.ru` (S3 website + SSL;
+  Timeweb DNS forbids apex CNAME, so the apex 301-redirects via Caddy).
+- API origin is `https://api.compmasone.ru` — set
+  `VITE_API_BASE=https://api.compmasone.ru/api` when building the frontend.
+- CDN is attached manually (provider v1.8.2 has no CDN resource), then enabled
+  in Terraform via `frontend_cdn_enabled = true` + `frontend_cdn_cname` in
+  `terraform.tfvars` — see `terraform/README.md §CDN`. Never retarget the
+  `www` CNAME by hand: Terraform owns it and a later apply would revert the
+  edit.
+- Caddy reads `DOMAIN`/`PORT` from `/etc/default/caddy` (see `DEPLOY.md` §5);
+  the `Caddyfile` carries PoC defaults so an unset `DOMAIN` cannot break the
+  config.
+- Admin runbook — credential inventory, gitignored secret-file layout
+  (`terraform/secrets/`), rotation and day-2 ops: see
+  [`terraform/RUNBOOK.md`](terraform/RUNBOOK.md).
+- State is local (`terraform.tfstate`, gitignored); `terraform.tfvars` is
+  gitignored; defaults in `variables.tf` already match the PoC.
+- `terraform destroy` removes the VPS, buckets, and DNS records — back up
+  snapshots / `pg_dump` archives first.
+
 ## Git workflow
 
 Never commit to `main` directly. Create a feature branch and open a pull

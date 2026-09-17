@@ -1,0 +1,13 @@
+# Optional overrides — defaults in variables.tf already match the PoC.
+# Usage: cp terraform.tfvars.example terraform.tfvars   (terraform.tfvars is gitignored)
+# NEVER put TWC_TOKEN or any secret here — TWC_TOKEN comes from the environment.
+
+# ssh_keys_ids   = [123456]            # pre-created in Timeweb panel → SSH keys
+# ssh_allowed_cidr = "203.0.113.10/32" # restrict SSH once your IP is known
+
+# CDN switch (after creating the CDN resource in the Timeweb panel — the
+# provider has no CDN resource; see README.md §CDN):
+# frontend_cdn_enabled = true
+# frontend_cdn_cname   = "<CDN CNAME target from the panel>"
+
+# frontend_s3_disk_mb = 1024           # only if the 1 GB S3 preset exists in ru-1

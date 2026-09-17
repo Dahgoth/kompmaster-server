@@ -62,3 +62,34 @@ describe("config.frontendOrigin (fail-closed allowlist)", () => {
     });
   });
 });
+
+describe("config.frontendCanonicalOrigin (outbound link base)", () => {
+  it("defaults to the canonical www storefront when unset", () => {
+    withEnv({ FRONTEND_ORIGIN: undefined }, () => {
+      const cfg = freshConfig();
+      assert.equal(cfg.frontendCanonicalOrigin, "https://www.compmasone.ru");
+      assert.equal(
+        cfg.frontendOrigin,
+        "https://www.compmasone.ru,https://compmasone.ru"
+      );
+    });
+  });
+
+  it("is the first listed origin for multi-origin allowlists", () => {
+    withEnv(
+      { FRONTEND_ORIGIN: "https://a.example, https://b.example" },
+      () => {
+        assert.equal(freshConfig().frontendCanonicalOrigin, "https://a.example");
+      }
+    );
+  });
+
+  it("never contains a comma (safe to interpolate into URLs)", () => {
+    withEnv(
+      { FRONTEND_ORIGIN: "https://www.compmasone.ru,https://compmasone.ru" },
+      () => {
+        assert.ok(!freshConfig().frontendCanonicalOrigin.includes(","));
+      }
+    );
+  });
+});
