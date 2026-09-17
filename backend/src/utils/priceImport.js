@@ -76,12 +76,39 @@ function findHeaderRow(matrix) {
 }
 
 /**
+ * Декодирует текстовые форматы прайса (csv/tsv) детерминированно, не полагаясь
+ * на кодовую страницу, которую библиотека угадывает внутри себя.
+ * Порядок: BOM (utf-8/utf-16) → строгий utf-8 → windows-1251
+ * (Excel в русской локали сохраняет CSV в ANSI 1251 без BOM).
+ */
+function decodeSpreadsheetText(buffer) {
+  if (buffer.length >= 2) {
+    if (buffer[0] === 0xff && buffer[1] === 0xfe) return new TextDecoder("utf-16le").decode(buffer);
+    if (buffer[0] === 0xfe && buffer[1] === 0xff) return new TextDecoder("utf-16be").decode(buffer);
+  }
+  if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf)
+    return new TextDecoder("utf-8").decode(buffer.subarray(3));
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+  } catch {
+    return new TextDecoder("windows-1251").decode(buffer);
+  }
+}
+
+/**
  * Разбирает файл прайса (xlsx/xls/csv/tsv) и возвращает
  * { rows: [{name, price, available}], sheetName, skipped, blankStock }
  * Перебирает все листы книги, использует первый, где нашлись все 3 столбца.
  */
 function parsePriceFile(buffer, _originalName) {
-  const wb = XLSX.read(buffer, { type: "buffer", codepage: 65001 });
+  // Бинарные форматы (xlsx = PK-zip, xls = OLE2) читаем из буфера;
+  // всё остальное — текст (csv/tsv) после явного декодирования.
+  const isBinary =
+    buffer.length >= 2 &&
+    ((buffer[0] === 0x50 && buffer[1] === 0x4b) || (buffer[0] === 0xd0 && buffer[1] === 0xcf));
+  const wb = isBinary
+    ? XLSX.read(buffer, { type: "buffer" })
+    : XLSX.read(decodeSpreadsheetText(buffer), { type: "string" });
   const errors = [];
   for (const sheetName of wb.SheetNames) {
     const sheet = wb.Sheets[sheetName];

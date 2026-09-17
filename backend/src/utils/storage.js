@@ -1,5 +1,5 @@
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const config = require("../config");
 
 const s3 = new S3Client({
@@ -15,7 +15,7 @@ const s3 = new S3Client({
 // folder: "products" | "categories" | "reviews" — как в исходном ТЗ.
 async function uploadBuffer(buffer, folder, mimeType) {
   const ext = (mimeType && mimeType.split("/")[1]) || "jpg";
-  const key = `${folder}/${uuidv4()}.${ext}`;
+  const key = `${folder}/${crypto.randomUUID()}.${ext}`;
   await s3.send(
     new PutObjectCommand({
       Bucket: config.s3.bucket,
