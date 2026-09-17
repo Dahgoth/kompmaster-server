@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Replaced the abandoned npm `xlsx@0.18.5` (last registry release 2023) with
+  the maintained SheetJS CE 0.20.3 from the official SheetJS CDN
+  (`docs/adr/004-spreadsheet-import-stack.md`), fixing CVE-2023-30533
+  (prototype pollution) and CVE-2024-22363 (ReDoS) — both reachable through
+  admin-uploaded price files.
+
+### Changed
+- Backend dependency cleanup on top of PR #29 (multer 2.4 fixes four upload
+  CVEs; nodemailer 9; vite 6): removed `uuid` (S3 object keys now use
+  `crypto.randomUUID()` from `node:crypto`) and `node-fetch` (native `fetch`
+  in SMS/Telegram notifications) in favour of Node 24 built-ins.
+- Price-file parsing (csv/tsv) now decodes text spreadsheets explicitly
+  (BOM → strict UTF-8 → windows-1251) instead of relying on the parser's
+  internal codepage option, which stopped working in SheetJS 0.20.x and
+  would mojibake Cyrillic headers in windows-1251 CSV exports from Excel/1C.
+
 ### Changed
 - Migrated dependency management from npm to pnpm. `packageManager` pins
   `pnpm@12.4.2` (run via Corepack); the npm lockfiles are replaced by a single
