@@ -78,8 +78,8 @@ Examples:
 - **Husky** — `.husky/commit-msg` runs commitlint on every commit.
 - **Commitlint** — `.commitlintrc.json` extends `@commitlint/config-conventional`.
 - **Husky `pre-push`** — blocks pushing directly to `main`; then runs only
-  the checks whose area changed in the pushed commits: backend (`npm test`),
-  frontend (`npm run test:frontend`), plus the docs-in-sync check
+  the checks whose area changed in the pushed commits: backend (`pnpm test`),
+  frontend (`pnpm run test:frontend`), plus the docs-in-sync check
   (`node scripts/check-docs.js`) on every non-docs-only push.
   Bypass only with `git push --no-verify` when you can state why, and re-run
   the suite immediately after.
@@ -87,7 +87,7 @@ Examples:
   and PR: `docs-sync` (always), `commitlint` (PRs), `backend` (backend paths),
   `frontend` (frontend paths, incl. build), `terraform` (placeholder until
   `.tf` files land).
-- Manual check: `npm run lint:commit` validates the most recent commit.
+- Manual check: `pnpm run lint:commit` validates the most recent commit.
 
 ## Workflow
 
@@ -113,19 +113,23 @@ See `CONTRIBUTING.md` for the full process.
 
 ## Commands
 
-- `npm install` — install dependencies and set up Husky hooks (via `prepare`).
-- `npm start` — run the server.
-- `npm run dev` — run with file watching.
-- `npm run migrate` — apply database migrations.
-- `npm test` — run backend tests (`node --test`).
-- `npm run test:frontend` — run frontend tests.
-- `npm run lint:commit` — validate the last commit message.
+The backend and `frontend/` are two independent pnpm projects, each with its
+own `pnpm-lock.yaml`. pnpm is pinned through `packageManager` in
+`package.json` and run via Corepack (`corepack enable pnpm`).
+
+- `pnpm install` — install dependencies and set up Husky hooks (via `prepare`).
+- `pnpm start` — run the server.
+- `pnpm run dev` — run with file watching.
+- `pnpm run migrate` — apply database migrations.
+- `pnpm test` — run backend tests (`node --test`).
+- `pnpm run test:frontend` — run frontend tests.
+- `pnpm run lint:commit` — validate the last commit message.
 
 ## Project-specific notes
 
 - Tests live in `tests/` (backend, CommonJS `node:test`) and
-  `frontend/tests/` (frontend, ESM `node:test`). Run `npm test` and
-  `npm run test:frontend` before committing (or rely on the path-aware
+  `frontend/tests/` (frontend, ESM `node:test`). Run `pnpm test` and
+  `pnpm run test:frontend` before committing (or rely on the path-aware
   `pre-push` hook); also validate changed `.js` files
   with `node --check <file>`.
 - Docs-in-sync is enforced by tooling, not just convention: run

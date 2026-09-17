@@ -62,7 +62,7 @@ Terraform creates the bucket + hosting but does **not** upload build output:
 
 ```bash
 cd frontend
-VITE_API_BASE=https://api.compmasone.ru/api npm run build
+VITE_API_BASE=https://api.compmasone.ru/api pnpm run build
 # then sync dist/ to the frontend bucket (credentials from
 # terraform output frontend_access_key/frontend_secret_key)
 aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend_bucket_full_name> --delete

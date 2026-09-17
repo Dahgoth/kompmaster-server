@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Migrated dependency management from npm to pnpm. `packageManager` pins
+  `pnpm@12.4.2` (run via Corepack); the npm lockfiles are replaced by
+  `pnpm-lock.yaml` at the root and in `frontend/` (two independent pnpm
+  projects). Husky hooks, CI, `scripts/deploy.sh`, `scripts/check-docs.js`,
+  and the install/run commands across `README.md`, `DEVELOPMENT.md`,
+  `CONTRIBUTING.md`, `AGENTS.md`, `ENVIRONMENT.md`, `DEPLOY.md`,
+  `frontend/README.md`, and the Terraform docs now use pnpm.
+  `frontend/pnpm-workspace.yaml` approves only the `esbuild` build script.
 - Bumped minimum Node.js version from 20 LTS to 24 LTS. CI workflows now run
   on Node 24; install instructions in `README.md`, `DEVELOPMENT.md`, and
   `DEPLOY.md` updated accordingly. Added `engines.node` field to
@@ -21,8 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the docs-in-sync check; docs-only pushes run the docs check alone.
 - `scripts/check-docs.js`: encodes the docs-in-sync hard rule as path
   classifiers, usable as `node scripts/check-docs.js [--staged|--base REF|files...]`.
-- TDD test framework on the built-in `node:test` runner: `npm test`
-  (backend, 18 tests) and `npm run test:frontend` (frontend, 16 tests);
+- TDD test framework on the built-in `node:test` runner: `pnpm test`
+  (backend) and `pnpm run test:frontend` (frontend);
   CI (`.github/workflows/ci.yml`) runs both suites, the frontend build,
   and commitlint on every push and PR; the Husky `pre-push` hook runs both
   suites before any push.
@@ -30,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `AGENTS.md` describing repository ground rules and tooling for agents.
 - Enforced Conventional Commits with commitlint + Husky (`commit-msg` hook).
 - Added this changelog and linked it from `README.md`.
-- Added `npm run lint:commit` helper to validate commit messages.
+- Added `pnpm run lint:commit` helper to validate commit messages.
 - Added `CONTRIBUTING.md` (contribution process), `DEVELOPMENT.md` (workspace
   setup), `ENVIRONMENT.md` (environment variables), and `DESIGN.md` (UX/UI
   contract), and referenced them from `README.md` and `AGENTS.md`.

@@ -154,7 +154,7 @@ YANDEX_METRIKA_ID=
 
 Follow [`../DEPLOY.md`](../DEPLOY.md) §2–5: install Node 24 + PostgreSQL 16,
 upload code to `/opt/compmaster`, copy `secrets/app.env` → `/opt/compmaster/.env`,
-run `npm install --omit=dev`, `npm run migrate`, then PM2. Caddy uses the
+run `pnpm install --prod --frozen-lockfile`, `pnpm run migrate`, then PM2. Caddy uses the
 repo's `Caddyfile`; the Debian/Ubuntu package reads `DOMAIN`/`PORT` from
 `/etc/default/caddy` (DEPLOY.md §5 — the Caddyfile also carries PoC defaults,
 so an unset `DOMAIN` cannot produce an empty site address). Caddy issues TLS
@@ -172,7 +172,7 @@ curl -I https://www.compmasone.ru            # 200 from S3 website (after step 4
 ```bash
 set -a; source terraform/secrets/s3-sync.env; set +a   # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
 cd frontend
-VITE_API_BASE=https://api.compmasone.ru/api npm run build
+VITE_API_BASE=https://api.compmasone.ru/api pnpm run build
 aws --endpoint-url https://s3.timeweb.com s3 sync dist/ \
   s3://$(cd terraform && terraform output -raw frontend_bucket_full_name) --delete
 ```

@@ -17,6 +17,7 @@ pg_dump -U kompmaster kompmaster | gzip > "backups/db-$(date +%Y%m%d-%H%M%S).sql
 Затем замените файлы проекта новой версией, **не удаляя `.env`**, и выполните:
 
 ```bash
+pnpm install --prod --frozen-lockfile   # если изменились зависимости
 pm2 restart kompmaster-api
 ```
 

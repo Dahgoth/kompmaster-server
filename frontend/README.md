@@ -12,12 +12,16 @@ Static storefront frontend for the KompMaster PC parts / restored electronics sh
 
 ## Development
 
+`frontend/` is a standalone pnpm project (own `pnpm-lock.yaml`); run its
+commands from this directory. pnpm is pinned via Corepack — enable it once with
+`corepack enable pnpm` (add `sudo` for a system-wide Node install).
+
 ```bash
-npm install
-npm run dev    # localhost:5173
-npm test       # node --test suite
-npm run build  # -> dist/
-npm run preview
+pnpm install
+pnpm run dev    # localhost:5173
+pnpm test       # node --test suite
+pnpm run build  # -> dist/
+pnpm run preview
 ```
 
 ## Deployment
@@ -27,7 +31,7 @@ infrastructure is provisioned by the backend repo's `terraform/` (see
 `terraform/README.md` there):
 
 ```bash
-VITE_API_BASE=https://api.compmasone.ru/api npm run build
+VITE_API_BASE=https://api.compmasone.ru/api pnpm run build
 aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend-bucket> --delete
 ```
 
@@ -50,6 +54,8 @@ aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend-bucket> -
 frontend/
   index.html          — entry point
   package.json        — deps + scripts
+  pnpm-workspace.yaml — pnpm settings (allowBuilds: esbuild)
+  pnpm-lock.yaml      — pnpm lockfile
   vite.config.js      — build config
   .env.example        — environment template
   

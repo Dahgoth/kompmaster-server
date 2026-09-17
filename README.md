@@ -41,8 +41,8 @@ Node.js/Express + PostgreSQL + S3-совместимое хранилище фо
 Тесты на встроенном раннере `node:test` — без дополнительных зависимостей:
 
 ```bash
-npm test                # backend: tests/*.test.js
-npm run test:frontend   # frontend: frontend/tests/*.test.js
+pnpm test                # backend: tests/*.test.js
+pnpm run test:frontend   # frontend: frontend/tests/*.test.js
 ```
 
 CI (`.github/workflows/ci.yml`) на каждый push и PR запускает только задания,
@@ -76,7 +76,7 @@ docker compose up -d postgres minio
 ```
 
 > **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
-> Production app deployment uses PM2 (`npm start`), not Docker.
+> Production app deployment uses PM2 (`pnpm start`), not Docker.
 > The archived [Docker Evaluation](docs/archive/DOCKER_EVALUATION.md) documents the full rationale.
 
 ## 2. Настройка проекта
@@ -84,7 +84,8 @@ docker compose up -d postgres minio
 ```bash
 # Распакуйте архив с кодом на сервере, затем:
 cd kompmaster-server
-npm install
+sudo corepack enable pnpm   # включает pnpm, закреплённый в package.json
+pnpm install
 
 cp .env.example .env
 nano .env   # заполните DATABASE_URL, JWT_SECRET, S3_*, SMTP_*, SMS_*, TELEGRAM_*
@@ -101,7 +102,7 @@ nano .env   # заполните DATABASE_URL, JWT_SECRET, S3_*, SMTP_*, SMS_*, 
 ## 3. Применить схему базы данных
 
 ```bash
-npm run migrate
+pnpm run migrate
 ```
 Выведет что-то вроде `[migrate] применяю 001_init.sql... готово`. Повторный
 запуск безопасен — уже применённые миграции пропускаются.
@@ -136,7 +137,7 @@ sudo -u postgres psql -d kompmaster -c \
 
 Для проверки:
 ```bash
-npm start
+pnpm start
 ```
 Откройте `http://ваш-сервер:4000/api/health` — должно вернуть `{"ok":true,...}`.
 
@@ -241,7 +242,7 @@ AI-агентов — в **[AGENTS.md](AGENTS.md)**.
 
 Этот код был написан и синтаксически проверен (`node --check` на каждом
 файле) без доступа к интернету — то есть **фактический прогон с реальной
-базой данных, S3 и живым npm install ещё не выполнялся**. Первым делом
+базой данных, S3 и живым pnpm install ещё не выполнялся**. Первым делом
 после разворачивания на сервере пройдите руками сценарий: регистрация →
 подтверждение телефона → вход → добавление товара → импорт прайса →
 оформление заказа → смена статуса → отзыв → его модерация. Если где-то

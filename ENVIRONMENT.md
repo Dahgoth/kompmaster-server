@@ -12,7 +12,7 @@ cp .env.example .env
 Never commit `.env` or any other file containing real secrets. The `.env`
 file is gitignored.
 
-The active entry point (`npm start` → `src/index.js`) reads configuration
+The active entry point (`pnpm start` → `src/index.js`) reads configuration
 through `src/config.js`. The legacy entry at `docs/legacy/server.js` reads some
 variables directly from `process.env` with different names; the differences are
 noted in [Legacy entry point](#legacy-entry-point).
