@@ -23,7 +23,9 @@ export async function renderAdminCategories() {
           <tr><th>ID</th><th>Название</th><th>Тип</th><th>Родитель</th><th>Видимая</th></tr>
         </thead>
         <tbody>
-          ${categories.map((c) => `
+          ${categories
+            .map(
+              (c) => `
             <tr>
               <td>${escapeHtml(c.id)}</td>
               <td>${escapeHtml(c.name || "")}</td>
@@ -31,7 +33,9 @@ export async function renderAdminCategories() {
               <td>${escapeHtml(c.parent_id || c.parentId || "—")}</td>
               <td>${c.visible ? "✓" : "—"}</td>
             </tr>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </tbody>
       </table>
     </div>

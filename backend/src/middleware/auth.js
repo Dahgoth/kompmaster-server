@@ -8,11 +8,14 @@ async function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ error: "Требуется авторизация" });
   try {
     const payload = verifyToken(token);
-    const { rows } = await db.query("SELECT id, login, role, display_name FROM users WHERE id = $1", [payload.sub]);
+    const { rows } = await db.query(
+      "SELECT id, login, role, display_name FROM users WHERE id = $1",
+      [payload.sub],
+    );
     if (!rows.length) return res.status(401).json({ error: "Аккаунт не найден" });
     req.user = rows[0];
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: "Недействительный или истёкший токен" });
   }
 }
@@ -40,9 +43,10 @@ function requireAdminPanelSession(req, res, next) {
   if (!token) return res.status(401).json({ error: "Нужен код доступа в админ-панель" });
   try {
     const payload = verifyAdminPanelToken(token);
-    if (payload.sub !== req.user.id) return res.status(401).json({ error: "Сессия админ-панели не совпадает с аккаунтом" });
+    if (payload.sub !== req.user.id)
+      return res.status(401).json({ error: "Сессия админ-панели не совпадает с аккаунтом" });
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: "Сессия админ-панели истекла, войдите заново" });
   }
 }

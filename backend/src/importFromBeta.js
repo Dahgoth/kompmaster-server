@@ -37,7 +37,7 @@ async function main() {
       `INSERT INTO categories (id, name, kind, visible, image)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (id) DO UPDATE SET name=$2, kind=$3, visible=$4, image=$5`,
-      [c.id, c.name, c.kind || "catalog", c.visible !== false, c.image || null]
+      [c.id, c.name, c.kind || "catalog", c.visible !== false, c.image || null],
     );
   }
   for (const c of categories) {
@@ -56,7 +56,15 @@ async function main() {
       const { rows } = await db.query(
         `INSERT INTO products (category_id, name, price, old_price, available, image, description)
          VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
-        [categoryId, p.name, p.price, p.oldPrice || null, p.available || 0, p.image || null, p.description || null]
+        [
+          categoryId,
+          p.name,
+          p.price,
+          p.oldPrice || null,
+          p.available || 0,
+          p.image || null,
+          p.description || null,
+        ],
       );
       productIdMap.set(`${categoryId}:${p.id}`, rows[0].id);
       productCount++;
@@ -83,7 +91,7 @@ async function main() {
           r.source === "admin" ? "admin" : "customer",
           r.status === "pending" ? "pending" : "approved",
           r.at || new Date().toISOString(),
-        ]
+        ],
       );
       reviewCount++;
     }

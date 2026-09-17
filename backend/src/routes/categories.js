@@ -22,10 +22,10 @@ router.post(
       `INSERT INTO categories (id, name, parent_id, kind, image)
        VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO UPDATE SET name = $2, parent_id = $3, kind = $4, image = $5`,
-      [id, name, parentId || null, kind || "catalog", image || null]
+      [id, name, parentId || null, kind || "catalog", image || null],
     );
     res.json({ ok: true });
-  }
+  },
 );
 
 router.delete(
@@ -36,7 +36,7 @@ router.delete(
   async (req, res) => {
     await db.query("DELETE FROM categories WHERE id = $1", [req.params.id]);
     res.json({ ok: true });
-  }
+  },
 );
 
 module.exports = router;

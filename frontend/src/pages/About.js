@@ -2,8 +2,7 @@
  * About page
  */
 
-import { aboutText, aboutProcess, aboutBusiness, siteContent, contacts } from "../data/content.js";
-import { escapeHtml } from "../utils.js";
+import { aboutProcess, aboutBusiness, siteContent, contacts } from "../data/content.js";
 
 export async function renderAbout() {
   return `

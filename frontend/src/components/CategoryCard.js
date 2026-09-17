@@ -16,7 +16,9 @@ export function renderCategoryCard(category) {
 }
 
 export function renderCategoryGroup(groupCategory, childCategories = []) {
-  const children = childCategories.filter((c) => c.parent_id === groupCategory.id || c.parentId === groupCategory.id);
+  const children = childCategories.filter(
+    (c) => c.parent_id === groupCategory.id || c.parentId === groupCategory.id,
+  );
   return `
     <div class="category-group">
       <h3 class="category-group__title">${escapeHtml(groupCategory.name)}</h3>

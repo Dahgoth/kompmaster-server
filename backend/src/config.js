@@ -20,14 +20,12 @@ function frontendOrigins(raw) {
     .filter(Boolean);
   if (!origins.length) {
     throw new Error(
-      "FRONTEND_ORIGIN must list at least one origin (e.g. https://www.compmasone.ru)"
+      "FRONTEND_ORIGIN must list at least one origin (e.g. https://www.compmasone.ru)",
     );
   }
   for (const o of origins) {
     if (o === "*" || !/^https?:\/\/[^/]+$/.test(o)) {
-      throw new Error(
-        `FRONTEND_ORIGIN entry is not an allowed explicit origin: ${o}`
-      );
+      throw new Error(`FRONTEND_ORIGIN entry is not an allowed explicit origin: ${o}`);
     }
   }
   return origins;
@@ -39,7 +37,7 @@ function frontendOrigins(raw) {
 const frontendOriginList = frontendOrigins(
   process.env.FRONTEND_ORIGIN === undefined
     ? "https://www.compmasone.ru,https://compmasone.ru"
-    : process.env.FRONTEND_ORIGIN
+    : process.env.FRONTEND_ORIGIN,
 );
 
 module.exports = {

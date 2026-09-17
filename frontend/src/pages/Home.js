@@ -7,7 +7,9 @@ import { renderCategoryCard, renderProductRow, renderSkeleton } from "../compone
 import { defaultCategories } from "../data/categories.js";
 
 export async function renderHome() {
-  let categories = defaultCategories.filter((c) => c.visible && !c.parentId && c.kind === "catalog");
+  let categories = defaultCategories.filter(
+    (c) => c.visible && !c.parentId && c.kind === "catalog",
+  );
   let featuredProducts = [];
   let loading = true;
 
@@ -46,9 +48,10 @@ export async function renderHome() {
       <div class="shell">
         <h2 class="section-title">Популярные товары</h2>
         <div class="product-grid">
-          ${loading
-            ? [1, 2, 3].map(() => renderSkeleton("image", "100%", "200px")).join("")
-            : featuredProducts.map((p) => renderProductRow(p)).join("")
+          ${
+            loading
+              ? [1, 2, 3].map(() => renderSkeleton("image", "100%", "200px")).join("")
+              : featuredProducts.map((p) => renderProductRow(p)).join("")
           }
         </div>
       </div>

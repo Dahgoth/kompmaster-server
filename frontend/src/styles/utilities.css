@@ -1,32 +1,76 @@
 /* ===== Utility classes ===== */
 
 /* ——— Spacing ——— */
-.mt-xs { margin-top: 8px; }
-.mt-sm { margin-top: 12px; }
-.mt-md { margin-top: 20px; }
-.mt-lg { margin-top: 34px; }
-.mt-xl { margin-top: 54px; }
-.mb-sm { margin-bottom: 12px; }
-.mb-md { margin-bottom: 20px; }
-.mb-lg { margin-bottom: 34px; }
-.mb-xl { margin-bottom: 54px; }
+.mt-xs {
+  margin-top: 8px;
+}
+.mt-sm {
+  margin-top: 12px;
+}
+.mt-md {
+  margin-top: 20px;
+}
+.mt-lg {
+  margin-top: 34px;
+}
+.mt-xl {
+  margin-top: 54px;
+}
+.mb-sm {
+  margin-bottom: 12px;
+}
+.mb-md {
+  margin-bottom: 20px;
+}
+.mb-lg {
+  margin-bottom: 34px;
+}
+.mb-xl {
+  margin-bottom: 54px;
+}
 
 /* ——— Display ——— */
-.d-flex { display: flex; }
-.d-grid { display: grid; }
-.align-center { align-items: center; }
-.justify-center { justify-content: center; }
-.gap-sm { gap: 8px; }
-.gap-md { gap: 16px; }
-.gap-lg { gap: 26px; }
+.d-flex {
+  display: flex;
+}
+.d-grid {
+  display: grid;
+}
+.align-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.gap-sm {
+  gap: 8px;
+}
+.gap-md {
+  gap: 16px;
+}
+.gap-lg {
+  gap: 26px;
+}
 
 /* ——— Text ——— */
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.text-muted { color: var(--muted); }
-.text-pink { color: var(--pink); }
-.font-bold { font-weight: 700; }
-.font-black { font-weight: 850; }
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.text-muted {
+  color: var(--muted);
+}
+.text-pink {
+  color: var(--pink);
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-black {
+  font-weight: 850;
+}
 
 /* ——— Badges / pills ——— */
 .badge {
@@ -39,10 +83,22 @@
   white-space: nowrap;
 }
 
-.badge--new { background: var(--pink); color: #fff; }
-.badge--sale { background: var(--violet); color: #fff; }
-.badge--stock { background: var(--lime); color: #111; }
-.badge--low { background: #ffd6d6; color: #a51e2d; }
+.badge--new {
+  background: var(--pink);
+  color: #fff;
+}
+.badge--sale {
+  background: var(--violet);
+  color: #fff;
+}
+.badge--stock {
+  background: var(--lime);
+  color: #111;
+}
+.badge--low {
+  background: #ffd6d6;
+  color: #a51e2d;
+}
 
 /* ——— Rating ——— */
 .rating-stars {
@@ -53,10 +109,18 @@
   font-size: 14px;
 }
 
-.rating-stars .star { font-size: 14px; }
-.rating-stars .star--empty { color: #ccc; }
+.rating-stars .star {
+  font-size: 14px;
+}
+.rating-stars .star--empty {
+  color: #ccc;
+}
 
-.rating-count { font-size: 13px; color: var(--muted); margin-left: 6px; }
+.rating-count {
+  font-size: 13px;
+  color: var(--muted);
+  margin-left: 6px;
+}
 
 /* ——— Skeleton loaders ——— */
 .skeleton {
@@ -67,8 +131,12 @@
 }
 
 @keyframes skeleton {
-  0% { background-position: 200%; }
-  100% { background-position: -200%; }
+  0% {
+    background-position: 200%;
+  }
+  100% {
+    background-position: -200%;
+  }
 }
 
 /* ——— Image placeholders ——— */
@@ -81,13 +149,20 @@
 }
 
 /* ——— Scrollbar (subtle) ——— */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 ::-webkit-scrollbar-thumb {
   background: rgba(17, 17, 20, 0.15);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(17, 17, 20, 0.25); }
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 17, 20, 0.25);
+}
 
 /* ——— Focus states ——— */
 *:focus-visible {
@@ -96,8 +171,14 @@
 }
 
 /* ——— Transitions ——— */
-.transition { transition: 0.2s ease; }
+.transition {
+  transition: 0.2s ease;
+}
 
 /* ——— Z-index helpers ——— */
-.z-splash { z-index: 2000; }
-.z-popup { z-index: 210; }
+.z-splash {
+  z-index: 2000;
+}
+.z-popup {
+  z-index: 210;
+}

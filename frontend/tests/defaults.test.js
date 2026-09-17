@@ -1,20 +1,13 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  escapeHtml,
-  formatPriceRaw,
-  slugify,
-} from "../src/utils.js";
+import { escapeHtml, formatPriceRaw, slugify } from "../src/utils.js";
 import { defaultCategories, menuLabels, menuOrder } from "../src/data/categories.js";
 import { paymentSettings, orderStatuses } from "../src/data/payment.js";
 
 describe("frontend utils", () => {
   it("escapeHtml neutralizes all five markup characters", () => {
-    assert.equal(
-      escapeHtml(`&<>"'`),
-      "&amp;&lt;&gt;&quot;&#39;"
-    );
+    assert.equal(escapeHtml(`&<>"'`), "&amp;&lt;&gt;&quot;&#39;");
   });
 
   it("escapeHtml returns empty string for falsy input", () => {
@@ -43,10 +36,7 @@ describe("frontend category defaults", () => {
   it("references only existing ids in group children lists", () => {
     const ids = new Set(defaultCategories.map((c) => c.id));
     for (const group of defaultCategories.filter((c) => c.kind === "group")) {
-      assert.ok(
-        Array.isArray(group.children),
-        `${group.id} must declare children`
-      );
+      assert.ok(Array.isArray(group.children), `${group.id} must declare children`);
       for (const childId of group.children) {
         assert.ok(ids.has(childId), `${group.id} references missing ${childId}`);
       }
@@ -81,7 +71,7 @@ describe("frontend payment defaults (PoC)", () => {
     for (const token of ["{order}", "{items}", "{total}"]) {
       assert.ok(
         paymentSettings.managerMessageTemplate.includes(token),
-        `template missing ${token}`
+        `template missing ${token}`,
       );
     }
   });

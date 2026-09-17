@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
   params.push(limit, offset);
   const { rows } = await db.query(
     `SELECT * FROM products ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
-    params
+    params,
   );
   res.json(rows);
 });
@@ -37,26 +37,47 @@ router.get("/:id", async (req, res) => {
   res.json(rows[0]);
 });
 
-router.post("/", requireAuth, requireRole(["admin"]), requireAdminPanelSession, async (req, res) => {
-  const { categoryId, name, price, oldPrice, available, image, description, specs } = req.body || {};
-  if (!categoryId || !name || price === undefined) {
-    return res.status(400).json({ error: "Нужны categoryId, name, price" });
-  }
-  const { rows } = await db.query(
-    `INSERT INTO products (category_id, name, price, old_price, available, image, description, specs)
+router.post(
+  "/",
+  requireAuth,
+  requireRole(["admin"]),
+  requireAdminPanelSession,
+  async (req, res) => {
+    const { categoryId, name, price, oldPrice, available, image, description, specs } =
+      req.body || {};
+    if (!categoryId || !name || price === undefined) {
+      return res.status(400).json({ error: "Нужны categoryId, name, price" });
+    }
+    const { rows } = await db.query(
+      `INSERT INTO products (category_id, name, price, old_price, available, image, description, specs)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-    [categoryId, name, price, oldPrice || null, available || 0, image || null, description || null, specs ? JSON.stringify(specs) : null]
-  );
-  res.json(rows[0]);
-});
+      [
+        categoryId,
+        name,
+        price,
+        oldPrice || null,
+        available || 0,
+        image || null,
+        description || null,
+        specs ? JSON.stringify(specs) : null,
+      ],
+    );
+    res.json(rows[0]);
+  },
+);
 
-router.put("/:id", requireAuth, requireRole(["admin"]), requireAdminPanelSession, async (req, res) => {
-  const { name, price, oldPrice, available, image, description, categoryId } = req.body || {};
-  const existing = await db.query("SELECT price FROM products WHERE id = $1", [req.params.id]);
-  if (!existing.rows.length) return res.status(404).json({ error: "Товар не найден" });
+router.put(
+  "/:id",
+  requireAuth,
+  requireRole(["admin"]),
+  requireAdminPanelSession,
+  async (req, res) => {
+    const { name, price, oldPrice, available, image, description, categoryId } = req.body || {};
+    const existing = await db.query("SELECT price FROM products WHERE id = $1", [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: "Товар не найден" });
 
-  const { rows } = await db.query(
-    `UPDATE products SET
+    const { rows } = await db.query(
+      `UPDATE products SET
        name = COALESCE($1, name),
        price = COALESCE($2, price),
        old_price = COALESCE($3, old_price),
@@ -66,22 +87,29 @@ router.put("/:id", requireAuth, requireRole(["admin"]), requireAdminPanelSession
        category_id = COALESCE($7, category_id),
        updated_at = now()
      WHERE id = $8 RETURNING *`,
-    [name, price, oldPrice, available, image, description, categoryId, req.params.id]
-  );
-  // История изменения цены — только если цена реально поменялась.
-  if (price !== undefined && Number(price) !== Number(existing.rows[0].price)) {
-    await db.query(
-      "INSERT INTO price_history (product_id, old_price, new_price) VALUES ($1,$2,$3)",
-      [req.params.id, existing.rows[0].price, price]
+      [name, price, oldPrice, available, image, description, categoryId, req.params.id],
     );
-  }
-  res.json(rows[0]);
-});
+    // История изменения цены — только если цена реально поменялась.
+    if (price !== undefined && Number(price) !== Number(existing.rows[0].price)) {
+      await db.query(
+        "INSERT INTO price_history (product_id, old_price, new_price) VALUES ($1,$2,$3)",
+        [req.params.id, existing.rows[0].price, price],
+      );
+    }
+    res.json(rows[0]);
+  },
+);
 
-router.delete("/:id", requireAuth, requireRole(["admin"]), requireAdminPanelSession, async (req, res) => {
-  await db.query("DELETE FROM products WHERE id = $1", [req.params.id]);
-  res.json({ ok: true });
-});
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRole(["admin"]),
+  requireAdminPanelSession,
+  async (req, res) => {
+    await db.query("DELETE FROM products WHERE id = $1", [req.params.id]);
+    res.json({ ok: true });
+  },
+);
 
 // ---- Импорт прайса (xlsx/xls/csv/tsv) ----
 // mode: "sync" (недостающим товарам остаток 0) | "merge" (не трогать отсутствующих)
@@ -118,25 +146,27 @@ router.post(
     }
 
     const client = await db.getClient();
-    let added = 0, updated = 0, zeroed = 0;
+    let added = 0,
+      updated = 0,
+      zeroed = 0;
     try {
       await client.query("BEGIN");
       const seenIds = new Set();
       for (const row of parsed.rows) {
         const existing = await client.query(
           "SELECT id, price FROM products WHERE category_id = $1 AND name = $2",
-          [categoryId, row.name]
+          [categoryId, row.name],
         );
         if (existing.rows.length) {
           const prod = existing.rows[0];
           await client.query(
             "UPDATE products SET price=$1, available=$2, updated_at=now() WHERE id=$3",
-            [row.price, row.available, prod.id]
+            [row.price, row.available, prod.id],
           );
           if (Number(prod.price) !== Number(row.price)) {
             await client.query(
               "INSERT INTO price_history (product_id, old_price, new_price) VALUES ($1,$2,$3)",
-              [prod.id, prod.price, row.price]
+              [prod.id, prod.price, row.price],
             );
           }
           seenIds.add(prod.id);
@@ -144,7 +174,7 @@ router.post(
         } else {
           const inserted = await client.query(
             "INSERT INTO products (category_id, name, price, available) VALUES ($1,$2,$3,$4) RETURNING id",
-            [categoryId, row.name, row.price, row.available]
+            [categoryId, row.name, row.price, row.available],
           );
           seenIds.add(inserted.rows[0].id);
           added++;
@@ -155,7 +185,7 @@ router.post(
           `UPDATE products SET available = 0
            WHERE category_id = $1 AND available <> 0 AND id <> ALL($2::uuid[])
            RETURNING id`,
-          [categoryId, [...seenIds]]
+          [categoryId, [...seenIds]],
         );
         zeroed = missing.rows.length;
       }
@@ -167,8 +197,15 @@ router.post(
       client.release();
     }
 
-    res.json({ added, updated, zeroed, skipped: parsed.skipped, blankStock: parsed.blankStock, duplicates: dup });
-  }
+    res.json({
+      added,
+      updated,
+      zeroed,
+      skipped: parsed.skipped,
+      blankStock: parsed.blankStock,
+      duplicates: dup,
+    });
+  },
 );
 
 // ---- Экспорт текущих остатков раздела (CSV, тот же формат, что и импорт) ----
@@ -178,9 +215,10 @@ router.get(
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
-    const { rows } = await db.query("SELECT name, price, available FROM products WHERE category_id = $1 ORDER BY name", [
-      req.params.categoryId,
-    ]);
+    const { rows } = await db.query(
+      "SELECT name, price, available FROM products WHERE category_id = $1 ORDER BY name",
+      [req.params.categoryId],
+    );
     const escape = (v) => {
       const s = String(v ?? "");
       return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -189,9 +227,12 @@ router.get(
     rows.forEach((r) => lines.push([escape(r.name), r.price, r.available].join(";")));
     const csv = "\uFEFF" + lines.join("\r\n");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="ostatki_${req.params.categoryId}.csv"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="ostatki_${req.params.categoryId}.csv"`,
+    );
     res.send(csv);
-  }
+  },
 );
 
 module.exports = router;

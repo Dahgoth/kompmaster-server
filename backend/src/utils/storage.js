@@ -23,7 +23,7 @@ async function uploadBuffer(buffer, folder, mimeType) {
       Body: buffer,
       ContentType: mimeType,
       ACL: "public-read",
-    })
+    }),
   );
   return `${config.s3.publicUrl.replace(/\/$/, "")}/${key}`;
 }

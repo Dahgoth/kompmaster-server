@@ -103,11 +103,16 @@ suggestion.
   The Husky `pre-push` hook runs only the suites whose area changed, plus
   `node scripts/check-versions.js` and `node scripts/check-docs.js` on the
   pushed files.
+- Run `pnpm run lint` before committing — it covers ESLint for both apps
+  (`lint:backend` / `lint:frontend`) and the Prettier check
+  (`format:check`). Fix findings with `pnpm run format` and by addressing
+  the reported rules; do not disable rules ad hoc.
 - Docs-in-sync is enforced by `scripts/check-docs.js` (run
   `node scripts/check-docs.js --staged` before committing). CI runs the same
   check on every push and PR and fails the build when a required doc is
   missing — the table above is a hard gate, not a suggestion.
-- Validate every changed `.js` file before committing with `node --check <file>`.
+- Validate every changed `.js` file with `node --check <file>`, or simply run
+  `pnpm run lint`, which parses both apps with ESLint.
 - Database schema changes go into `backend/migrations/` as new `NNN_*.sql`
   files. Never edit a migration that has already been applied.
 - Never commit `.env`, `node_modules/`, or the contents of `uploads/`.

@@ -8,16 +8,11 @@ import { escapeHtml, formatPrice, formatDate } from "../utils.js";
 export async function renderOrder(params = {}) {
   const { id } = params;
   let order = null;
-  let loading = true;
 
-  try {
-    const resp = await api.get(`/orders/${id}`, { auth: true });
-    if (resp.ok && resp.data) order = resp.data;
-  } finally {
-    loading = false;
-  }
+  const resp = await api.get(`/orders/${id}`, { auth: true });
+  if (resp.ok && resp.data) order = resp.data;
 
-  if (loading || !order) {
+  if (!order) {
     return `
       <section class="section">
         <div class="shell">
@@ -48,12 +43,18 @@ export async function renderOrder(params = {}) {
             <span>Товары</span>
             <span>${formatPrice(order.total)}</span>
           </div>
-          ${order.items?.map((item) => `
+          ${
+            order.items
+              ?.map(
+                (item) => `
             <div class="summary-row">
               <span>${escapeHtml(item.name)} × ${item.quantity}</span>
               <span>${formatPrice(item.price * item.quantity)}</span>
             </div>
-          `).join("") || ""}
+          `,
+              )
+              .join("") || ""
+          }
           <div class="summary-row">
             <span>Доставка</span>
             <span>${formatPrice(order.delivery_price || 0)}</span>

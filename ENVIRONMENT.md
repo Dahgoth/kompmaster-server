@@ -2,6 +2,10 @@
 
 Environment configuration guide for the KompMaster server.
 
+`backend/src/config.js` is formatted by the workspace Prettier/ESLint setup
+(see `DEVELOPMENT.md` §Linting and formatting); formatting-only commits to
+that file do not change the env surface described in this document.
+
 Variables are read through `dotenv` at the top of `backend/src/config.js`. Copy
 `backend/.env.example` to `backend/.env` and fill in real values:
 

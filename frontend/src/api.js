@@ -79,10 +79,9 @@ export const api = {
 };
 
 export async function fetchBootstrap() {
-  const [categories, products, cart] = await Promise.all([
+  const [categories, products] = await Promise.all([
     api.get("/categories", { admin: true }),
     api.get("/products", { admin: true }),
-    Promise.resolve({ ok: true, data: null }),
   ]);
 
   if (!categories.ok && !categories.error.includes("401")) {

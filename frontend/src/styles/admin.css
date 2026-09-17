@@ -19,7 +19,10 @@
   display: block;
 }
 
-.admin-nav { display: grid; gap: 6px; }
+.admin-nav {
+  display: grid;
+  gap: 6px;
+}
 .admin-nav a {
   display: flex;
   align-items: center;
@@ -31,14 +34,19 @@
   transition: 0.18s;
 }
 
-.admin-nav a:hover { background: #1e1e24; color: #fff; }
+.admin-nav a:hover {
+  background: #1e1e24;
+  color: #fff;
+}
 .admin-nav a.active {
   background: var(--pink);
   color: #fff;
   font-weight: 700;
 }
 
-.admin-content { padding: 34px; }
+.admin-content {
+  padding: 34px;
+}
 .admin-card {
   border-radius: var(--radius-lg);
   background: #fff;
@@ -59,7 +67,8 @@
   font-size: 14px;
 }
 
-.admin-table th, .admin-table td {
+.admin-table th,
+.admin-table td {
   padding: 12px 14px;
   text-align: left;
   border-bottom: 1px solid var(--line);
@@ -73,10 +82,18 @@
   letter-spacing: 0.05em;
 }
 
-.admin-table tr:hover { background: var(--soft); }
-.admin-table a { color: var(--pink); font-weight: 600; }
+.admin-table tr:hover {
+  background: var(--soft);
+}
+.admin-table a {
+  color: var(--pink);
+  font-weight: 600;
+}
 
-.admin-actions { display: flex; gap: 8px; }
+.admin-actions {
+  display: flex;
+  gap: 8px;
+}
 .admin-btn {
   width: 32px;
   height: 32px;
@@ -90,8 +107,15 @@
   font-size: 14px;
 }
 
-.admin-btn:hover { background: var(--pink); color: #fff; border-color: var(--pink); }
-.admin-btn--delete:hover { background: var(--pink); color: #fff; }
+.admin-btn:hover {
+  background: var(--pink);
+  color: #fff;
+  border-color: var(--pink);
+}
+.admin-btn--delete:hover {
+  background: var(--pink);
+  color: #fff;
+}
 
 /* Admin login */
 .admin-login {
@@ -109,10 +133,21 @@
   text-align: center;
 }
 
-.admin-login .brand { font-size: 40px; margin-bottom: 28px; }
-.admin-login h1 { font-size: 24px; font-weight: 800; margin-bottom: 26px; }
+.admin-login .brand {
+  font-size: 40px;
+  margin-bottom: 28px;
+}
+.admin-login h1 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 26px;
+}
 
 @media (max-width: 820px) {
-  .admin-layout { grid-template-columns: 1fr; }
-  .admin-sidebar { display: none; }
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+  .admin-sidebar {
+    display: none;
+  }
 }

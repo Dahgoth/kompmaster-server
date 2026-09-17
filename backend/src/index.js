@@ -29,7 +29,7 @@ app.use(
       callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
-  })
+  }),
 );
 app.use(express.json({ limit: "2mb" }));
 
@@ -45,7 +45,7 @@ app.use("/api/uploads", uploadsRoutes);
 
 // Единая обработка ошибок — чтобы упавший запрос не ронял процесс и не
 // отдавал клиенту голый стек-трейс.
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error("[unhandled]", err);
   res.status(err.status || 500).json({ error: err.message || "Внутренняя ошибка сервера" });
 });

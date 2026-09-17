@@ -69,7 +69,7 @@ export function addToCart(product, quantity = 1) {
   let newCart;
   if (existing) {
     newCart = _state.cart.map((item) =>
-      item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+      item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
     );
   } else {
     newCart = [..._state.cart, { ...product, quantity }];
@@ -89,9 +89,7 @@ export function updateCartQuantity(productId, quantity) {
     return;
   }
   setState({
-    cart: _state.cart.map((item) =>
-      item.id === productId ? { ...item, quantity } : item
-    ),
+    cart: _state.cart.map((item) => (item.id === productId ? { ...item, quantity } : item)),
   });
 }
 

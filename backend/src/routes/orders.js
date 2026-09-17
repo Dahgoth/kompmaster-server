@@ -30,18 +30,29 @@ router.post("/", requireAuth, async (req, res) => {
       // чтобы два одновременных заказа не увели остаток в минус.
       const { rows } = await client.query(
         "SELECT id, name, price, available FROM products WHERE id = $1 FOR UPDATE",
-        [item.productId]
+        [item.productId],
       );
       const product = rows[0];
-      if (!product) throw Object.assign(new Error(`Товар ${item.productId} не найден`), { status: 400 });
+      if (!product)
+        throw Object.assign(new Error(`Товар ${item.productId} не найден`), { status: 400 });
       if (product.available < item.qty) {
         throw Object.assign(
-          new Error(`Недостаточно товара «${product.name}»: в наличии ${product.available}, запрошено ${item.qty}`),
-          { status: 409 }
+          new Error(
+            `Недостаточно товара «${product.name}»: в наличии ${product.available}, запрошено ${item.qty}`,
+          ),
+          { status: 409 },
         );
       }
-      await client.query("UPDATE products SET available = available - $1 WHERE id = $2", [item.qty, product.id]);
-      priced.push({ productId: product.id, name: product.name, price: Number(product.price), qty: item.qty });
+      await client.query("UPDATE products SET available = available - $1 WHERE id = $2", [
+        item.qty,
+        product.id,
+      ]);
+      priced.push({
+        productId: product.id,
+        name: product.name,
+        price: Number(product.price),
+        qty: item.qty,
+      });
     }
 
     const subtotal = priced.reduce((s, x) => s + x.price * x.qty, 0);
@@ -49,10 +60,20 @@ router.post("/", requireAuth, async (req, res) => {
     const { rows: orderRows } = await client.query(
       `INSERT INTO orders (number, user_id, items, subtotal, total, receive_method, address, contact_phone)
        VALUES ($1,$2,$3,$4,$4,$5,$6,$7) RETURNING *`,
-      [number, req.user.id, JSON.stringify(priced), subtotal, receiveMethod || "pickup", address || null, contactPhone || null]
+      [
+        number,
+        req.user.id,
+        JSON.stringify(priced),
+        subtotal,
+        receiveMethod || "pickup",
+        address || null,
+        contactPhone || null,
+      ],
     );
     const order = orderRows[0];
-    await client.query("INSERT INTO order_history (order_id, text) VALUES ($1, 'Заказ создан')", [order.id]);
+    await client.query("INSERT INTO order_history (order_id, text) VALUES ($1, 'Заказ создан')", [
+      order.id,
+    ]);
     await client.query("COMMIT");
 
     notifyAdmin(`🛒 Новый заказ ${order.number} на сумму ${subtotal} ₽`);
@@ -67,14 +88,23 @@ router.post("/", requireAuth, async (req, res) => {
 
 // Мои заказы
 router.get("/my", requireAuth, async (req, res) => {
-  const { rows } = await db.query("SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC", [req.user.id]);
+  const { rows } = await db.query(
+    "SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC",
+    [req.user.id],
+  );
   res.json(rows);
 });
 
 router.get("/my/:id", requireAuth, async (req, res) => {
-  const { rows } = await db.query("SELECT * FROM orders WHERE id = $1 AND user_id = $2", [req.params.id, req.user.id]);
+  const { rows } = await db.query("SELECT * FROM orders WHERE id = $1 AND user_id = $2", [
+    req.params.id,
+    req.user.id,
+  ]);
   if (!rows.length) return res.status(404).json({ error: "Заказ не найден" });
-  const history = await db.query("SELECT * FROM order_history WHERE order_id = $1 ORDER BY created_at", [req.params.id]);
+  const history = await db.query(
+    "SELECT * FROM order_history WHERE order_id = $1 ORDER BY created_at",
+    [req.params.id],
+  );
   res.json({ ...rows[0], history: history.rows });
 });
 
@@ -89,18 +119,24 @@ router.get(
     const { status, search, page = 1, pageSize = 30 } = req.query;
     const conditions = [];
     const params = [];
-    if (status) { params.push(status); conditions.push(`status = $${params.length}`); }
-    if (search) { params.push(`%${search}%`); conditions.push(`number ILIKE $${params.length}`); }
+    if (status) {
+      params.push(status);
+      conditions.push(`status = $${params.length}`);
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      conditions.push(`number ILIKE $${params.length}`);
+    }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const limit = Math.min(100, Number(pageSize) || 30);
     const offset = (Math.max(1, Number(page) || 1) - 1) * limit;
     params.push(limit, offset);
     const { rows } = await db.query(
       `SELECT * FROM orders ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
-      params
+      params,
     );
     res.json(rows);
-  }
+  },
 );
 
 router.put(
@@ -113,12 +149,15 @@ router.put(
     if (!status) return res.status(400).json({ error: "Не передан статус" });
     const { rows } = await db.query(
       "UPDATE orders SET status = $1, status_updated_at = now() WHERE id = $2 RETURNING *",
-      [status, req.params.id]
+      [status, req.params.id],
     );
     if (!rows.length) return res.status(404).json({ error: "Заказ не найден" });
-    await db.query("INSERT INTO order_history (order_id, text) VALUES ($1, $2)", [req.params.id, `Статус изменён на «${status}»`]);
+    await db.query("INSERT INTO order_history (order_id, text) VALUES ($1, $2)", [
+      req.params.id,
+      `Статус изменён на «${status}»`,
+    ]);
     res.json(rows[0]);
-  }
+  },
 );
 
 // Отмена — доступна и менеджеру (это управление статусом), возвращает остаток на склад.
@@ -132,17 +171,22 @@ router.post(
     const client = await db.getClient();
     try {
       await client.query("BEGIN");
-      const { rows } = await client.query("SELECT * FROM orders WHERE id = $1 FOR UPDATE", [req.params.id]);
+      const { rows } = await client.query("SELECT * FROM orders WHERE id = $1 FOR UPDATE", [
+        req.params.id,
+      ]);
       const order = rows[0];
       if (!order) throw Object.assign(new Error("Заказ не найден"), { status: 404 });
       if (order.status !== "Отменён") {
         for (const item of order.items) {
-          await client.query("UPDATE products SET available = available + $1 WHERE id = $2", [item.qty, item.productId]);
+          await client.query("UPDATE products SET available = available + $1 WHERE id = $2", [
+            item.qty,
+            item.productId,
+          ]);
         }
       }
       await client.query(
         "UPDATE orders SET status = 'Отменён', cancel_reason = $1, status_updated_at = now() WHERE id = $2",
-        [reason || null, order.id]
+        [reason || null, order.id],
       );
       await client.query("INSERT INTO order_history (order_id, text) VALUES ($1, $2)", [
         order.id,
@@ -156,15 +200,21 @@ router.post(
     } finally {
       client.release();
     }
-  }
+  },
 );
 
 // Полное удаление заказа — только настоящий admin (не manager), это
 // разрушительнее, чем управление статусом.
-router.delete("/:id", requireAuth, requireRole(["admin"]), requireAdminPanelSession, async (req, res) => {
-  await db.query("DELETE FROM orders WHERE id = $1", [req.params.id]);
-  res.json({ ok: true });
-});
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRole(["admin"]),
+  requireAdminPanelSession,
+  async (req, res) => {
+    await db.query("DELETE FROM orders WHERE id = $1", [req.params.id]);
+    res.json({ ok: true });
+  },
+);
 
 // ---- Вебхук платёжной системы ----
 // Идемпотентно: каждое provider_event_id обрабатывается только один раз,
@@ -175,7 +225,7 @@ router.post("/payment-webhook", async (req, res) => {
 
   try {
     await db.query("INSERT INTO payment_webhook_events (provider_event_id) VALUES ($1)", [eventId]);
-  } catch (err) {
+  } catch {
     // Уникальный ключ уже есть — значит это уведомление мы уже обработали.
     return res.json({ ok: true, duplicate: true });
   }
@@ -183,7 +233,7 @@ router.post("/payment-webhook", async (req, res) => {
   if (status === "paid") {
     await db.query(
       "UPDATE orders SET payment_status = 'Оплачено', paid_at = now() WHERE number = $1",
-      [orderNumber]
+      [orderNumber],
     );
     notifyAdmin(`💰 Заказ ${orderNumber} оплачен`);
   }

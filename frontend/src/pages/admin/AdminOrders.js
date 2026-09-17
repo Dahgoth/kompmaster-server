@@ -16,9 +16,12 @@ export async function renderAdminOrders() {
   return `
     <div class="admin-card">
       <h2>Заказы</h2>
-      ${orders.length === 0 ? `
+      ${
+        orders.length === 0
+          ? `
         <p style="color:var(--muted);">Нет заказов</p>
-      ` : `
+      `
+          : `
         <table class="admin-table">
           <thead>
             <tr>
@@ -26,7 +29,9 @@ export async function renderAdminOrders() {
             </tr>
           </thead>
           <tbody>
-            ${orders.map((o) => `
+            ${orders
+              .map(
+                (o) => `
               <tr onclick="window.navigateTo('/admin/orders/${escapeHtml(o.id)}')" style="cursor:pointer;">
                 <td>${escapeHtml(o.order_number || o.id)}</td>
                 <td>${formatDate(o.created_at)}</td>
@@ -34,10 +39,13 @@ export async function renderAdminOrders() {
                 <td><span data-status="${escapeHtml(getStatusValue(o.status))}">${escapeHtml(getStatusLabel(o.status))}</span></td>
                 <td>${escapeHtml(o.payment_method || "—")}</td>
               </tr>
-            `).join("")}
+            `,
+              )
+              .join("")}
           </tbody>
         </table>
-      `}
+      `
+      }
     </div>
   `;
 }

@@ -4,7 +4,6 @@
 
 import { api } from "../api.js";
 import { escapeHtml, formatPrice } from "../utils.js";
-import { getCartCount } from "../store.js";
 
 export async function renderProduct(params = {}) {
   const { id } = params;
@@ -63,12 +62,18 @@ export async function renderProduct(params = {}) {
             <div class="detail-sku">Арт: ${escapeHtml(product.sku || "—")}</div>
 
             <table class="detail-specs-table">
-              ${Object.entries(product.specs || product.attributes || {}).map(([key, val]) => `
+              ${Object.entries(product.specs || product.attributes || {})
+                .map(
+                  ([key, val]) => `
                 <tr><td>${escapeHtml(key)}</td><td>${escapeHtml(String(val))}</td></tr>
-              `).join("")}
+              `,
+                )
+                .join("")}
             </table>
 
-            ${inStock ? `
+            ${
+              inStock
+                ? `
               <div class="detail-actions">
                 <div class="qty-stepper">
                   <button type="button" class="qty-minus">−</button>
@@ -79,7 +84,9 @@ export async function renderProduct(params = {}) {
                   В корзину
                 </button>
               </div>
-            ` : `<button class="btn btn--secondary btn--large" disabled>Нет в наличии</button>`}
+            `
+                : `<button class="btn btn--secondary btn--large" disabled>Нет в наличии</button>`
+            }
 
             <div style="margin-top:26px;">
               <button class="btn btn--secondary" onclick="window.showAuthModal('login')">Купить в 1 клик</button>

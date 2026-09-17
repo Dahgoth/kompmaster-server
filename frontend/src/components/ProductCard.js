@@ -7,7 +7,6 @@ import { escapeHtml, formatPrice } from "../utils.js";
 export function renderProductCard(product) {
   const price = product.price || 0;
   const oldPrice = product.old_price;
-  const inStock = product.in_stock !== false;
 
   return `
     <article class="product-card" data-id="${escapeHtml(product.id)}">

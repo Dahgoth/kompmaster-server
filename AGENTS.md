@@ -92,6 +92,13 @@ Examples:
   `pnpm run version:sync` (`node scripts/sync-versions.js`) to propagate the
   new version to both apps. See
   `docs/adr/003-monorepo-workspace-and-versioning.md`.
+- **ESLint + Prettier** — `eslint.config.js` (flat config,
+  `eslint:recommended` scope; style rules are delegated to Prettier) and
+  `.prettierrc.json` cover `backend/**`, `frontend/**`, and `scripts/**`.
+  Run `pnpm run lint` (or `format` to rewrite) before committing. The CI
+  `backend`/`frontend` jobs lint their area before testing. The six
+  ADR-001-quarantined legacy ESM files in `backend/` are excluded from both
+  tools and must stay frozen.
 - **Husky `pre-push`** — blocks pushing directly to `main`; then runs only
   the checks whose area changed in the pushed commits: backend (`pnpm test:backend`),
   frontend (`pnpm run test:frontend`), `node scripts/check-versions.js`
@@ -102,10 +109,10 @@ Examples:
   immediately after.
 - **CI** — `.github/workflows/ci.yml` runs path-filtered jobs on every push
   and PR: `docs-sync` (always), `commitlint` (PRs), `versions` (version
-  alignment), `backend` (backend paths), `frontend` (frontend paths, incl.
-  build), `terraform` (`terraform fmt -check -recursive` + `terraform
-  validate` on `terraform/**` paths; provider pinned by the committed
-  `.terraform.lock.hcl`).
+  alignment), `backend` (backend paths, incl. ESLint), `frontend` (frontend
+  paths, incl. ESLint and build), `terraform` (`terraform fmt -check
+  -recursive` + `terraform validate` on `terraform/**` paths; provider pinned
+  by the committed `.terraform.lock.hcl`).
 - Manual check: `pnpm run lint:commit` validates the most recent commit.
 
 ## Workflow
@@ -152,6 +159,8 @@ Corepack (`corepack enable pnpm`). Target a single app with
   `backend/tests/*.test.js`).
 - `pnpm run test:frontend` — run frontend tests (`frontend/tests/*.test.js`).
 - `pnpm run build:frontend` — build the storefront.
+- `pnpm run lint` — ESLint (`lint:backend` / `lint:frontend`) plus the
+  Prettier check (`format:check`); `pnpm run format` rewrites files.
 - `pnpm version:check` / `pnpm version:sync` — check (propagate) that backend
   and frontend versions mirror the root.
 - `pnpm run lint:commit` — validate the last commit message.
@@ -163,7 +172,8 @@ Corepack (`corepack enable pnpm`). Target a single app with
 - Tests live in `backend/tests/` (backend, CommonJS `node:test`) and
   `frontend/tests/` (frontend, ESM `node:test`). Run `pnpm test:backend` and
   `pnpm run test:frontend` before committing (or rely on the path-aware
-  `pre-push` hook); also validate changed `.js` files with `node --check <file>`.
+  `pre-push` hook); `pnpm run lint` must also pass (it parses both apps with
+  ESLint, superseding per-file `node --check`).
 - Docs-in-sync is enforced by tooling, not just convention: run
   `node scripts/check-docs.js --staged` before committing, and keep the
   domain table below satisfied in the same PR.

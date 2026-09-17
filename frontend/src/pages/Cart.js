@@ -2,9 +2,9 @@
  * Cart page
  */
 
-import { getState, removeFromCart, updateCartQuantity, clearCart, getCartTotal, getCartCount } from "../store.js";
-import { renderCartItem, renderNotice } from "../components/index.js";
-import { escapeHtml, formatPrice } from "../utils.js";
+import { getState, getCartTotal, getCartCount } from "../store.js";
+import { renderCartItem } from "../components/index.js";
+import { formatPrice } from "../utils.js";
 
 export async function renderCart() {
   const { cart } = getState();

@@ -61,6 +61,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   source-disclosure obligations.
 
 ### Added
+- Linting and formatting toolchain: ESLint 10 (flat `eslint.config.js`,
+  `eslint:recommended` scope — parse errors, `no-undef`, unused vars, dead
+  logic; style rules deliberately left to Prettier) and Prettier 3
+  (`.prettierrc.json`, 100-char width) as root devDependencies, plus a shared
+  `.editorconfig`. Root scripts `pnpm run lint` / `lint:backend` /
+  `lint:frontend` / `format` / `format:check`; the per-app `lint` scripts
+  delegate to the workspace root. CI `backend` and `frontend` jobs run ESLint
+  before their suites, and the shared config files are part of both jobs'
+  path filters. The six ADR-001-quarantined legacy ESM files in `backend/`
+  are excluded from both tools and stay frozen.
 - Path-filtered CI (`.github/workflows/ci.yml`): `docs-sync` (always-on
   `scripts/check-docs.js`), `commitlint` (PRs), `backend` / `frontend` /
   `terraform` jobs gated on changed paths via `dorny/paths-filter`.
@@ -108,6 +118,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   source of truth for the release version.
 
 ### Fixed
+- Storefront pages never rendered: `frontend/src/pages/index.js` built its
+  `pageMap` from names that were only re-exported (`export { renderHome }
+  from "./Home.js"` creates no local binding), so every `renderPage()` call
+  threw `ReferenceError` before any page could be drawn. The renderers are
+  now imported locally and re-exported explicitly. Found by ESLint `no-undef`
+  during the linting rollout.
+- Storefront header and drawer event handlers referenced `showEl`/`hideEl`
+  helpers without importing them (`Header.js`, `Drawer.js`), so opening the
+  mobile menu or closing the drawer threw `ReferenceError`. Both now import
+  the helpers from `utils.js`. Found by ESLint `no-undef`.
 - Password-reset e-mail links broke when `FRONTEND_ORIGIN` listed multiple
   origins: the comma-joined CORS allowlist was interpolated into the reset
   URL. Added `config.frontendCanonicalOrigin` (first listed origin) used for

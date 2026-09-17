@@ -24,13 +24,9 @@ describe("middleware.requireRole", () => {
   it("calls next() when the user role is allowed", () => {
     const res = fakeRes();
     let nextCalled = false;
-    requireRole(["admin", "manager"])(
-      { user: { role: "manager" } },
-      res,
-      () => {
-        nextCalled = true;
-      }
-    );
+    requireRole(["admin", "manager"])({ user: { role: "manager" } }, res, () => {
+      nextCalled = true;
+    });
     assert.equal(nextCalled, true);
     assert.equal(res.statusCode, 200);
   });

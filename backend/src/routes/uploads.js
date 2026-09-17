@@ -35,7 +35,7 @@ router.post(
       console.error("[uploads] ошибка загрузки в хранилище:", err);
       res.status(500).json({ error: "Не удалось загрузить файл в хранилище" });
     }
-  }
+  },
 );
 
 module.exports = router;
