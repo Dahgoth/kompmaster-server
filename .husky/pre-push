@@ -61,7 +61,7 @@ has_terraform=false
 
 for f in $changed; do
   case "$f" in
-    src/*|tests/*|migrations/*|scripts/*|package.json|pnpm-lock.yaml|pnpm-workspace.yaml|docker-compose.yml|Caddyfile|.env.example|public/*|seed.json)
+    backend/src/*|backend/tests/*|backend/migrations/*|backend/scripts/*|backend/seed.json|backend/.env.example|scripts/*|package.json|backend/package.json|pnpm-lock.yaml|pnpm-workspace.yaml|docker-compose.yml|Caddyfile)
       has_backend=true ;;
     terraform/*|frontend/terraform/*)
       has_terraform=true ;;
@@ -77,9 +77,12 @@ fi
 echo "pre-push: docs-in-sync check..."
 node scripts/check-docs.js $changed || exit 1
 
+echo "pre-push: shared version guard..."
+node scripts/check-versions.js || exit 1
+
 if [ "$has_backend" = true ]; then
   echo "pre-push: backend files changed — running backend tests..."
-  pnpm test || exit 1
+  pnpm run test:backend || exit 1
 else
   echo "pre-push: no backend changes — skipping backend tests."
 fi

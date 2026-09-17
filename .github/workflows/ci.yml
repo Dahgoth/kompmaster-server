@@ -40,6 +40,18 @@ jobs:
           echo "docs-sync base: $base"
           node scripts/check-docs.js --base "$base"
 
+  # Always runs: the workspace root package.json#version is the single source
+  # of truth and both apps must match it (ADR 003). Pure Node — no install.
+  versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Shared version guard
+        run: node scripts/check-versions.js
+
   commitlint:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -66,18 +78,13 @@ jobs:
         with:
           filters: |
             backend:
-              - 'src/**'
-              - 'tests/**'
-              - 'migrations/**'
+              - 'backend/**'
               - 'scripts/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'docker-compose.yml'
               - 'Caddyfile'
-              - '.env.example'
-              - 'public/**'
-              - 'seed.json'
       - uses: pnpm/action-setup@v4
         if: steps.changes.outputs.backend == 'true'
       - uses: actions/setup-node@v4
@@ -99,14 +106,20 @@ jobs:
               base=$(git merge-base HEAD origin/main)
             fi
           fi
-          # NOTE: plain '*' pathspecs — git's default fnmatch crosses '/' so
-          # 'src/*.js' matches src/routes/x.js too, while 'src/**/*.js' misses
-          # files directly in src/.
-          files=$(git diff --name-only "$base"...HEAD -- 'src/*.js' 'tests/*.js' 'scripts/*.js' || true)
+          # Only syntax-check backend JS files whose *content* changed. A full
+          # diff with rename detection lets git pair `git mv src/ backend/src/`
+          # renames, so `--diff-filter=AM` leaves pure renames out. The backend
+          # package is CommonJS and a few pre-existing legacy files use ESM
+          # syntax (ADR 001 legacy quarantine), which `node --check` rejects
+          # even though this change did not touch their content.
+          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD \
+            | grep -E '^backend/(src|tests|scripts)/.*\.js$' || true)
           if [ -n "$files" ]; then
             for f in $files; do node --check "$f"; done
+          else
+            echo "no backend JS content changes to check."
           fi
-      - run: pnpm test
+      - run: pnpm --filter kompmaster-server test
         if: steps.changes.outputs.backend == 'true'
 
   frontend:
@@ -130,16 +143,12 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         if: steps.changes.outputs.frontend == 'true'
-        working-directory: frontend
-      - run: pnpm test
+      - run: pnpm --filter kompmaster-frontend test
         if: steps.changes.outputs.frontend == 'true'
-        working-directory: frontend
-      - run: pnpm run build
+      - run: pnpm --filter kompmaster-frontend run build
         if: steps.changes.outputs.frontend == 'true'
-        working-directory: frontend
 
   terraform:
     runs-on: ubuntu-latest

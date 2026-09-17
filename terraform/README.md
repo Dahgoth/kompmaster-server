@@ -3,7 +3,10 @@
 Provisions the PoC runtime for Option B (ADR-001 §1a pure C, ADR-002 Option
 D+A): a single MSK-50 VPS running **only the API**, with the storefront served
 as a static artifact from S3 website hosting (+ CDN attached manually), and a
-separate media bucket for product photos.
+separate media bucket for product photos. The repository is now a pnpm
+workspace with the API under `backend/`; see
+[ADR 003](../docs/adr/003-monorepo-workspace-and-versioning.md) for the layout,
+runtime working directory, and fixed shared versioning decisions.
 
 ## Stack
 
@@ -61,12 +64,39 @@ override e.g. `ssh_keys_ids`. Restrict `ssh_allowed_cidr` after first login.
 Terraform creates the bucket + hosting but does **not** upload build output:
 
 ```bash
-cd frontend
-VITE_API_BASE=https://api.compmasone.ru/api pnpm run build
-# then sync dist/ to the frontend bucket (credentials from
+VITE_API_BASE=https://api.compmasone.ru/api pnpm --filter kompmaster-frontend build
+# or, from the package directory:
+(cd frontend && VITE_API_BASE=https://api.compmasone.ru/api pnpm run build)
+# then sync frontend/dist/ to the frontend bucket (credentials from
 # terraform output frontend_access_key/frontend_secret_key)
-aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend_bucket_full_name> --delete
+aws --endpoint-url https://s3.timeweb.com s3 sync frontend/dist/ s3://<frontend_bucket_full_name> --delete
 ```
+
+Vercel is connected for storefront preview/staging/fallback. Its Root Directory
+is `frontend`; install from the repository root and build with `pnpm` (typically
+`pnpm --filter kompmaster-frontend build`).
+
+## Deploying the API
+
+The production API runs from `/opt/compmaster/backend` on the Timeweb VPS under
+PM2. Its environment file is `/opt/compmaster/backend/.env` (template
+`backend/.env.example`). From the repository root:
+
+```bash
+pnpm install --prod --frozen-lockfile --ignore-scripts --filter kompmaster-server...
+pnpm run migrate
+pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend
+```
+
+`backend/scripts/deploy.sh` performs the workspace install, migrations, and PM2
+start with the backend working directory. `backend/scripts/backup.sh` writes
+database archives to `backend/backups/`.
+
+Before any release or deploy, run `pnpm run version:check`; the root
+`package.json#version` is the single source of truth, and `pnpm run version:sync`
+propagates it to both app manifests. The API and storefront are deployed from
+the same tag/commit. Production uses Timeweb S3 + CDN for the storefront and
+Timeweb VPS + PM2 for the API.
 
 ## CDN (manual attach + Terraform toggle)
 

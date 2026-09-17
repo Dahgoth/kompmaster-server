@@ -2,22 +2,22 @@
 
 Environment configuration guide for the KompMaster server.
 
-Variables are read through `dotenv` at the top of `src/config.js`. Copy
-`.env.example` to `.env` and fill in real values:
+Variables are read through `dotenv` at the top of `backend/src/config.js`. Copy
+`backend/.env.example` to `backend/.env` and fill in real values:
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Never commit `.env` or any other file containing real secrets. The `.env`
-file is gitignored.
+Never commit `backend/.env` or any other file containing real secrets. The
+`backend/.env` file is gitignored.
 
-The active entry point (`pnpm start` → `src/index.js`) reads configuration
-through `src/config.js`. The legacy entry at `docs/legacy/server.js` reads some
+The active entry point (`pnpm start` → `backend/src/index.js`) reads configuration
+through `backend/src/config.js`. The legacy entry at `docs/legacy/server.js` reads some
 variables directly from `process.env` with different names; the differences are
 noted in [Legacy entry point](#legacy-entry-point).
 
-## Active entry point (via `src/config.js`)
+## Active entry point (via `backend/src/config.js`)
 
 ### Core
 
@@ -55,7 +55,7 @@ noted in [Legacy entry point](#legacy-entry-point).
 
 ### S3 / object storage
 
-Used by `src/utils/storage.js` for photo uploads. Works with MinIO, Selectel
+Used by `backend/src/utils/storage.js` for photo uploads. Works with MinIO, Selectel
 Object Storage, and Cloudflare R2 (`forcePathStyle` is enabled).
 
 - `S3_ENDPOINT` — S3 endpoint URL. **Required.**
@@ -67,7 +67,7 @@ Object Storage, and Cloudflare R2 (`forcePathStyle` is enabled).
 
 ### SMTP / e-mail
 
-Used by `src/utils/email.js` for password-reset e-mail. If `SMTP_HOST` or
+Used by `backend/src/utils/email.js` for password-reset e-mail. If `SMTP_HOST` or
 `SMTP_USER` is empty, e-mail is logged to the console instead of sent.
 
 - `SMTP_HOST` — SMTP server host. **Required** for real delivery.
@@ -78,7 +78,7 @@ Used by `src/utils/email.js` for password-reset e-mail. If `SMTP_HOST` or
 
 ### SMS
 
-Used by `src/utils/sms.js`, which is written against the SMS.ru API shape but
+Used by `backend/src/utils/sms.js`, which is written against the SMS.ru API shape but
 is easy to swap for another provider.
 
 - `SMS_PROVIDER_API_URL` — SMS gateway endpoint. **Required.** Example:
@@ -88,7 +88,7 @@ is easy to swap for another provider.
 
 ### Telegram notifications
 
-Used by `src/utils/telegram.js` to notify admins. If either value is missing,
+Used by `backend/src/utils/telegram.js` to notify admins. If either value is missing,
 notifications are logged to the console instead of sent.
 
 - `TELEGRAM_BOT_TOKEN` — Telegram bot token. `[SECRET]`
@@ -113,7 +113,7 @@ notifications are logged to the console instead of sent.
   instead; the two entries are inconsistent and should be reconciled.
 - `ADMIN_NOTIFY_EMAIL` — recipient for "order paid" e-mail.
 - `GOOGLE_SERVICE_ACCOUNT_JSON` — service-account JSON for the Google Sheets
-  integration (`src/sheets.js`).
+  integration (`backend/src/sheets.js`).
 
 If you work on the legacy entry, keep `ENVIRONMENT.md` in sync with any
 variable you add or rename.

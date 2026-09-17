@@ -17,20 +17,20 @@ const fs = require("node:fs");
 
 // --- path classifiers (repo-root-relative) ---
 const isBackendCode = (f) =>
-  f.startsWith("src/") ||
-  f.startsWith("tests/") ||
-  f.startsWith("migrations/");
+  f.startsWith("backend/src/") ||
+  f.startsWith("backend/tests/") ||
+  f.startsWith("backend/migrations/");
 const isBackendWorkflowFile = (f) =>
-  ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "docker-compose.yml", "Caddyfile"].includes(f) ||
-  f.startsWith("scripts/");
+  ["package.json", "backend/package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "docker-compose.yml", "Caddyfile"].includes(f) ||
+  f.startsWith("scripts/") ||
+  f.startsWith("backend/scripts/");
 const isFrontendCode = (f) =>
   f.startsWith("frontend/") && !f.startsWith("frontend/terraform/");
 const isFrontendWorkflowFile = (f) =>
-  ["frontend/package.json", "frontend/pnpm-lock.yaml", "frontend/pnpm-workspace.yaml", "frontend/vite.config.js"].includes(f);
+  ["frontend/package.json", "frontend/vite.config.js"].includes(f);
 const isTerraformCode = (f) =>
   f.startsWith("terraform/") || f.startsWith("frontend/terraform/");
-const isPublicAsset = (f) => f.startsWith("public/");
-const isRoute = (f) => f.startsWith("src/routes/");
+const isRoute = (f) => f.startsWith("backend/src/routes/");
 const isFrontendPage = (f) =>
   f.startsWith("frontend/src/pages/") ||
   f.startsWith("frontend/src/components/") ||
@@ -40,8 +40,8 @@ const isFrontendStyle = (f) =>
   f === "frontend/src/data/content.js";
 
 const ENV_FILES = new Set([
-  "src/config.js",
-  ".env.example",
+  "backend/src/config.js",
+  "backend/.env.example",
   "docker-compose.yml",
   "Caddyfile",
 ]);
@@ -67,7 +67,6 @@ function classify(files) {
   const backendTouched = files.some((f) => isBackendCode(f) || isBackendWorkflowFile(f));
   const frontendTouched = files.some((f) => isFrontendCode(f) || isFrontendWorkflowFile(f));
   const terraformTouched = files.some(isTerraformCode);
-  const publicTouched = files.some(isPublicAsset);
 
   // Config surface -> ENVIRONMENT.md
   if (files.some((f) => ENV_FILES.has(f))) need.add("ENVIRONMENT.md");
@@ -92,15 +91,14 @@ function classify(files) {
 
   // UX/visual surface -> DESIGN.md
   if (
-    publicTouched ||
     files.some((f) => isFrontendStyle(f) || isFrontendPage(f)) ||
     touched.has("DESIGN.md")
   ) {
     need.add("DESIGN.md");
   }
 
-  // User-facing behavior -> CHANGELOG.md (routes, pages, public assets)
-  if (files.some((f) => isRoute(f) || isFrontendPage(f) || isPublicAsset(f))) {
+  // User-facing behavior -> CHANGELOG.md (routes, pages)
+  if (files.some((f) => isRoute(f) || isFrontendPage(f))) {
     need.add("CHANGELOG.md");
   }
 

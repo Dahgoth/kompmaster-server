@@ -1,42 +1,29 @@
 {
-  "name": "kompmaster-server",
+  "name": "kompmaster",
   "version": "1.0.0",
-  "description": "Backend API for KompMaster store (products, orders, users, reviews, price import/export, notifications)",
-  "main": "src/index.js",
-  "type": "commonjs",
-  "packageManager": "pnpm@12.4.2",
+  "private": true,
+  "description": "KompMaster monorepo — backend API and static storefront",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Dahgoth/kompmaster-server.git"
   },
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
-    "migrate": "node src/migrate.js",
-    "test": "node --test \"tests/**/*.test.js\"",
-    "test:frontend": "pnpm --dir frontend test",
-    "lint:commit": "commitlint --from HEAD~1",
-    "prepare": "husky"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.637.0",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "express-rate-limit": "^7.4.0",
-    "helmet": "^7.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "node-fetch": "^2.7.0",
-    "nodemailer": "^6.9.14",
-    "pg": "^8.12.0",
-    "uuid": "^9.0.1",
-    "xlsx": "^0.18.5"
-  },
+  "packageManager": "pnpm@12.4.2",
   "engines": {
     "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "pnpm --filter kompmaster-server start",
+    "dev": "pnpm --filter kompmaster-server dev",
+    "migrate": "pnpm --filter kompmaster-server migrate",
+    "test": "pnpm run test:backend && pnpm run test:frontend",
+    "test:backend": "pnpm --filter kompmaster-server test",
+    "test:frontend": "pnpm --filter kompmaster-frontend test",
+    "build:frontend": "pnpm --filter kompmaster-frontend build",
+    "version:check": "node scripts/check-versions.js",
+    "version:sync": "node scripts/sync-versions.js",
+    "lint:commit": "commitlint --from HEAD~1",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",

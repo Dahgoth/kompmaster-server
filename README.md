@@ -41,15 +41,17 @@ Node.js/Express + PostgreSQL + S3-совместимое хранилище фо
 Тесты на встроенном раннере `node:test` — без дополнительных зависимостей:
 
 ```bash
-pnpm test                # backend: tests/*.test.js
+pnpm test:backend         # backend: backend/tests/*.test.js
 pnpm run test:frontend   # frontend: frontend/tests/*.test.js
 ```
 
 CI (`.github/workflows/ci.yml`) на каждый push и PR запускает только задания,
 затронутые изменёнными путями: `docs-sync` (всегда), `commitlint` (PR),
+`versions` (согласованность версий backend и frontend с корневой),
 `backend`, `frontend` (+ сборка), `terraform` (заглушка до появления `.tf`).
-Husky-хук `pre-push` прогоняет те же проверки по PR-объёму изменений и
-`node scripts/check-docs.js` — проверку синхронизации документации.
+Husky-хук `pre-push` прогоняет те же проверки по PR-объёму изменений,
+`node scripts/check-versions.js` и `node scripts/check-docs.js` — проверку
+синхронизации версий и документации.
 
 ## 1. Установка на сервере (Ubuntu, чистый VPS)
 
@@ -84,12 +86,12 @@ docker compose up -d postgres minio
 ```bash
 # Распакуйте архив с кодом на сервере, затем:
 cd kompmaster-server
-sudo corepack enable pnpm   # включает pnpm, закреплённый в package.json
-pnpm install
+sudo corepack enable pnpm   # включает pnpm, закреплённый в корневом package.json
+pnpm install                # один root pnpm-workspace.yaml + pnpm-lock.yaml: устанавливает backend и frontend
 
-cp .env.example .env
-nano .env   # заполните DATABASE_URL, JWT_SECRET, S3_*, SMTP_*, SMS_*, TELEGRAM_*
-            # полный список переменных — в ENVIRONMENT.md
+cp backend/.env.example backend/.env
+nano backend/.env   # заполните DATABASE_URL, JWT_SECRET, S3_*, SMTP_*, SMS_*, TELEGRAM_*
+                    # полный список переменных — в ENVIRONMENT.md
 ```
 
 Обязательно смените:
@@ -109,12 +111,12 @@ pnpm run migrate
 
 ## 4. (Опционально) Перенос данных из старой HTML-беты
 
-См. подробную инструкцию прямо в файле `src/importFromBeta.js` — коротко:
+См. подробную инструкцию прямо в файле `backend/src/importFromBeta.js` — коротко:
 откройте старый сайт в браузере, выполните команду в консоли (F12),
 сохраните результат в `export.json`, затем:
 
 ```bash
-node src/importFromBeta.js export.json
+node backend/src/importFromBeta.js export.json
 ```
 
 Пользователей и пароли этот скрипт намеренно не переносит — старые пароли
@@ -145,10 +147,17 @@ pnpm start
 
 ```bash
 sudo npm install -g pm2
-pm2 start src/index.js --name kompmaster-api
+pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend
 pm2 save
 pm2 startup   # выполните команду, которую он покажет — автозапуск после перезагрузки сервера
 ```
+
+Рабочий каталог PM2 — `backend/` (передаётся `--cwd`), поэтому `dotenv`
+подхватывает `backend/.env`; шаблон — `backend/.env.example`. Автоматизированный
+деплой — `backend/scripts/deploy.sh`.
+
+Боевые деплои: API — на Timeweb VPS через PM2; витрина — на Timeweb S3 + CDN.
+Vercel также подключён к репозиторию для preview/staging/fallback витрины.
 
 ### Nginx как обратный прокси + HTTPS
 

@@ -8,18 +8,24 @@
 ```bash
 cd /opt/compmaster
 set -a
-. ./.env
+. ./backend/.env
 set +a
-mkdir -p backups
-pg_dump -U kompmaster kompmaster | gzip > "backups/db-$(date +%Y%m%d-%H%M%S).sql.gz"
+mkdir -p backend/backups
+pg_dump -U kompmaster kompmaster | gzip > "backend/backups/db-$(date +%Y%m%d-%H%M%S).sql.gz"
 ```
 
-Затем замените файлы проекта новой версией, **не удаляя `.env`**, и выполните:
+Затем замените файлы проекта новой версией, **не удаляя `backend/.env`**, и выполните:
 
 ```bash
-pnpm install --prod --frozen-lockfile   # если изменились зависимости
+pnpm install --prod --frozen-lockfile --ignore-scripts --filter kompmaster-server...
+pnpm run migrate
 pm2 restart kompmaster-api
 ```
+
+Можно использовать канонический сценарий `backend/scripts/deploy.sh`: он выполняет
+workspace install с `--filter`, миграции и запускает API в PM2 с
+`--cwd /opt/compmaster/backend`. Резервное копирование выполняет
+`backend/scripts/backup.sh`; архивы сохраняются в `backend/backups/`.
 
 Проверка:
 
@@ -31,7 +37,10 @@ pm2 status
 Если обновление сломало, верните предыдущую версию кода и снова выполните
 `pm2 restart kompmaster-api`. База данных при этом остаётся на месте.
 
-Важное правило: всегда делайте backup БД перед обновлением.
+Важное правило: всегда делайте backup БД перед обновлением. Перед обновлением
+production-пары выполните `pnpm run version:check`; при изменении корневой
+версии выполните `pnpm run version:sync`. Backend и витрина развёртываются из
+одного tag/commit.
 
 
 ## Обновление Server v1 → v2

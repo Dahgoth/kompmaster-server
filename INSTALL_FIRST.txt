@@ -18,26 +18,34 @@ COMPMASTERONE — ГОТОВЫЙ АРХИВ ДЛЯ УСТАНОВКИ
 
 Перед запуском:
 1. Распаковать СОДЕРЖИМОЕ архива, например, в /opt/compmaster
-2. cp .env.example .env
-3. В .env обязательно задать:
-   DOMAIN
+2. cp backend/.env.example backend/.env
+3. В backend/.env обязательно задать:
    JWT_SECRET
    POSTGRES_PASSWORD
    DATABASE_URL (с тем же паролем)
    ADMIN_EMAIL
    ADMIN_PASSWORD
+
+DOMAIN и PORT для Caddy задаются отдельно в `/etc/default/caddy`
+(см. DEPLOY.md §5).
 4. Направить A-запись домена на IP VPS.
 5. Открыть 80/443.
-6. Запустить:
-    pm2 start src/index.js --name kompmaster-api
+6. Из корня /opt/compmaster выполнить:
+   sudo corepack enable pnpm
+   pnpm install --prod --frozen-lockfile --ignore-scripts --filter kompmaster-server...
+   pnpm run migrate
+   sudo npm install -g pm2
+   pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend
 7. Проверить:
-    pm2 status
-    curl https://ВАШ-ДОМЕН/api/health
+   pm2 status
+   curl https://ВАШ-ДОМЕН/api/health
+
+Альтернативный канонический запуск и обновление: backend/scripts/deploy.sh.
 
 ВАЖНО:
  - не удалять базу данных и загруженные файлы при обновлениях;
- - .env не публиковать;
- - перед обновлением делать backup PostgreSQL;
+ - backend/.env не публиковать;
+ - перед обновлением делать backup PostgreSQL (`backend/scripts/backup.sh`);
  - инструкции подробнее: DEPLOY.md и UPDATE.md.
 
 Docker Compose используется только для локальной разработки (PostgreSQL + MinIO).

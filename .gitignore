@@ -16,6 +16,9 @@ yarn-error.log*
 # Runtime uploads (user photos)
 uploads/
 
+# Backend runtime artifacts (DB backups; uploads/ above matches at any level)
+backend/backups/
+
 # Kilo editor config
 .kilo/kilo.jsonc
 

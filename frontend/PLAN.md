@@ -3,7 +3,7 @@
 Status: Draft — to be validated against ADR 001 / ADR 002 decisions
 Date: 2026-09-16
 Author: Frontend scaffolding agent
-Related: ADR 001 §1a (pure C), ADR 002 (PoC re-scope), `public/index.html` (legacy, inspiration-only)
+Related: ADR 001 §1a (pure C), ADR 002 (PoC re-scope), `docs/legacy/public/index.html` (legacy, inspiration-only)
 
 ---
 
@@ -11,11 +11,12 @@ Related: ADR 001 §1a (pure C), ADR 002 (PoC re-scope), `public/index.html` (leg
 
 ### 1.1 What the backend provides (canonical, modular API)
 
-The backend (`src/index.js`) serves **only** `/api/*`. It does **not** serve static files.
-The frontend is a **separate static artifact** deployed to RF S3 + CDN (selectel / timeweb / yandex),
-per ADR 001 §1a "pure C, API-only."
+The backend (`backend/src/index.js`) serves **only** `/api/*`. It does **not** serve static files.
+The frontend is a **separate static artifact** deployed to Timeweb S3 + CDN,
+per ADR 001 §1a "pure C, API-only." Vercel is used for storefront
+preview/staging/fallback.
 
-Current API endpoints (`src/routes/*.js`):
+Current API endpoints (`backend/src/routes/*.js`):
 
 | Method | Endpoint | Auth | Request body | Response |
 |--------|----------|------|--------------|----------|
@@ -63,7 +64,7 @@ Auth scheme:
 
 ### 1.2 Key API gaps (endpoints the legacy FE used but modular API lacks)
 
-These endpoints exist in the legacy `src/server.js` but **not** in the modular `src/index.js`:
+These endpoints exist in the legacy `backend/src/server.js` but **not** in the modular `backend/src/index.js`:
 
 1. **`GET /api/bootstrap`** — legacy returned site_state (categories, content, menu_settings, payment_settings, media), products (grouped by category), current user, admin flag, and orders in one call.
 2. **`GET/PUT /api/admin/site-state`** — legacy stored/updated site content, menu settings, payment settings, and media in the `site_state` JSONB table.
@@ -77,7 +78,7 @@ These endpoints exist in the legacy `src/server.js` but **not** in the modular `
 
 ### 1.3 Legacy frontend UX to preserve
 
-Extracted from `public/index.html` (2149 lines, single-file vanilla JS/HTML/CSS):
+Extracted from `docs/legacy/public/index.html` (2149 lines, single-file vanilla JS/HTML/CSS):
 
 **Storefront routes:**
 - `home` — splash screen (2.5s auto-dismiss), hero banner with telegram link, about text block with guarantee + delivery copy (neon number highlight), category grid (two-level tree), office section (Sochi photo + video, Moscow "soon")
@@ -238,7 +239,7 @@ Rationale:
 │       ├── logo.svg                    # Logo for splash
 │       └── og-image.png                # Open Graph image
 │
-└── terraform/                          # (Optional) S3 bucket + CDN config
+└── ../terraform/                       # Repository-wide S3 bucket + CDN config
     ├── main.tf                         # S3 bucket + bucket policy + CDN
     └── variables.tf                    # Domain, region, etc.
 ```
@@ -257,7 +258,7 @@ Browser                    Vite dev / dist (S3 CDN)
     │    })
     │                          │
     ▼                          ▼
-/src/api.js ──────────►  /api/* (Express backend on VPS:4000)
+/frontend/src/api.js ───────►  /api/* (Express backend on VPS:4000)
                               │
                         Bearer JWT auth
                         (cookie-free, no CSRF)
@@ -271,7 +272,7 @@ Browser                    Vite dev / dist (S3 CDN)
 3. If token in localStorage: `GET /api/auth/me` → store.currentUser
 4. If admin: no need to call `/api/bootstrap` — admins access admin panel separately
 
-**Static content** (content, menu, payment, media): hardcoded defaults in `src/data/` modules. These are the legacy defaults from `index.html`. When backend adds `/api/site-state` or `/api/settings`, swap the import.
+**Static content** (content, menu, payment, media): hardcoded defaults in `frontend/src/data/` modules. These are the legacy defaults from `index.html`. When backend adds `/api/site-state` or `/api/settings`, swap the import.
 
 **JWT storage**: `localStorage` (same origin = `compmasone.ru` served from S3/CDN). Token is 7 days. Admin panel token is 12 hours.
 
@@ -344,10 +345,10 @@ Browser                    Vite dev / dist (S3 CDN)
 
 ## 6. Key Migration Changes (legacy → modular)
 
-| Concern | Legacy (`public/index.html`) | New Frontend |
+| Concern | Legacy (`docs/legacy/public/index.html`) | New Frontend |
 |---------|------------------------------|--------------|
 | Auth | cookie `km_auth` | `Authorization: Bearer <jwt>` |
-| Data source | `server-bridge.js` → `/api/bootstrap` | Individual API calls to `/api/*` |
+| Data source | `docs/legacy/public/server-bridge.js` → `/api/bootstrap` | Individual API calls to `/api/*` |
 | Products | localStorage `PRODUCTS[id] = [[name,price,qty,id]]` | `GET /api/products?category=` returns objects |
 | Categories | localStorage + `/api/bootstrap` (site_state JSONB) | `GET /api/categories` (DB table) + hardcoded defaults |
 | Content | `/api/bootstrap` → site_state.content | Hardcoded defaults (src/data/content.js) |

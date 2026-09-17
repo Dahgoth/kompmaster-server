@@ -6,8 +6,16 @@ hard convention you must follow.
 
 ## Project
 
-KompMaster backend — Node.js/Express + PostgreSQL + S3-compatible photo
-storage. See `README.md` for architecture, API surface, and setup.
+KompMaster is a pnpm workspace monorepo with two apps:
+
+- `backend/` — Node.js/Express + PostgreSQL + S3-compatible photo storage
+  (package name `kompmaster-server`).
+- `frontend/` — Vite + React storefront (package name `kompmaster-frontend`).
+
+The workspace has a single root `pnpm-lock.yaml` and a private root
+`package.json` (name `kompmaster`) that holds the shared version and the
+commitlint + husky devDependencies. See `README.md` for architecture, API
+surface, and setup.
 
 ## Documentation map
 
@@ -77,16 +85,23 @@ Examples:
 
 - **Husky** — `.husky/commit-msg` runs commitlint on every commit.
 - **Commitlint** — `.commitlintrc.json` extends `@commitlint/config-conventional`.
+- **Fixed version** — the root `package.json#version` is the single source of
+  truth; `backend/` and `frontend/` must mirror it. Enforced by the `versions`
+  CI job and the Husky `pre-push` hook via `pnpm run version:check`
+  (`node scripts/check-versions.js`). After a version bump, run
+  `pnpm run version:sync` (`node scripts/sync-versions.js`) to propagate the
+  new version to both apps. See
+  `docs/adr/003-monorepo-workspace-and-versioning.md`.
 - **Husky `pre-push`** — blocks pushing directly to `main`; then runs only
-  the checks whose area changed in the pushed commits: backend (`pnpm test`),
-  frontend (`pnpm run test:frontend`), plus the docs-in-sync check
-  (`node scripts/check-docs.js`) on every non-docs-only push.
-  Bypass only with `git push --no-verify` when you can state why, and re-run
-  the suite immediately after.
+  the checks whose area changed in the pushed commits: backend (`pnpm test:backend`),
+  frontend (`pnpm run test:frontend`), `node scripts/check-versions.js`
+  (version alignment), plus the docs-in-sync check (`node scripts/check-docs.js`)
+  on every non-docs-only push. Bypass only with `git push --no-verify` when you
+  can state why, and re-run the suite immediately after.
 - **CI** — `.github/workflows/ci.yml` runs path-filtered jobs on every push
-  and PR: `docs-sync` (always), `commitlint` (PRs), `backend` (backend paths),
-  `frontend` (frontend paths, incl. build), `terraform` (placeholder until
-  `.tf` files land).
+  and PR: `docs-sync` (always), `commitlint` (PRs), `versions` (version
+  alignment), `backend` (backend paths), `frontend` (frontend paths, incl.
+  build), `terraform` (placeholder until `.tf` files land).
 - Manual check: `pnpm run lint:commit` validates the most recent commit.
 
 ## Workflow
@@ -106,35 +121,54 @@ See `CONTRIBUTING.md` for the full process.
    - `MAJOR` — breaking changes,
    - `MINOR` — new features (backward compatible),
    - `PATCH` — bug fixes.
-2. Update `package.json#version`.
-3. Move the relevant `[Unreleased]` entries into a new dated section in
+2. Update `package.json#version` (root — single source of truth).
+3. Propagate the bumped version to both apps: `pnpm run version:sync`.
+4. Move the relevant `[Unreleased]` entries into a new dated section in
    `CHANGELOG.md`.
-4. Tag the release commit: `git tag vX.Y.Z`.
+5. Tag the release commit: `git tag vX.Y.Z`.
+
+Backend and the storefront always deploy from the same tag/commit. Run
+`pnpm run version:check` before pushing to confirm all versions align.
 
 ## Commands
 
-The backend and `frontend/` are two independent pnpm projects, each with its
-own `pnpm-lock.yaml`. pnpm is pinned through `packageManager` in
-`package.json` and run via Corepack (`corepack enable pnpm`).
+This is a single pnpm workspace: one root `pnpm-lock.yaml` installs both apps.
+pnpm is pinned through `packageManager` in the root `package.json` and run via
+Corepack (`corepack enable pnpm`). Target a single app with
+`pnpm --filter <name> <script>` (e.g. `pnpm --filter kompmaster-server test`).
 
-- `pnpm install` — install dependencies and set up Husky hooks (via `prepare`).
-- `pnpm start` — run the server.
-- `pnpm run dev` — run with file watching.
+- `pnpm install` — install dependencies for both apps and set up Husky hooks
+  (via `prepare`).
+- `pnpm start` — run the backend server.
+- `pnpm run dev` — run the backend with file watching.
 - `pnpm run migrate` — apply database migrations.
-- `pnpm test` — run backend tests (`node --test`).
-- `pnpm run test:frontend` — run frontend tests.
+- `pnpm test` — run backend and frontend tests (`pnpm test:backend &&
+  pnpm run test:frontend`).
+- `pnpm test:backend` — run backend tests (`node --test`,
+  `backend/tests/*.test.js`).
+- `pnpm run test:frontend` — run frontend tests (`frontend/tests/*.test.js`).
+- `pnpm run build:frontend` — build the storefront.
+- `pnpm version:check` / `pnpm version:sync` — check (propagate) that backend
+  and frontend versions mirror the root.
 - `pnpm run lint:commit` — validate the last commit message.
+- `pnpm --filter kompmaster-server <script>` /
+  `pnpm --filter kompmaster-frontend <script>` — run any script in one app only.
 
 ## Project-specific notes
 
-- Tests live in `tests/` (backend, CommonJS `node:test`) and
-  `frontend/tests/` (frontend, ESM `node:test`). Run `pnpm test` and
+- Tests live in `backend/tests/` (backend, CommonJS `node:test`) and
+  `frontend/tests/` (frontend, ESM `node:test`). Run `pnpm test:backend` and
   `pnpm run test:frontend` before committing (or rely on the path-aware
-  `pre-push` hook); also validate changed `.js` files
-  with `node --check <file>`.
+  `pre-push` hook); also validate changed `.js` files with `node --check <file>`.
 - Docs-in-sync is enforced by tooling, not just convention: run
   `node scripts/check-docs.js --staged` before committing, and keep the
   domain table below satisfied in the same PR.
-- Database schema changes go into `migrations/` as new `NNN_*.sql` files;
-  existing applied migrations must not be edited.
+- Database schema changes go into `backend/migrations/` as new `NNN_*.sql`
+  files; existing applied migrations must not be edited.
+- Operational scripts live at `backend/scripts/` (`deploy.sh`, `backup.sh`,
+  `init-db.js`, `reset-admin.js`).
+- Deploy: the API runs under PM2 with a CWD of `backend/` so `dotenv` loads
+  `backend/.env` (template `backend/.env.example`). Start with
+  `pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend`.
+  The automated deploy helper is `backend/scripts/deploy.sh`.
 - Never commit `.env`, `node_modules/`, or the contents of `uploads/`.

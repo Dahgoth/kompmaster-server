@@ -378,6 +378,11 @@ Concrete vendor pricing (Timeweb vs Yandex) deferred to ADR 002; order-of-magnit
 
 *No blocking questions remain in ADR 001 — pure C, modular canonical (inspiration-only), RF-only HA cheapest principle, and 5k WAU model are decided.*
 
+> **Resolved 2026-09-17:** Open Question 5's repo-layout concern is settled by
+> [ADR 003](003-monorepo-workspace-and-versioning.md) — one repository with a
+> root pnpm workspace and `/backend` + `/frontend` app directories, with a
+> fixed shared version. The storefront tech choice (Vite) stands as built.
+
 ## References
 
 - Issue #3 — evidence, Option A/B/C; comments 5650018690, 5650145815, 5650224627, 5653517595 (Mermaid source)
