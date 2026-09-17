@@ -1,7 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
-const { adminLimiter } = require("../middleware/rateLimit");
+const { adminLimiter, orderCreateLimiter } = require("../middleware/rateLimit");
 const { notifyAdmin } = require("../utils/telegram");
 
 const router = express.Router();
@@ -16,7 +16,7 @@ function generateOrderNumber() {
 // Именно то место, где в статической HTML-бете гонки быть не могло (один
 // браузер — один пользователь), а на сервере с параллельными запросами
 // без блокировки строки два покупателя могли бы увести остаток в минус.
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", orderCreateLimiter, requireAuth, async (req, res) => {
   const { items, receiveMethod, address, contactPhone } = req.body || {};
   if (!Array.isArray(items) || !items.length) {
     return res.status(400).json({ error: "Корзина пуста" });

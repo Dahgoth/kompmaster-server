@@ -3,7 +3,11 @@ const assert = require("node:assert/strict");
 
 process.env.FRONTEND_ORIGIN = "https://compmasone.ru";
 
-const { adminPanelVerifyLimiter, adminLimiter } = require("../src/middleware/rateLimit");
+const {
+  adminPanelVerifyLimiter,
+  adminLimiter,
+  orderCreateLimiter,
+} = require("../src/middleware/rateLimit");
 
 function fakeReq(authorization) {
   return { ip: "203.0.113.7", headers: { authorization } };
@@ -70,5 +74,16 @@ describe("middleware.rateLimit admin limiters", () => {
 
     const other = await invoke(adminLimiter, userB);
     assert.equal(other.nextCalled, true, "account-b must not be affected by account-a's quota");
+  });
+
+  it("orderCreateLimiter caps order creation per account", async () => {
+    const req = fakeReq("Bearer customer-token");
+    for (let i = 0; i < 10; i++) {
+      const { nextCalled } = await invoke(orderCreateLimiter, req);
+      assert.equal(nextCalled, true, `order ${i + 1} should pass`);
+    }
+    const { res, nextCalled } = await invoke(orderCreateLimiter, req);
+    assert.equal(nextCalled, false);
+    assert.equal(res.statusCode, 429);
   });
 });

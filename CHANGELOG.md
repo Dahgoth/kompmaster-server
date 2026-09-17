@@ -61,11 +61,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   source-disclosure obligations.
 
 ### Added
-- Rate limiting on all admin-panel endpoints (resolves CodeQL
+- Rate limiting on expensive endpoints (resolves CodeQL
   `js/missing-rate-limiting` alerts): `adminPanelVerifyLimiter`
   (10 attempts / 15 min) guards `POST /api/auth/admin-panel/verify` against
-  second-password brute force, and `adminLimiter` (300 requests / 15 min)
-  guards the admin CRUD routes in orders, products, reviews, and users.
+  second-password brute force, `adminLimiter` (300 requests / 15 min)
+  guards the admin CRUD routes in orders, products, reviews, and users, and
+  `orderCreateLimiter` (10 orders / hour) guards public order creation,
+  which deducts stock in a transaction.
   Both sit first in each route's middleware chain (CodeQL models every
   middleware as a route handler, so the limiter must precede `requireAuth`)
   and key on the `Authorization` header — falling back to IP for token-less

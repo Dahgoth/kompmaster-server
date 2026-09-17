@@ -229,13 +229,14 @@ this section is the detailed reference.
 - Backend: `backend/tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
   null-safety, JWT round-trips and admin-panel flag rejection, price-import
   header variants and duplicate detection, the fail-closed `FRONTEND_ORIGIN`
-  allowlist, `requireRole` 403 behavior, and the admin rate limiters
-  (Authorization-header keying, brute-force blocking). Admin endpoints are
-  rate-limited via `backend/src/middleware/rateLimit.js`
-  (`adminPanelVerifyLimiter`, `adminLimiter`) — new admin routes must place
-  the limiter **first** in the route chain, before `requireAuth` (CodeQL
-  models every middleware as a route handler and requires the limiter to
-  precede all of them; `js/missing-rate-limiting` is enforced in CI).
+  allowlist, `requireRole` 403 behavior, and the rate limiters
+  (Authorization-header keying, brute-force blocking). Expensive endpoints
+  are rate-limited via `backend/src/middleware/rateLimit.js`
+  (`adminPanelVerifyLimiter`, `adminLimiter`, `orderCreateLimiter`) — new
+  admin routes must place the limiter **first** in the route chain, before
+  `requireAuth` (CodeQL models every middleware as a route handler and
+  requires the limiter to precede all of them; `js/missing-rate-limiting`
+  is enforced in CI).
 - Frontend: `frontend/tests/*.test.js` (ESM). Covers `matchRoute` param
   matching, no-Vite `apiBase` fallback, escaping/formatting helpers, and
   category/payment default consistency.

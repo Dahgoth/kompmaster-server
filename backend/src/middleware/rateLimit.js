@@ -37,7 +37,7 @@ const passwordResetLimiter = rateLimit({
 // аккаунта доступен ещё до проверки JWT), fallback на req.ip для запросов
 // без токена; приложение работает за Caddy без `trust proxy`, поэтому
 // чистый IP-ключ схлопнулся бы в один общий бакет для всех клиентов.
-const adminKey = (req) => req.headers.authorization || req.ip;
+const accountKey = (req) => req.headers.authorization || req.ip;
 
 // Подбор второго пароля админ-панели — жёсткий лимит, как у loginLimiter.
 const adminPanelVerifyLimiter = rateLimit({
@@ -46,7 +46,7 @@ const adminPanelVerifyLimiter = rateLimit({
   message: { error: "Слишком много попыток ввода кода доступа. Попробуйте позже." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: adminKey,
+  keyGenerator: accountKey,
 });
 
 // CRUD админки за тройной защитой (requireAuth + requireRole +
@@ -57,7 +57,18 @@ const adminLimiter = rateLimit({
   message: { error: "Слишком много запросов к админ-панели. Попробуйте позже." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: adminKey,
+  keyGenerator: accountKey,
+});
+
+// Создание заказа — публичный, но самый дорогой клиентский маршрут
+// (списание остатков в транзакции): ограничиваем на аккаунт.
+const orderCreateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { error: "Слишком много заказов с этого аккаунта. Попробуйте позже." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: accountKey,
 });
 
 module.exports = {
@@ -67,4 +78,5 @@ module.exports = {
   passwordResetLimiter,
   adminPanelVerifyLimiter,
   adminLimiter,
+  orderCreateLimiter,
 };
