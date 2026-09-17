@@ -150,9 +150,9 @@ router.post("/reset-password", async (req, res) => {
 
 router.post(
   "/admin-panel/verify",
+  adminPanelVerifyLimiter,
   requireAuth,
   requireRole(["admin", "manager"]),
-  adminPanelVerifyLimiter,
   async (req, res) => {
     const { password } = req.body || {};
     if (password !== config.adminPanelPassword) {

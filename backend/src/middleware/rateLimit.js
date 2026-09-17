@@ -30,11 +30,14 @@ const passwordResetLimiter = rateLimit({
   message: { error: "Слишком много запросов восстановления пароля. Попробуйте позже." },
 });
 
-// Ограничители для админ-панели (CodeQL js/missing-rate-limiting). Ключ —
-// аутентифицированный пользователь, а не IP: приложение работает за Caddy
-// без `trust proxy`, поэтому IP-ключ схлопнулся бы в один общий бакет для
-// всех клиентов. Ставятся в цепочку после requireAuth, когда req.user уже
-// заполнен; fallback на req.ip защищает от отсутствия пользователя.
+// Ограничители для админ-панели (CodeQL js/missing-rate-limiting). Ставятся
+// ПЕРВЫМИ в цепочку маршрута, до requireAuth: CodeQL считает отдельным
+// route handler'ом каждый middleware, поэтому ограничитель должен
+// предшествовать всей цепочке. Ключ — заголовок Authorization (идентификатор
+// аккаунта доступен ещё до проверки JWT), fallback на req.ip для запросов
+// без токена; приложение работает за Caddy без `trust proxy`, поэтому
+// чистый IP-ключ схлопнулся бы в один общий бакет для всех клиентов.
+const adminKey = (req) => req.headers.authorization || req.ip;
 
 // Подбор второго пароля админ-панели — жёсткий лимит, как у loginLimiter.
 const adminPanelVerifyLimiter = rateLimit({
@@ -43,18 +46,18 @@ const adminPanelVerifyLimiter = rateLimit({
   message: { error: "Слишком много попыток ввода кода доступа. Попробуйте позже." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip,
+  keyGenerator: adminKey,
 });
 
 // CRUD админки за тройной защитой (requireAuth + requireRole +
-// requireAdminPanelSession): щедрый, но конечный лимит на пользователя.
+// requireAdminPanelSession): щедрый, но конечный лимит на аккаунт.
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
   message: { error: "Слишком много запросов к админ-панели. Попробуйте позже." },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip,
+  keyGenerator: adminKey,
 });
 
 module.exports = {

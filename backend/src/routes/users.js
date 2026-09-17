@@ -8,8 +8,8 @@ const router = express.Router();
 // Список пользователей — только настоящий admin, менеджеру не видно.
 router.get(
   "/",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -34,8 +34,8 @@ router.get(
 // правки кода, прямо через админку.
 router.put(
   "/:id/role",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {

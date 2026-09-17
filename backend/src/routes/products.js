@@ -40,8 +40,8 @@ router.get("/:id", async (req, res) => {
 
 router.post(
   "/",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -70,8 +70,8 @@ router.post(
 
 router.put(
   "/:id",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -105,8 +105,8 @@ router.put(
 
 router.delete(
   "/:id",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -119,8 +119,8 @@ router.delete(
 // mode: "sync" (недостающим товарам остаток 0) | "merge" (не трогать отсутствующих)
 router.post(
   "/import-price",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   upload.single("file"),
@@ -216,8 +216,8 @@ router.post(
 // ---- Экспорт текущих остатков раздела (CSV, тот же формат, что и импорт) ----
 router.get(
   "/export-price/:categoryId",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {

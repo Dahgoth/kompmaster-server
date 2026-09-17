@@ -66,9 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (10 attempts / 15 min) guards `POST /api/auth/admin-panel/verify` against
   second-password brute force, and `adminLimiter` (300 requests / 15 min)
   guards the admin CRUD routes in orders, products, reviews, and users.
-  Both key on the authenticated user ID rather than IP — the app runs behind
-  Caddy without `trust proxy`, where IP keys would collapse into a single
-  shared bucket. Regression tests in `backend/tests/rateLimit.test.js`.
+  Both sit first in each route's middleware chain (CodeQL models every
+  middleware as a route handler, so the limiter must precede `requireAuth`)
+  and key on the `Authorization` header — falling back to IP for token-less
+  requests — because the app runs behind Caddy without `trust proxy`, where
+  IP keys would collapse into a single shared bucket. Regression tests in
+  `backend/tests/rateLimit.test.js`.
 - Linting and formatting toolchain: ESLint 10 (flat `eslint.config.js`,
   `eslint:recommended` scope — parse errors, `no-undef`, unused vars, dead
   logic; style rules deliberately left to Prettier) and Prettier 3

@@ -113,8 +113,8 @@ router.get("/my/:id", requireAuth, async (req, res) => {
 // И admin, и manager проходят сюда — по ТЗ менеджеру доступны только заказы.
 router.get(
   "/",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -143,8 +143,8 @@ router.get(
 
 router.put(
   "/:id/status",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -166,8 +166,8 @@ router.put(
 // Отмена — доступна и менеджеру (это управление статусом), возвращает остаток на склад.
 router.post(
   "/:id/cancel",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -211,8 +211,8 @@ router.post(
 // разрушительнее, чем управление статусом.
 router.delete(
   "/:id",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {

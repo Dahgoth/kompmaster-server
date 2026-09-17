@@ -52,8 +52,8 @@ router.post("/product/:productId", requireAuth, async (req, res) => {
 // ---- Админка: модерация ----
 router.get(
   "/pending",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -68,8 +68,8 @@ router.get(
 
 router.put(
   "/:id/approve",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -84,8 +84,8 @@ router.put(
 
 router.delete(
   "/:id",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -97,8 +97,8 @@ router.delete(
 // Добавление отзыва вручную админом — публикуется сразу, без модерации.
 router.post(
   "/manual",
-  requireAuth,
   adminLimiter,
+  requireAuth,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
