@@ -7,10 +7,11 @@ local environment.
 ## Overview
 
 KompMaster is a pnpm workspace with a Node.js/Express backend (`backend/`,
-package `kompmaster-server`) that serves a REST API and the static storefront
-(`backend/public/index.html`). It talks to PostgreSQL for data and an
-S3-compatible store for photos. The active entry point is `backend/src/index.js`
-(see [Entry points](#entry-points)).
+package `kompmaster-server`) that serves the `/api/*` REST API, and a static
+storefront (`frontend/`) built separately for S3 + CDN. The backend talks to
+PostgreSQL for data and an S3-compatible store for photos. The active entry
+point is `backend/src/index.js` (see [Entry points](#entry-points)). The legacy
+single-file storefront is archived under `docs/legacy/public/`.
 
 ## Prerequisites
 
@@ -223,8 +224,8 @@ node scripts/check-docs.js <files...>    # ad-hoc check
 ```
 
 Rule summary: env/config surface → `ENVIRONMENT.md`; workflow/tooling or any
-code change → `DEVELOPMENT.md`; visual surface (`backend/public/`, frontend
-styles/components/pages, content defaults) → `DESIGN.md`; route/page/public
+code change → `DEVELOPMENT.md`; visual surface (frontend
+styles/components/pages, content defaults) → `DESIGN.md`; route/page
 changes → `CHANGELOG.md` (`[Unreleased]` must be non-empty); any
 `frontend/**` change → `frontend/README.md`; any `terraform/**` change →
 `terraform/README.md`. Editing a required doc satisfies its own rule.

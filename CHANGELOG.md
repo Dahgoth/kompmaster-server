@@ -19,10 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The root `pnpm-workspace.yaml` approves only the `esbuild` build script.
 - Restructured the repo as a pnpm workspace: the backend app moved from the
   repo root into `backend/` (`src/`→`backend/src/`, `tests/`→`backend/tests/`,
-  `migrations/`→`backend/migrations/`, `public/`→`backend/public/`,
+  `migrations/`→`backend/migrations/`,
   `seed.json`→`backend/seed.json`, `.env.example`→`backend/.env.example`,
   `package.json`→`backend/package.json`, operational scripts
-  →`backend/scripts/`). Repo-level tooling (`scripts/`, `.husky/`, `.github/`,
+  →`backend/scripts/`). The legacy single-file storefront
+  (`public/index.html` + `public/server-bridge.js`) is archived under
+  `docs/legacy/public/` rather than kept in the backend app directory.
+  Repo-level tooling (`scripts/`, `.husky/`, `.github/`,
   `Caddyfile`, `docker-compose.yml`, `terraform/`, `docs/`) remains at the
   root. `frontend/` stays a workspace package; its `pnpm-lock.yaml` and
   `pnpm-workspace.yaml` were removed in favour of the single root lockfile and

@@ -33,9 +33,15 @@ repository and is used for storefront preview/staging/fallback.
 ### 1. App layout: `/backend` + `/frontend`
 
 Backend application code moves under `backend/`: `src/`, `tests/`,
-`migrations/`, `public/`, `seed.json`, `.env.example`, its `package.json`, and
-its operational scripts (`deploy.sh`, `backup.sh`, `init-db.js`,
+`migrations/`, `seed.json`, `.env.example`, its `package.json`, and its
+operational scripts (`deploy.sh`, `backup.sh`, `init-db.js`,
 `reset-admin.js`).
+
+The legacy single-file storefront (`public/index.html` +
+`public/server-bridge.js`) is **not** application code: the canonical backend
+never served it (ADR 001) and only the retired `docs/legacy/server.js` did, so
+it is archived under `docs/legacy/public/` instead of being carried into
+`backend/`.
 
 Repository-level infrastructure stays at the root: `terraform/`, `.github/`,
 `.husky/`, `docker-compose.yml`, `Caddyfile`, `scripts/check-docs.js`,
@@ -93,8 +99,9 @@ encodes this.
 
 **Neutral**
 
-- `public/` stays under `backend/` as legacy, decoupled static assets
-  (ADR 001); the canonical backend still serves the API only.
+- The legacy single-file storefront is archived under `docs/legacy/public/`
+  alongside the retired legacy server; the canonical backend continues to
+  serve the API only (ADR 001).
 
 ## Alternatives Considered
 

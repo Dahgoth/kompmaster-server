@@ -3,7 +3,7 @@
 Status: Draft — to be validated against ADR 001 / ADR 002 decisions
 Date: 2026-09-16
 Author: Frontend scaffolding agent
-Related: ADR 001 §1a (pure C), ADR 002 (PoC re-scope), `backend/public/index.html` (legacy, inspiration-only)
+Related: ADR 001 §1a (pure C), ADR 002 (PoC re-scope), `docs/legacy/public/index.html` (legacy, inspiration-only)
 
 ---
 
@@ -78,7 +78,7 @@ These endpoints exist in the legacy `backend/src/server.js` but **not** in the m
 
 ### 1.3 Legacy frontend UX to preserve
 
-Extracted from `backend/public/index.html` (2149 lines, single-file vanilla JS/HTML/CSS):
+Extracted from `docs/legacy/public/index.html` (2149 lines, single-file vanilla JS/HTML/CSS):
 
 **Storefront routes:**
 - `home` — splash screen (2.5s auto-dismiss), hero banner with telegram link, about text block with guarantee + delivery copy (neon number highlight), category grid (two-level tree), office section (Sochi photo + video, Moscow "soon")
@@ -345,10 +345,10 @@ Browser                    Vite dev / dist (S3 CDN)
 
 ## 6. Key Migration Changes (legacy → modular)
 
-| Concern | Legacy (`public/index.html`) | New Frontend |
+| Concern | Legacy (`docs/legacy/public/index.html`) | New Frontend |
 |---------|------------------------------|--------------|
 | Auth | cookie `km_auth` | `Authorization: Bearer <jwt>` |
-| Data source | `server-bridge.js` → `/api/bootstrap` | Individual API calls to `/api/*` |
+| Data source | `docs/legacy/public/server-bridge.js` → `/api/bootstrap` | Individual API calls to `/api/*` |
 | Products | localStorage `PRODUCTS[id] = [[name,price,qty,id]]` | `GET /api/products?category=` returns objects |
 | Categories | localStorage + `/api/bootstrap` (site_state JSONB) | `GET /api/categories` (DB table) + hardcoded defaults |
 | Content | `/api/bootstrap` → site_state.content | Hardcoded defaults (src/data/content.js) |

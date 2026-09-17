@@ -61,7 +61,7 @@ with `pnpm --filter kompmaster-frontend build` (or run `pnpm run build` from
 ## Key Decisions
 
 - No framework — vanilla JS for zero-runtime bundle size
-- Design tokens extracted from legacy `backend/public/index.html`
+- Design tokens extracted from legacy `docs/legacy/public/index.html`
 - Site content (FAQ, About, Warranty) hardcoded since modular API has no content endpoints
 - Manual payment mode only (external providers deferred per ADR-002)
 

@@ -30,7 +30,6 @@ const isFrontendWorkflowFile = (f) =>
   ["frontend/package.json", "frontend/vite.config.js"].includes(f);
 const isTerraformCode = (f) =>
   f.startsWith("terraform/") || f.startsWith("frontend/terraform/");
-const isPublicAsset = (f) => f.startsWith("backend/public/");
 const isRoute = (f) => f.startsWith("backend/src/routes/");
 const isFrontendPage = (f) =>
   f.startsWith("frontend/src/pages/") ||
@@ -68,7 +67,6 @@ function classify(files) {
   const backendTouched = files.some((f) => isBackendCode(f) || isBackendWorkflowFile(f));
   const frontendTouched = files.some((f) => isFrontendCode(f) || isFrontendWorkflowFile(f));
   const terraformTouched = files.some(isTerraformCode);
-  const publicTouched = files.some(isPublicAsset);
 
   // Config surface -> ENVIRONMENT.md
   if (files.some((f) => ENV_FILES.has(f))) need.add("ENVIRONMENT.md");
@@ -93,15 +91,14 @@ function classify(files) {
 
   // UX/visual surface -> DESIGN.md
   if (
-    publicTouched ||
     files.some((f) => isFrontendStyle(f) || isFrontendPage(f)) ||
     touched.has("DESIGN.md")
   ) {
     need.add("DESIGN.md");
   }
 
-  // User-facing behavior -> CHANGELOG.md (routes, pages, public assets)
-  if (files.some((f) => isRoute(f) || isFrontendPage(f) || isPublicAsset(f))) {
+  // User-facing behavior -> CHANGELOG.md (routes, pages)
+  if (files.some((f) => isRoute(f) || isFrontendPage(f))) {
     need.add("CHANGELOG.md");
   }
 

@@ -61,7 +61,7 @@ has_terraform=false
 
 for f in $changed; do
   case "$f" in
-    backend/src/*|backend/tests/*|backend/migrations/*|backend/scripts/*|backend/public/*|backend/seed.json|backend/.env.example|scripts/*|package.json|backend/package.json|pnpm-lock.yaml|pnpm-workspace.yaml|docker-compose.yml|Caddyfile)
+    backend/src/*|backend/tests/*|backend/migrations/*|backend/scripts/*|backend/seed.json|backend/.env.example|scripts/*|package.json|backend/package.json|pnpm-lock.yaml|pnpm-workspace.yaml|docker-compose.yml|Caddyfile)
       has_backend=true ;;
     terraform/*|frontend/terraform/*)
       has_terraform=true ;;
