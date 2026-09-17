@@ -150,6 +150,23 @@ from a `pnpm` field in `package.json`.
 `package-lock.json`. CI runs `pnpm install --frozen-lockfile`, so a stale
 lockfile fails the build instead of silently re-resolving.
 
+### CDN-pinned dependency (SheetJS / xlsx)
+
+One backend dependency is not sourced from the npm registry: `xlsx` is pinned
+to an exact tarball from the official SheetJS CDN (the vendor's distribution
+channel since it stopped publishing to npm) — see
+`docs/adr/004-spreadsheet-import-stack.md` for the decision and the
+alternatives considered. Consequences:
+
+- **Dependabot does not track CDN tarballs.** When a new release appears on
+  <https://cdn.sheetjs.com/>, update the pinned URL in
+  `backend/package.json`, run `pnpm install` (the lockfile records the
+  tarball integrity), and verify the price-import format matrix —
+  xlsx, xls, csv (UTF-8 and windows-1251), tsv with Cyrillic headers —
+  against `backend/src/utils/priceImport.js` before merging.
+- Do not "fix" the CDN URL to a registry `^` range: the npm `xlsx` package is
+  frozen at 0.18.5 with known CVEs fixed only in CDN releases.
+
 ### Fixed shared versioning
 
 The root `package.json#version` is the single source of truth for the release
