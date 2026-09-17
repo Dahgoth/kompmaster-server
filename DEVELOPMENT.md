@@ -6,9 +6,10 @@ local environment.
 
 ## Overview
 
-KompMaster is a Node.js/Express backend that serves a REST API and the static
-storefront (`public/index.html`). It talks to PostgreSQL for data and an
-S3-compatible store for photos. The active entry point is `src/index.js`
+KompMaster is a pnpm workspace with a Node.js/Express backend (`backend/`,
+package `kompmaster-server`) that serves a REST API and the static storefront
+(`backend/public/index.html`). It talks to PostgreSQL for data and an
+S3-compatible store for photos. The active entry point is `backend/src/index.js`
 (see [Entry points](#entry-points)).
 
 ## Prerequisites
@@ -32,15 +33,16 @@ corepack enable pnpm   # activates the pnpm version pinned in package.json
 pnpm install
 ```
 
-`pnpm install` also runs the `prepare` script, which installs the Husky hooks
-(commit-msg and pre-push). pnpm is pinned through `packageManager` in
-`package.json`; Corepack downloads that exact version, so every checkout uses
-the same one. `npm` is not used for project dependencies.
+`pnpm install` also runs the root `prepare` script, which installs the Husky hooks
+(commit-msg and pre-push). The root orchestrator `package.json` pins pnpm
+through `packageManager`; Corepack downloads that exact version, so every checkout uses
+the same one. `npm` is not used for project dependencies. `pnpm install` at the
+repo root installs both the `backend/` and `frontend/` workspace packages.
 
 ### 2. Configure environment
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
 Fill in the required variables. See [`ENVIRONMENT.md`](ENVIRONMENT.md) for the
@@ -64,7 +66,7 @@ variables to an existing bucket.
 pnpm run migrate
 ```
 
-The migration runner applies `migrations/*.sql` in order and records applied
+The migration runner applies `backend/migrations/*.sql` in order and records applied
 files in `schema_migrations`, so re-runs are safe.
 
 ### 5. Run and verify
@@ -86,18 +88,25 @@ curl http://localhost:4000/api/health
 
 For production on a VPS, use PM2 (see [README §6](../README.md#6-%D0%97%D0%B0%D0%BF%D1%83%D1%81%D0%BA)):
 
+The API runs under PM2 with a CWD of `backend/` so `dotenv` loads `backend/.env`
+(template `backend/.env.example`). On the VPS the runtime directory is
+`/opt/compmaster/backend`:
+
 ```bash
-corepack enable pnpm
-pnpm install --prod --frozen-lockfile
+sudo corepack enable pnpm
+pnpm install --prod --frozen-lockfile --ignore-scripts --filter kompmaster-server...
 sudo npm install -g pm2
-pm2 start src/index.js --name kompmaster-api
+pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend
 pm2 save
 pm2 startup   # выполните команду, которую он покажет — автозапуск после перезагрузки сервера
 ```
 
 (`npm install -g pm2` only installs the global process manager; project
-dependencies are always installed with pnpm. `scripts/deploy.sh` wraps the
-`pnpm install` + `pnpm run migrate` + PM2 steps.)
+dependencies are always installed with pnpm. `--ignore-scripts` is required
+because the workspace root `prepare` (husky) is a devDependency and is absent
+under `--prod`; the backend has no dependencies that need install scripts.
+`backend/scripts/deploy.sh` wraps the `pnpm install` + `pnpm run migrate` + PM2
+steps.)
 
 > **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
 > Production app deployment uses PM2. See
@@ -107,32 +116,51 @@ dependencies are always installed with pnpm. `scripts/deploy.sh` wraps the
 ## Package manager (pnpm)
 
 The project uses **pnpm**, not npm. pnpm is pinned through `packageManager` in
-`package.json` and activated with Corepack (`corepack enable pnpm`), so local
-and CI runs use the same version. Run project scripts with `pnpm run <script>`.
+the root `package.json` (the private workspace orchestrator) and activated with
+Corepack (`corepack enable pnpm`), so local and CI runs use the same version.
+Run project scripts with `pnpm run <script>`.
 
-The backend (repo root) and `frontend/` are **two independent pnpm projects**,
-each with its own `pnpm-lock.yaml` and its own install:
+The repo is a **pnpm workspace** with two workspace packages:
 
-| Project  | Manifest                | Lockfile                  | Settings                       |
-| -------- | ----------------------- | ------------------------- | ------------------------------ |
-| Backend  | `package.json`          | `pnpm-lock.yaml`          | —                              |
-| Frontend | `frontend/package.json` | `frontend/pnpm-lock.yaml` | `frontend/pnpm-workspace.yaml` |
+| Project  | Manifest            | Version | devDeps / packageManager |
+| -------- | ------------------- | ------- | ------------------------ |
+| Backend  | `backend/package.json`  | mirrors root | none; private |
+| Frontend | `frontend/package.json` | mirrors root | — |
 
-- Install backend deps: `pnpm install` (repo root).
-- Install frontend deps: `pnpm install` inside `frontend/`, or
-  `pnpm --dir frontend install` from the root.
-- The frontend stays a standalone project (not a workspace package) because it
-  builds and deploys independently to S3/CDN. `pnpm --dir frontend <script>`
-  runs its scripts from the repo root and backs `pnpm run test:frontend`.
+- The root `package.json` (name `kompmaster`, private) holds the shared
+  `version`, the commitlint/Husky devDependencies, and workspace scripts
+  (`start`/`dev`/`migrate`/`test`/`test:frontend`/`build:frontend`/
+  `version:check`/`version:sync`/`lint:commit`).
+- `pnpm-workspace.yaml` at the root declares `packages: [backend, frontend]`
+  and `allowBuilds: [esbuild]`.
+- One root `pnpm-lock.yaml` installs **both** apps: `pnpm install` from the
+  repo root resolves dependencies for `backend/` and `frontend/`.
+- Run a single app's scripts with `pnpm --filter kompmaster-server <script>`
+  or `pnpm --filter kompmaster-frontend <script>`.
 
 pnpm blocks dependency build scripts by default. The only approved build is
-`esbuild` (Vite's native binary), declared under `allowBuilds` in
-`frontend/pnpm-workspace.yaml` — pnpm ≥ 11 reads settings from that file, not
+`esbuild` (Vite's native binary), declared under `allowBuilds` in the root
+`pnpm-workspace.yaml` — pnpm ≥ 11 reads settings from that file, not
 from a `pnpm` field in `package.json`.
 
-`pnpm-lock.yaml` files are committed; do not add a `package-lock.json`. CI runs
-`pnpm install --frozen-lockfile`, so a stale lockfile fails the build instead of
-silently re-resolving.
+`pnpm-lock.yaml` is committed (single file at the root); do not add a
+`package-lock.json`. CI runs `pnpm install --frozen-lockfile`, so a stale
+lockfile fails the build instead of silently re-resolving.
+
+### Fixed shared versioning
+
+The root `package.json#version` is the single source of truth for the release
+version. `backend/package.json` and `frontend/package.json` must mirror it.
+
+- `pnpm run version:check` runs `node scripts/check-versions.js`, which fails
+  if either app's version drifts from the root. This runs as an always-on
+  `versions` CI job and in the Husky `pre-push` hook.
+- `pnpm run version:sync` runs `node scripts/sync-versions.js`, which writes
+  the root version into both apps. Run this after bumping the root version.
+- Release flow: bump `version` in root `package.json` →
+  `pnpm run version:sync` → move `CHANGELOG.md` entries into a new dated
+  section → `git tag vX.Y.Z` → push. Backend and frontend always deploy from
+  the same tag.
 
 > Historical records (`docs/adr/`, `docs/research/`, `docs/archive/`) keep the
 > original `npm` commands they were written with; they are dated snapshots and
@@ -142,12 +170,18 @@ silently re-resolving.
 
 | Command                 | Description                                      |
 | ----------------------- | ------------------------------------------------ |
-| `pnpm start`            | Run the server                                   |
-| `pnpm run dev`          | Run with file watching                           |
-| `pnpm run migrate`      | Apply pending `migrations/*.sql`                 |
-| `pnpm test`             | Run backend tests (`node --test`)                |
-| `pnpm run test:frontend`| Run frontend tests (delegates to `frontend/`)    |
+| `pnpm start`            | Run the server (`backend/src/index.js`)          |
+| `pnpm run dev`          | Run with file watching (`/backend/src/`)         |
+| `pnpm run migrate`      | Apply pending `backend/migrations/*.sql`         |
+| `pnpm test`             | Run backend and frontend tests                   |
+| `pnpm test:backend`     | Run backend tests (`node --test`, `node:backend`) |
+| `pnpm test:frontend`    | Run frontend tests (`node:frontend`)             |
+| `pnpm build:frontend`   | Build the storefront (`pnpm --filter kompmaster-frontend build`) |
+| `pnpm version:check`    | Assert backend/frontend versions mirror root (`node scripts/check-versions.js`) |
+| `pnpm version:sync`     | Write root version into both apps (`node scripts/sync-versions.js`) |
 | `pnpm run lint:commit`  | Validate the most recent commit message          |
+| `pnpm --filter kompmaster-server <script>`  | Run a backend script                             |
+| `pnpm --filter kompmaster-frontend <script>`| Run a frontend script                            |
 | `docker compose up -d postgres minio` | Start local Postgres + MinIO only; app runs via PM2 (`pnpm start`) |
 
 ## Testing
@@ -156,7 +190,7 @@ Tests use the built-in `node:test` runner — no extra dependencies.
 A short overview also lives in [README § «Тесты и CI»](README.md#тесты-и-ci);
 this section is the detailed reference.
 
-- Backend: `tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
+- Backend: `backend/tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
   null-safety, JWT round-trips and admin-panel flag rejection, price-import
   header variants and duplicate detection, the fail-closed `FRONTEND_ORIGIN`
   allowlist, and `requireRole` 403 behavior.
@@ -164,12 +198,18 @@ this section is the detailed reference.
   matching, no-Vite `apiBase` fallback, escaping/formatting helpers, and
   category/payment default consistency.
 - Run both suites before committing: `pnpm test` and
-  `pnpm run test:frontend`.
+  `pnpm test:frontend`.
   The Husky `pre-push` hook runs only the suites whose area changed in the
-  pushed commits, plus `node scripts/check-docs.js`; CI
-  (`.github/workflows/ci.yml`) runs path-filtered `backend` / `frontend` /
-  `terraform` jobs plus an always-on `docs-sync` job and commitlint on every
-  push and PR.
+  pushed commits (backend `pnpm test:backend` / frontend `pnpm test:frontend`),
+  plus `node scripts/check-versions.js` and `node scripts/check-docs.js`.
+  CI (`.github/workflows/ci.yml`) runs path-filtered `backend` / `frontend` /
+  `terraform` jobs plus always-on `docs-sync` and `versions` jobs and
+  commitlint on every push and PR. The `backend` job filters on `backend/**`
+  plus the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, and
+  `scripts/**`; the `frontend` job runs `pnpm --filter kompmaster-frontend
+  test|build`. The backend syntax check inspects only content-changed backend JS
+  (`git mv` renames are excluded). See
+  [`docs/adr/003-monorepo-workspace-and-versioning.md`](docs/adr/003-monorepo-workspace-and-versioning.md).
 
 ## Docs-in-sync enforcement
 
@@ -183,7 +223,7 @@ node scripts/check-docs.js <files...>    # ad-hoc check
 ```
 
 Rule summary: env/config surface → `ENVIRONMENT.md`; workflow/tooling or any
-code change → `DEVELOPMENT.md`; visual surface (`public/`, frontend
+code change → `DEVELOPMENT.md`; visual surface (`backend/public/`, frontend
 styles/components/pages, content defaults) → `DESIGN.md`; route/page/public
 changes → `CHANGELOG.md` (`[Unreleased]` must be non-empty); any
 `frontend/**` change → `frontend/README.md`; any `terraform/**` change →
@@ -215,21 +255,21 @@ enforcement points diff the **whole branch against `origin/main`**
 
 ## Entry points
 
-There are two server implementations in `src/`, and they are **not** identical:
+There are two server implementations in `backend/src/`, and they are **not** identical:
 
 | File             | Module style | Run via             | Notes                                   |
 | ---------------- | ------------ | ------------------- | --------------------------------------- |
-| `src/index.js`   | CommonJS     | `pnpm start` / `pnpm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`. |
+| `backend/src/index.js`   | CommonJS     | `pnpm start` / `pnpm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`. |
 | — | — | — | `docs/legacy/server.js` — archived legacy ESM monolith, cannot boot. See ADR 001 §1. |
 
-Treat `src/index.js` as the source of truth. If you touch one entry point,
+Treat `backend/src/index.js` as the source of truth. If you touch one entry point,
 verify you do not need the same change in the other, and flag the discrepancy
 in your pull request. (`ENVIRONMENT.md` documents the env-var differences
 between the two.)
 
 > **Note on `docs/legacy/server.js`:** Former legacy ESM entry that cannot boot under
 > the current CommonJS runtime. It is quarantined as inspiration-only per ADR 001.
-> Moved out of `src/` to prevent confusion with the canonical entry. See
+> Moved out of `backend/src/` to prevent confusion with the canonical entry. See
 > `docs/archive/DOCKER_EVALUATION.md`.
 
 ## Docker-based setup (databases only)
@@ -246,8 +286,8 @@ with local volumes:
 `/terraform/` provisions the PoC runtime on Timeweb Cloud (ADR-002, Option
 D+A) for **Option B**: one MSK-50-shape VPS running the API only, daily disk
 autobackups, two S3 buckets (media + static storefront with website hosting),
-and DNS records in the Timeweb-managed `compmasone.ru` zone. App code, `.env`,
-and migrations are NOT managed by Terraform. Full stack details live in
+and DNS records in the Timeweb-managed `compmasone.ru` zone. App code,
+`backend/.env`, and `backend/migrations/` are NOT managed by Terraform. Full stack details live in
 [`terraform/README.md`](terraform/README.md).
 
 ```bash
@@ -256,7 +296,7 @@ cd terraform
 terraform init
 terraform plan         # 1 VPS + firewall + backups + 2 buckets + 4 DNS records
 terraform apply
-terraform output       # map S3_* into .env — see ENVIRONMENT.md
+  terraform output       # map S3_* into `backend/.env` — see ENVIRONMENT.md
 ```
 
 Notes:
@@ -289,7 +329,7 @@ commit conventions.
 
 ## Database schema changes
 
-1. Add a new `migrations/NNN_*.sql` file (increment `NNN`; existing files are
+1. Add a new `backend/migrations/NNN_*.sql` file (increment `NNN`; existing files are
    immutable).
 2. Run `pnpm run migrate` to apply it.
 3. Mention the migration in your pull request and in `CHANGELOG.md` when the
@@ -305,7 +345,7 @@ be running the legacy `docs/legacy/server.js` entry — switch to `pnpm start`.
 ### `JWT_SECRET` not set
 
 In development the app falls back to a dev-only secret and warns. In
-production it refuses to start. Set `JWT_SECRET` in `.env`:
+production it refuses to start. Set `JWT_SECRET` in `backend/.env`:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
@@ -325,8 +365,8 @@ Confirm `DATABASE_URL` matches the credentials in `docker-compose.yml`
 
 ### Port already in use
 
-The active entry point uses `PORT` (default `4000`). Set `PORT` in `.env` to
-change it. Note: the legacy entry at `docs/legacy/server.js` used port
+The active entry point uses `PORT` (default `4000`). Set `PORT` in
+`backend/.env` to change it. Note: the legacy entry at `docs/legacy/server.js` used port
 `3000` (see `docs/archive/DOCKER_EVALUATION.md`); the canonical port is now `4000`.
 
 ### Migration fails partway

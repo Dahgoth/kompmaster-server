@@ -17,20 +17,21 @@ const fs = require("node:fs");
 
 // --- path classifiers (repo-root-relative) ---
 const isBackendCode = (f) =>
-  f.startsWith("src/") ||
-  f.startsWith("tests/") ||
-  f.startsWith("migrations/");
+  f.startsWith("backend/src/") ||
+  f.startsWith("backend/tests/") ||
+  f.startsWith("backend/migrations/");
 const isBackendWorkflowFile = (f) =>
-  ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "docker-compose.yml", "Caddyfile"].includes(f) ||
-  f.startsWith("scripts/");
+  ["package.json", "backend/package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "docker-compose.yml", "Caddyfile"].includes(f) ||
+  f.startsWith("scripts/") ||
+  f.startsWith("backend/scripts/");
 const isFrontendCode = (f) =>
   f.startsWith("frontend/") && !f.startsWith("frontend/terraform/");
 const isFrontendWorkflowFile = (f) =>
-  ["frontend/package.json", "frontend/pnpm-lock.yaml", "frontend/pnpm-workspace.yaml", "frontend/vite.config.js"].includes(f);
+  ["frontend/package.json", "frontend/vite.config.js"].includes(f);
 const isTerraformCode = (f) =>
   f.startsWith("terraform/") || f.startsWith("frontend/terraform/");
-const isPublicAsset = (f) => f.startsWith("public/");
-const isRoute = (f) => f.startsWith("src/routes/");
+const isPublicAsset = (f) => f.startsWith("backend/public/");
+const isRoute = (f) => f.startsWith("backend/src/routes/");
 const isFrontendPage = (f) =>
   f.startsWith("frontend/src/pages/") ||
   f.startsWith("frontend/src/components/") ||
@@ -40,8 +41,8 @@ const isFrontendStyle = (f) =>
   f === "frontend/src/data/content.js";
 
 const ENV_FILES = new Set([
-  "src/config.js",
-  ".env.example",
+  "backend/src/config.js",
+  "backend/.env.example",
   "docker-compose.yml",
   "Caddyfile",
 ]);

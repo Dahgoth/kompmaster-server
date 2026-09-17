@@ -38,13 +38,15 @@ sudo chown $USER:$USER /opt/compmaster
 cd /opt/compmaster
 ```
 
-Распакуйте сюда содержимое архива проекта.
+Распакуйте содержимое архива в `/opt/compmaster`: это корень pnpm-workspace,
+backend находится в `/opt/compmaster/backend`, storefront — в
+`/opt/compmaster/frontend`.
 
 ## 4. Настройки
 
 ```bash
-cp .env.example .env
-nano .env
+cp backend/.env.example backend/.env
+nano backend/.env
 ```
 
 Обязательно замените:
@@ -53,7 +55,7 @@ nano .env
   используется в ссылках восстановления пароля: `https://www.compmasone.ru,https://compmasone.ru`)
 - `JWT_SECRET`
 - `DATABASE_URL` (пароль совпадает с `POSTGRES_PASSWORD`)
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` (бутстрап админа, см. `scripts/reset-admin.js`)
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` (бутстрап админа, см. `backend/scripts/reset-admin.js`)
 
 Для случайного секрета можно выполнить:
 
@@ -63,15 +65,26 @@ openssl rand -hex 48
 
 ## 5. Запуск
 
+Установка и запуск API выполняются из корня workspace. Для production-зависимостей
+backend:
+
 ```bash
-pnpm install --prod --frozen-lockfile
+pnpm install --prod --frozen-lockfile --ignore-scripts --filter kompmaster-server...
 pnpm run migrate
 
 sudo npm install -g pm2
-pm2 start src/index.js --name kompmaster-api
+pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend
 pm2 save
 pm2 startup   # выполните команду, которую он покажет — автозапуск после перезагрузки сервера
 ```
+
+`backend/scripts/deploy.sh` выполняет ту же последовательность: workspace install
+с `--filter kompmaster-server...`, миграции и PM2 с `--cwd /opt/compmaster/backend`.
+
+Перед релизом или деплоем проверьте общую версию: `package.json#version` в корне —
+единый источник истины, `pnpm run version:check` проверяет backend и frontend,
+а `pnpm run version:sync` синхронизирует их манифесты. Backend и витрина
+развёртываются из одного tag/commit.
 
 Проверить контейнеры (PostgreSQL):
 
@@ -118,7 +131,7 @@ curl -I https://compmasone.ru        # 301 → https://www.compmasone.ru
 
 `https://www.compmasone.ru/admin`
 
-Используйте `ADMIN_EMAIL` и `ADMIN_PASSWORD` из `.env`.
+Используйте `ADMIN_EMAIL` и `ADMIN_PASSWORD` из `backend/.env`.
 
 После первого входа пароль можно поменять в админке.
 

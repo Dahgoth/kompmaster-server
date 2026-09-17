@@ -4,13 +4,13 @@
 > being rebuilt as a static Vite + vanilla-ESM app in `frontend/` (see
 > `frontend/PLAN.md` and `frontend/README.md`), deployed to S3+CDN per
 > ADR 001 §1a. Until the rebuild lands, this document still describes the
-> legacy single-file `public/index.html` below. The rebuilt tokens, layout,
+> legacy single-file `backend/public/index.html` below. The rebuilt tokens, layout,
 > and components in `frontend/src/styles/` and `frontend/src/components/`
 > are extracted from that legacy file and intentionally match it, so this
 > contract applies to both surfaces during the transition.
 
 This document is the UX/UI contract for the KompMaster storefront. The front
-end lives in a single file, `public/index.html`, and is served directly by the
+end lives in a single file, `backend/public/index.html`, and is served directly by the
 backend. Any change to visuals, layout, motion, or voice must keep this
 document in sync (see `CONTRIBUTING.md`).
 

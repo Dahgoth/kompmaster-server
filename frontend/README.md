@@ -12,28 +12,45 @@ Static storefront frontend for the KompMaster PC parts / restored electronics sh
 
 ## Development
 
-`frontend/` is a standalone pnpm project (own `pnpm-lock.yaml`); run its
-commands from this directory. pnpm is pinned via Corepack — enable it once with
+`frontend/` is a package in the repository's root pnpm workspace. The root
+`pnpm-lock.yaml` covers both apps, so install dependencies once from the
+repository root. pnpm is pinned via Corepack — enable it once with
 `corepack enable pnpm` (add `sudo` for a system-wide Node install).
 
 ```bash
+corepack enable pnpm
 pnpm install
-pnpm run dev    # localhost:5173
-pnpm test       # node --test suite
-pnpm run build  # -> dist/
-pnpm run preview
 ```
+
+Run frontend scripts from the repository root with the workspace filter:
+
+```bash
+pnpm --filter kompmaster-frontend dev
+pnpm --filter kompmaster-frontend test
+pnpm --filter kompmaster-frontend build
+pnpm --filter kompmaster-frontend preview
+```
+
+The equivalent `pnpm run dev`, `pnpm run test`, `pnpm run build`, and
+`pnpm run preview` commands continue to work from `frontend/`. The root also
+provides `pnpm build:frontend` as a convenience alias for the filtered build.
 
 ## Deployment
 
-Static artifact on Timeweb S3 website hosting (+ CDN attached manually) —
-infrastructure is provisioned by the backend repo's `terraform/` (see
-`terraform/README.md` there):
+Production remains a static artifact on Timeweb S3 website hosting with the CDN
+attached manually. Infrastructure is provisioned by the repository root's
+`../terraform/` (see `../terraform/README.md`). From the repository root:
 
 ```bash
-VITE_API_BASE=https://api.compmasone.ru/api pnpm run build
-aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend-bucket> --delete
+VITE_API_BASE=https://api.compmasone.ru/api pnpm run build:frontend
+aws --endpoint-url https://s3.timeweb.com s3 sync frontend/dist/ s3://<frontend-bucket> --delete
 ```
+
+Vercel is used for storefront preview, staging, and fallback deployments. In
+the Vercel project, set **Root Directory** to `frontend`, run the install
+command from the repository root as `pnpm install --frozen-lockfile`, and build
+with `pnpm --filter kompmaster-frontend build` (or run `pnpm run build` from
+`frontend/`). Production traffic remains on Timeweb S3 + CDN.
 
 - Storefront is canonical at `https://www.compmasone.ru`; the apex
   `compmasone.ru` 301-redirects to it (Timeweb DNS forbids apex CNAME).
@@ -44,39 +61,41 @@ aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend-bucket> -
 ## Key Decisions
 
 - No framework — vanilla JS for zero-runtime bundle size
-- Design tokens extracted from legacy `public/index.html`
+- Design tokens extracted from legacy `backend/public/index.html`
 - Site content (FAQ, About, Warranty) hardcoded since modular API has no content endpoints
 - Manual payment mode only (external providers deferred per ADR-002)
 
 ## Project Structure
 
 ```
-frontend/
-  index.html          — entry point
-  package.json        — deps + scripts
-  pnpm-workspace.yaml — pnpm settings (allowBuilds: esbuild)
-  pnpm-lock.yaml      — pnpm lockfile
-  vite.config.js      — build config
-  .env.example        — environment template
-  
-  src/
-    main.js           — app entry
-    config.js         — config + localStorage helpers
-    api.js            — API client (Bearer JWT + admin token)
-    store.js          — reactive state management
-    router.js         — client-side router
-    utils.js          — formatting, DOM, helpers
+repository root/
+  pnpm-workspace.yaml       — workspace packages + build settings
+  pnpm-lock.yaml            — single lockfile for both apps
+  terraform/                — repository-wide IaC for the TF stack
+  frontend/.env.example     — environment template
+
+  frontend/
+    index.html              — entry point
+    package.json            — deps + scripts
+    vite.config.js          — build config
     
-    data/
-      categories.js   — default categories + menu
-      content.js      — hardcoded site content (FAQ, About, Warranty)
-      payment.js      — payment configuration defaults
+    src/                    — frontend application code
+      main.js               — app entry
+      config.js             — config + localStorage helpers
+      api.js                — API client (Bearer JWT + admin token)
+      store.js              — reactive state management
+      router.js             — client-side router
+      utils.js              — formatting, DOM, helpers
+      
+      data/
+        categories.js       — default categories + menu
+        content.js          — hardcoded site content (FAQ, About, Warranty)
+        payment.js          — payment configuration defaults
+      
+      styles/               — CSS modules (tokens, base, layout, components, pages, admin, utilities)
+      components/           — reusable UI components
+      pages/                — page renderers
+        admin/              — admin panel pages
     
-    styles/           — CSS modules (tokens, base, layout, components, pages, admin, utilities)
-    components/       — reusable UI components
-    pages/            — page renderers
-      admin/          — admin panel pages
-    
-  public/             — static assets (favicon, images)
-  terraform/          — IaC for TF stack
+    public/                 — static assets (favicon, images)
 ```

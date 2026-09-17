@@ -1,8 +1,0 @@
-# pnpm settings for the standalone frontend project (pnpm >= 11 reads all
-# non-auth settings from here, not from package.json).
-#
-# esbuild (a Vite transitive dependency) ships a native binary via a postinstall
-# script. pnpm blocks dependency build scripts by default, so approve exactly
-# this one package instead of opening the installer up.
-allowBuilds:
-  esbuild: true

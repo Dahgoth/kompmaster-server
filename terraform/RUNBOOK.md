@@ -5,6 +5,8 @@ where those credentials live (all gitignored), and the exact commands for
 provision, deploy, rotate, and destroy. Read top to bottom on first use.
 
 Related: [`terraform/README.md`](README.md) (stack + topology),
+[`../docs/adr/003-monorepo-workspace-and-versioning.md`](../docs/adr/003-monorepo-workspace-and-versioning.md)
+(workspace layout, runtime CWD, and shared versioning),
 [`../ENVIRONMENT.md`](../ENVIRONMENT.md) (app variables),
 [`../DEPLOY.md`](../DEPLOY.md) (VPS software install, Russian),
 [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
@@ -34,14 +36,14 @@ copies for tooling.
 | `ssh_allowed_cidr` | firewall SSH rule | Your IP /32 | `terraform/terraform.tfvars` |
 | `server_ipv4` | DNS A-records, VPS access | `terraform output server_ipv4` | not secret |
 | `POSTGRES_PASSWORD` | PostgreSQL on VPS (feeds `DATABASE_URL`) | Password manager | `terraform/secrets/db.env` |
-| `DATABASE_URL` | backend (`src/db.js`) | Composed from `db.env` | `terraform/secrets/app.env` + VPS `/opt/compmaster/.env` |
-| `JWT_SECRET` | backend JWT signing (32-byte hex) | `openssl rand -hex 32` | `terraform/secrets/app.env` + VPS `.env` |
+| `DATABASE_URL` | backend (`backend/src/db.js`) | Composed from `db.env` | `terraform/secrets/app.env` + VPS `/opt/compmaster/backend/.env` |
+| `JWT_SECRET` | backend JWT signing (32-byte hex) | `openssl rand -hex 32` | `terraform/secrets/app.env` + VPS `backend/.env` |
 | `JWT_EXPIRES_IN` | backend | Policy (default `7d`) | `terraform/secrets/app.env` |
-| `ADMIN_PANEL_PASSWORD` | admin panel second password | Password manager | `terraform/secrets/app.env` + VPS `.env` |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | `scripts/reset-admin.js` bootstrap | Password manager | `terraform/secrets/db.env` |
-| `FRONTEND_ORIGIN` | backend CORS allowlist; **first entry = canonical** (password-reset links) | Fixed PoC value (www first) | `terraform/secrets/app.env` + VPS `.env` |
+| `ADMIN_PANEL_PASSWORD` | admin panel second password | Password manager | `terraform/secrets/app.env` + VPS `backend/.env` |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | `backend/scripts/reset-admin.js` bootstrap | Password manager | `terraform/secrets/db.env` |
+| `FRONTEND_ORIGIN` | backend CORS allowlist; **first entry = canonical** (password-reset links) | Fixed PoC value (www first) | `terraform/secrets/app.env` + VPS `backend/.env` |
 | `PORT`, `NODE_ENV` | app + Caddy (`{$PORT}`) | Policy (`4000`, `production`) | `terraform/secrets/app.env` |
-| `S3_ENDPOINT` | app storage (`src/utils/storage.js`) | `terraform output s3_hostname` | `terraform/secrets/app.env` |
+| `S3_ENDPOINT` | app storage (`backend/src/utils/storage.js`) | `terraform output s3_hostname` | `terraform/secrets/app.env` |
 | `S3_BUCKET` | app media bucket | `terraform output s3_bucket_name` (fallback `s3_bucket_full_name`) | `terraform/secrets/app.env` |
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | app media bucket | `terraform output s3_access_key` / `s3_secret_key` | `terraform/secrets/app.env` |
 | `S3_PUBLIC_URL` | public photo base URL | `https://assets.compmasone.ru` | `terraform/secrets/app.env` |
@@ -120,7 +122,7 @@ Plan-review checklist:
 
 ### 4.2 Compose app `.env` (from outputs)
 
-Fill `secrets/app.env` — this becomes the VPS `/opt/compmaster/.env` verbatim:
+Fill `secrets/app.env` — this becomes the VPS `/opt/compmaster/backend/.env` verbatim:
 
 ```bash
 NODE_ENV=production
@@ -148,18 +150,30 @@ YANDEX_METRIKA_ID=
 ```
 
 `secrets/db.env` mirrors `POSTGRES_PASSWORD` + `ADMIN_EMAIL`/`ADMIN_PASSWORD`
-(used by `scripts/reset-admin.js` on the VPS).
+(used by `backend/scripts/reset-admin.js` on the VPS).
 
 ### 4.3 VPS bootstrap (first apply only)
 
 Follow [`../DEPLOY.md`](../DEPLOY.md) §2–5: install Node 24 + PostgreSQL 16,
-upload code to `/opt/compmaster`, copy `secrets/app.env` → `/opt/compmaster/.env`,
-run `pnpm install --prod --frozen-lockfile`, `pnpm run migrate`, then PM2. Caddy uses the
-repo's `Caddyfile`; the Debian/Ubuntu package reads `DOMAIN`/`PORT` from
-`/etc/default/caddy` (DEPLOY.md §5 — the Caddyfile also carries PoC defaults,
-so an unset `DOMAIN` cannot produce an empty site address). Caddy issues TLS
-for both `compmasone.ru` (redirect) and `api.compmasone.ru` (proxy)
-automatically once DNS resolves. Verify:
+upload the workspace to `/opt/compmaster`, copy `secrets/app.env` →
+`/opt/compmaster/backend/.env`, then run the backend workspace install and
+migrations:
+
+```bash
+cd /opt/compmaster
+pnpm install --prod --frozen-lockfile --ignore-scripts --filter kompmaster-server...
+pnpm run migrate
+pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend
+```
+
+`backend/scripts/deploy.sh` performs the install, migrate, and PM2 steps with
+the backend working directory. `backend/scripts/backup.sh` writes database
+archives to `backend/backups/`. Caddy uses the repo's root `Caddyfile`; the
+Debian/Ubuntu package reads `DOMAIN`/`PORT` from `/etc/default/caddy`
+(DEPLOY.md §5 — the Caddyfile also carries PoC defaults, so an unset `DOMAIN`
+cannot produce an empty site address). Caddy issues TLS for both
+`compmasone.ru` (redirect) and `api.compmasone.ru` (proxy) automatically once
+DNS resolves. Verify:
 
 ```bash
 curl https://api.compmasone.ru/api/health    # {"ok":true,...}
@@ -169,13 +183,23 @@ curl -I https://www.compmasone.ru            # 200 from S3 website (after step 4
 
 ### 4.4 Deploy the storefront
 
+From the repository root, build the workspace package and sync its output:
+
 ```bash
 set -a; source terraform/secrets/s3-sync.env; set +a   # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
-cd frontend
-VITE_API_BASE=https://api.compmasone.ru/api pnpm run build
-aws --endpoint-url https://s3.timeweb.com s3 sync dist/ \
+VITE_API_BASE=https://api.compmasone.ru/api pnpm --filter kompmaster-frontend build
+# or, from the package directory:
+(cd frontend && VITE_API_BASE=https://api.compmasone.ru/api pnpm run build)
+aws --endpoint-url https://s3.timeweb.com s3 sync frontend/dist/ \
   s3://$(cd terraform && terraform output -raw frontend_bucket_full_name) --delete
 ```
+
+Before deploying, run `pnpm run version:check`; the root `package.json#version`
+is the single source of truth, and `pnpm run version:sync` propagates it to
+both app manifests. The backend and storefront must be deployed from the same
+tag/commit. Vercel is connected for storefront preview/staging/fallback: set
+Root Directory to `frontend`, install from the repository root, and build with
+`pnpm`.
 
 Then attach the CDN (panel/API — the provider has no CDN resource), flip
 `frontend_cdn_enabled = true` + `frontend_cdn_cname` in `terraform.tfvars`,
@@ -202,9 +226,9 @@ Never retarget the `www` CNAME by hand: Terraform owns it.
 | Secret | Rotation |
 | --- | --- |
 | `TWC_TOKEN` | Panel → API keys → new token, update `secrets/twc.env`; delete the old token |
-| `JWT_SECRET` | New value in VPS `.env` + `pm2 restart kompmaster-api` (invalidates all sessions — do at low traffic) |
-| `ADMIN_PANEL_PASSWORD` | Update VPS `.env` + restart |
-| Media S3 keys | Regenerate in Timeweb S3 panel, update VPS `.env`, restart; keys are also in `terraform.tfstate` — state stays local/sensitive |
+| `JWT_SECRET` | New value in VPS `backend/.env` + `pm2 restart kompmaster-api` (invalidates all sessions — do at low traffic) |
+| `ADMIN_PANEL_PASSWORD` | Update VPS `backend/.env` + restart |
+| Media S3 keys | Regenerate in Timeweb S3 panel, update VPS `backend/.env`, restart; keys are also in `terraform.tfstate` — state stays local/sensitive |
 | Frontend sync keys | Same, update `secrets/s3-sync.env` |
 | `POSTGRES_PASSWORD` | Rotate inside PostgreSQL (`ALTER USER`), then `DATABASE_URL` |
 | Root SSH | Prefer switching to `ssh_keys_ids` + disabling password auth; then `ssh_allowed_cidr` to your /32 |

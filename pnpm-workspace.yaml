@@ -1,0 +1,13 @@
+# pnpm workspace root for the KompMaster monorepo.
+#
+# Settings live here (pnpm >= 11 does not read a `pnpm` field from
+# package.json). The single root pnpm-lock.yaml covers both packages.
+packages:
+  - backend
+  - frontend
+
+# esbuild (a Vite transitive dependency) ships a native binary via a
+# postinstall script. pnpm blocks dependency build scripts by default, so
+# approve exactly this one package instead of opening the installer up.
+allowBuilds:
+  esbuild: true

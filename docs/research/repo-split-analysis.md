@@ -1,5 +1,11 @@
 ## Repo split: 1 vs 2 vs 3 repos
 
+> **Update 2026-09-17:** the layout question is decided in
+> [ADR 003](../adr/003-monorepo-workspace-and-versioning.md) — one repository
+> with a root pnpm workspace and `/backend` + `/frontend` app directories, and
+> a fixed shared version. This analysis is retained as the historical input;
+> the "2 repos" and "3 repos" options remain the documented future path.
+
 Options for pure C architecture (`src/index.js` API-only + static FE on CDN + Terraform infra):
 
 | Structure | Pros | Cons | Best for |
