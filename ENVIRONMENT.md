@@ -25,12 +25,15 @@ noted in [Legacy entry point](#legacy-entry-point).
   Default `development`. In production, missing `JWT_SECRET` is fatal.
 - `PORT` — HTTP port for the API. Default `4000`.
 - `FRONTEND_ORIGIN` — allowed CORS origin(s), comma-separated for multi-origin
-  (e.g. `https://compmasone.ru,https://www.compmasone.ru`). Used for the
+  (e.g. `https://www.compmasone.ru,https://compmasone.ru`). Used for the
   browser app and for building password-reset links. **Required.** Wildcard
   `*` is rejected at startup (fail-closed); server requests without `Origin`
-  (curl, health checks) are still allowed. The PoC default (when the variable
-  is unset) lists both the apex and `www` because the apex redirects to the
-  canonical `www` storefront (see `terraform/`). An explicitly empty value also fails closed (the dev default
+  (curl, health checks) are still allowed. **The first listed origin is
+  canonical** (`config.frontendCanonicalOrigin`) and is the base for outbound
+  links — list the canonical storefront first. The PoC default (when unset)
+  is `www` then apex, because the apex 301-redirects to `www` (see
+  `terraform/`). Never interpolate the whole comma-joined allowlist into a
+  URL. An explicitly empty value also fails closed (the dev default
   applies only when the variable is unset).
 
 ### Database
@@ -140,12 +143,20 @@ After `terraform apply`, map outputs into `.env`:
 
 `DATABASE_URL` still targets PostgreSQL on the VPS itself (embedded/Docker),
 not a managed cluster — Terraform does not output it. Set
-`FRONTEND_ORIGIN=https://compmasone.ru,https://www.compmasone.ru` (apex
-redirects to `www`); payment/SMS variables stay empty at PoC launch (manual
-checkout, Telegram/e-mail only).
+`FRONTEND_ORIGIN=https://www.compmasone.ru,https://compmasone.ru` (canonical
+`www` first; the apex redirects to it); payment/SMS variables stay empty at
+PoC launch (manual checkout, Telegram/e-mail only).
+
+On the VPS, Caddy reads `DOMAIN` and `PORT` from its environment — the
+Debian/Ubuntu package loads `/etc/default/caddy` (see `DEPLOY.md` §5). The
+`Caddyfile` carries PoC defaults (`compmasone.ru`, `4000`) so an unset `DOMAIN`
+cannot produce an empty site address.
 
 Frontend build output (`frontend/dist`) is deployed to the `kompmaster-frontend`
 bucket via S3 sync (credentials from `frontend_access_key`/`frontend_secret_key`
-outputs) — see `terraform/README.md §Deploying the storefront`. Where to *store*
-all of these credentials (gitignored `terraform/secrets/` files, password
-manager, VPS `.env`) and how to rotate them: `terraform/RUNBOOK.md`.
+outputs) — see `terraform/README.md §Deploying the storefront`. When the CDN is
+attached, flip `frontend_cdn_enabled = true` + `frontend_cdn_cname` in
+`terraform.tfvars` and re-apply (Terraform keeps owning the `www` CNAME — no
+manual DNS edits). Where to *store* all of these credentials (gitignored
+`terraform/secrets/` files, password manager, VPS `.env`) and how to rotate
+them: `terraform/RUNBOOK.md`.

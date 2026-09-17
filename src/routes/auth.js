@@ -111,7 +111,7 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
       `INSERT INTO password_resets (token, user_id, expires_at) VALUES ($1, $2, now() + interval '1 hour')`,
       [token, user.id]
     );
-    const resetUrl = `${config.frontendOrigin}/reset-password?token=${token}`;
+    const resetUrl = `${config.frontendCanonicalOrigin}/reset-password?token=${token}`;
     await sendPasswordResetEmail(user.login, resetUrl);
   }
   res.json({ ok: true, message: "Если такой аккаунт существует, письмо со ссылкой отправлено." });

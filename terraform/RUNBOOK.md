@@ -39,7 +39,7 @@ copies for tooling.
 | `JWT_EXPIRES_IN` | backend | Policy (default `7d`) | `terraform/secrets/app.env` |
 | `ADMIN_PANEL_PASSWORD` | admin panel second password | Password manager | `terraform/secrets/app.env` + VPS `.env` |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | `scripts/reset-admin.js` bootstrap | Password manager | `terraform/secrets/db.env` |
-| `FRONTEND_ORIGIN` | backend CORS allowlist | Fixed PoC value | `terraform/secrets/app.env` + VPS `.env` |
+| `FRONTEND_ORIGIN` | backend CORS allowlist; **first entry = canonical** (password-reset links) | Fixed PoC value (www first) | `terraform/secrets/app.env` + VPS `.env` |
 | `PORT`, `NODE_ENV` | app + Caddy (`{$PORT}`) | Policy (`4000`, `production`) | `terraform/secrets/app.env` |
 | `S3_ENDPOINT` | app storage (`src/utils/storage.js`) | `terraform output s3_hostname` | `terraform/secrets/app.env` |
 | `S3_BUCKET` | app media bucket | `terraform output s3_bucket_name` (fallback `s3_bucket_full_name`) | `terraform/secrets/app.env` |
@@ -107,7 +107,7 @@ cd terraform
 set -a; source secrets/twc.env; set +a   # or: export $(cat secrets/twc.env | xargs)
 
 terraform init          # provider tf.timeweb.cloud/timeweb-cloud v1.8.2
-terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 1 backup schedule + 2 buckets + 2 subdomains + 4 DNS records
+terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 1 backup schedule + 2 buckets + 1–2 subdomains (frontend one only while CDN is off) + 4 DNS records
 terraform apply         # never use -auto-approve
 terraform output        # copy into the secret files below
 ```
@@ -125,7 +125,7 @@ Fill `secrets/app.env` — this becomes the VPS `/opt/compmaster/.env` verbatim:
 ```bash
 NODE_ENV=production
 PORT=4000
-FRONTEND_ORIGIN=https://compmasone.ru,https://www.compmasone.ru
+FRONTEND_ORIGIN=https://www.compmasone.ru,https://compmasone.ru   # FIRST entry = canonical (outbound links)
 
 DATABASE_URL=postgres://kompmaster:<POSTGRES_PASSWORD>@localhost:5432/kompmaster
 JWT_SECRET=$(openssl rand -hex 32)
@@ -155,9 +155,11 @@ YANDEX_METRIKA_ID=
 Follow [`../DEPLOY.md`](../DEPLOY.md) §2–5: install Node 20 + PostgreSQL 16,
 upload code to `/opt/compmaster`, copy `secrets/app.env` → `/opt/compmaster/.env`,
 run `npm install --omit=dev`, `npm run migrate`, then PM2. Caddy uses the
-repo's `Caddyfile` with `DOMAIN` and `PORT` set; it issues TLS for both
-`compmasone.ru` (redirect) and `api.compmasone.ru` (proxy) automatically once
-DNS resolves. Verify:
+repo's `Caddyfile`; the Debian/Ubuntu package reads `DOMAIN`/`PORT` from
+`/etc/default/caddy` (DEPLOY.md §5 — the Caddyfile also carries PoC defaults,
+so an unset `DOMAIN` cannot produce an empty site address). Caddy issues TLS
+for both `compmasone.ru` (redirect) and `api.compmasone.ru` (proxy)
+automatically once DNS resolves. Verify:
 
 ```bash
 curl https://api.compmasone.ru/api/health    # {"ok":true,...}
@@ -175,9 +177,11 @@ aws --endpoint-url https://s3.timeweb.com s3 sync dist/ \
   s3://$(cd terraform && terraform output -raw frontend_bucket_full_name) --delete
 ```
 
-Then attach the CDN manually (provider has no CDN resource — see
-[`terraform/README.md §CDN`](README.md#cdn-manual-step)) and purge its cache
-after each deploy.
+Then attach the CDN (panel/API — the provider has no CDN resource), flip
+`frontend_cdn_enabled = true` + `frontend_cdn_cname` in `terraform.tfvars`,
+`terraform apply`, and purge the CDN cache after each deploy — see
+[`terraform/README.md §CDN`](README.md#cdn-manual-attach--terraform-toggle).
+Never retarget the `www` CNAME by hand: Terraform owns it.
 
 ## 5. Day-2 operations
 
@@ -188,6 +192,7 @@ after each deploy.
 | Sensitive outputs | `terraform output -raw s3_secret_key` (do not paste into shells/logs carelessly) |
 | Backup state before risky ops | `cp terraform.tfstate terraform.tfstate.bak` (state file holds secrets — keep it out of sync/cloud) |
 | Change shape (e.g. MSK-80) | edit `terraform.tfvars`, `terraform apply` — Timeweb migrates with ~10–15 min downtime |
+| Attach / enable CDN | create the CDN resource in the panel, then `frontend_cdn_enabled = true` + `frontend_cdn_cname = "<target>"` in `terraform.tfvars`, `terraform apply` (www CNAME → CDN, S3 www cert dropped) |
 | Re-issue SSL for a subdomain | `release_cert = true` re-applies; check `twc_s3_bucket_subdomain.*.status` |
 | Adopt resources created manually | `terraform import` (see provider docs; e.g. `terraform import twc_s3_bucket.media 42`) |
 | Full teardown | `terraform destroy` — deletes VPS, buckets (with backups inside!), DNS records. Back up `pg_dump` archives first |

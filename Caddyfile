@@ -2,12 +2,16 @@
 # (www.$DOMAIN); this host only redirects the apex and proxies the API.
 #
 # DNS: @ and api → this VPS (A), www/assets → s3.timeweb.com (CNAME).
+#
+# DOMAIN/PORT come from the environment; the Debian/Ubuntu Caddy package reads
+# /etc/default/caddy (see DEPLOY.md §5). The defaults below match the PoC and
+# prevent an empty site address (Caddy fails to adapt when {$DOMAIN} is unset).
 
-{$DOMAIN} {
-  redir https://www.{$DOMAIN}{uri} permanent
+{$DOMAIN:compmasone.ru} {
+  redir https://www.{$DOMAIN:compmasone.ru}{uri} permanent
 }
 
-api.{$DOMAIN} {
+api.{$DOMAIN:compmasone.ru} {
   encode zstd gzip
   reverse_proxy 127.0.0.1:{$PORT:4000}
 }

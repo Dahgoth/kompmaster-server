@@ -10,6 +10,9 @@ function required(name, fallback) {
   return v;
 }
 
+// Returns the validated allowlist as an array. The joined string is what the
+// CORS middleware consumes; the first entry is the canonical origin used to
+// build outbound links (see frontendCanonicalOrigin).
 function frontendOrigins(raw) {
   const origins = String(raw || "")
     .split(",")
@@ -17,7 +20,7 @@ function frontendOrigins(raw) {
     .filter(Boolean);
   if (!origins.length) {
     throw new Error(
-      "FRONTEND_ORIGIN must list at least one origin (e.g. https://compmasone.ru)"
+      "FRONTEND_ORIGIN must list at least one origin (e.g. https://www.compmasone.ru)"
     );
   }
   for (const o of origins) {
@@ -27,20 +30,25 @@ function frontendOrigins(raw) {
       );
     }
   }
-  return origins.join(",");
+  return origins;
 }
+
+// Unset FRONTEND_ORIGIN keeps the PoC defaults: the canonical storefront
+// (www) first, then the apex — which 301-redirects to www (see terraform/).
+// An explicitly empty value fails closed (fail-closed allowlist, E14).
+const frontendOriginList = frontendOrigins(
+  process.env.FRONTEND_ORIGIN === undefined
+    ? "https://www.compmasone.ru,https://compmasone.ru"
+    : process.env.FRONTEND_ORIGIN
+);
 
 module.exports = {
   port: Number(required("PORT", "4000")),
   nodeEnv: required("NODE_ENV", "development"),
-  // Unset FRONTEND_ORIGIN keeps the PoC default origins (apex + www both
-  // serve the storefront), but an explicitly empty value fails closed inside
-  // frontendOrigins (fail-closed allowlist, E14).
-  frontendOrigin: frontendOrigins(
-    process.env.FRONTEND_ORIGIN === undefined
-      ? "https://compmasone.ru,https://www.compmasone.ru"
-      : process.env.FRONTEND_ORIGIN
-  ),
+  frontendOrigin: frontendOriginList.join(","),
+  // Single origin for outbound links (password-reset URLs). NEVER interpolate
+  // frontendOrigin into a URL — it is a comma-separated allowlist.
+  frontendCanonicalOrigin: frontendOriginList[0],
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: required("JWT_EXPIRES_IN", "7d"),

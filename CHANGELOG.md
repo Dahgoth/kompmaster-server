@@ -52,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PM2/host-`pg_dump` flow. Rationale: `docs/archive/DOCKER_EVALUATION.md`.
 
 ### Changed
+- Terraform CDN cutover is now a variable toggle (`frontend_cdn_enabled` +
+  `frontend_cdn_cname`) instead of a manual DNS retarget that the next
+  `terraform apply` would revert (drift). Frontend S3 preset defaults to the
+  verified 10 GB tier (1 GB opt-in via `frontend_s3_disk_mb`).
 - `package.json`: set `license` to `MIT`, added dev dependencies
   (commitlint, Husky), and `prepare`/`lint:commit` scripts.
 - Changed license from AGPL-3.0 to MIT (resolves #6): the AGPL
@@ -63,6 +67,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   source of truth for the release version.
 
 ### Fixed
+- Password-reset e-mail links broke when `FRONTEND_ORIGIN` listed multiple
+  origins: the comma-joined CORS allowlist was interpolated into the reset
+  URL. Added `config.frontendCanonicalOrigin` (first listed origin) used for
+  outbound links; `frontendOrigin` stays the CORS allowlist only. Regression
+  tests in `tests/config.test.js`.
+- `Caddyfile` produced an empty site address when `DOMAIN` was unset (Caddy
+  fails to adapt/start): site addresses now carry PoC defaults
+  (`{$DOMAIN:compmasone.ru}`); `DEPLOY.md` §5 documents provisioning
+  `DOMAIN`/`PORT` via `/etc/default/caddy`.
 - CORS (E14): `FRONTEND_ORIGIN` is now a validated explicit allowlist
   (comma-separated, credentials preserved); wildcard `*` is rejected at
   startup (fail-closed). Requests without `Origin` (curl, health checks)

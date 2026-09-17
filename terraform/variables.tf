@@ -57,9 +57,9 @@ variable "api_subdomain" {
 }
 
 variable "frontend_s3_disk_mb" {
-  description = "Frontend bucket preset size in MB. dist/ is ~140 KB, so the 1 GB tier (1 ₽/mo) is plenty; set 10240 if the 1 GB preset is unavailable in the location."
+  description = "Frontend bucket preset size in MB. Defaults to the verified 10 GB minimum (79 ₽/mo, same tier as the media bucket); dist/ is ~140 KB, so set 1024 only if you have confirmed the 1 GB preset exists in var.location."
   type        = number
-  default     = 1024
+  default     = 10240
 }
 
 variable "frontend_index_page" {
@@ -72,6 +72,18 @@ variable "frontend_spa_fallback" {
   description = "Document served for 404 so history-API deep links (/catalog, /admin) boot the SPA. The frontend router is path-based, not hash-based."
   type        = string
   default     = "index.html"
+}
+
+variable "frontend_cdn_enabled" {
+  description = "Set true after attaching the Timeweb CDN resource (panel/API — provider v1.8.2 has no CDN resource). Then www CNAMEs to frontend_cdn_cname instead of s3.timeweb.com, the CDN terminates TLS, and Terraform stops managing the www bucket-subdomain SSL binding."
+  type        = bool
+  default     = false
+}
+
+variable "frontend_cdn_cname" {
+  description = "CDN CNAME target for the frontend hostname (given by Timeweb when the CDN resource is created). Required when frontend_cdn_enabled = true."
+  type        = string
+  default     = ""
 }
 
 variable "location" {

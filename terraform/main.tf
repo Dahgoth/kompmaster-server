@@ -12,7 +12,14 @@
 #
 # The apex cannot be a CNAME on Timeweb DNS, hence the www-canonical redirect.
 # CDN is NOT provisioned here: terraform-provider-timeweb-cloud v1.8.2 has no
-# CDN resource. Attach it in the panel/API to the frontend origin — README.md.
+# CDN resource. After attaching it in the panel/API, set
+# frontend_cdn_enabled = true + frontend_cdn_cname in terraform.tfvars and
+# re-apply — Terraform stays the source of truth for the www CNAME (no drift).
+
+locals {
+  # www points at S3 directly until the CDN resource exists; then at the CDN.
+  frontend_cname_target = var.frontend_cdn_enabled ? var.frontend_cdn_cname : "s3.timeweb.com"
+}
 
 data "twc_configurator" "server" {
   location = var.location
@@ -141,13 +148,22 @@ resource "twc_dns_rr" "api" {
   value   = twc_server.main.main_ipv4
 }
 
-# Static frontend: CNAME must point to s3.timeweb.com before the bucket
-# subdomain requests its certificate. The bucket is public with website hosting.
+# Static frontend: while CDN is off, CNAME → s3.timeweb.com (bucket website +
+# S3-issued SSL). Once the CDN is attached, CNAME → the CDN target (CDN
+# terminates TLS). Either way Terraform owns the record value — no manual
+# panel edits that a later apply would revert.
 resource "twc_dns_rr" "www" {
   zone_id = data.twc_dns_zone.main.id
   name    = var.frontend_subdomain
   type    = "CNAME"
-  value   = "s3.timeweb.com"
+  value   = local.frontend_cname_target
+
+  lifecycle {
+    precondition {
+      condition     = length(trimspace(local.frontend_cname_target)) > 0
+      error_message = "frontend_cdn_cname must be set when frontend_cdn_enabled = true."
+    }
+  }
 }
 
 # Media hostname: CNAME must resolve to s3.timeweb.com before the bucket
@@ -189,7 +205,11 @@ resource "twc_s3_bucket" "frontend" {
   }
 }
 
+# S3 issues the www cert only while S3 serves the bucket directly; with the
+# CDN attached the CDN terminates TLS for www and this binding is dropped.
 resource "twc_s3_bucket_subdomain" "frontend" {
+  count = var.frontend_cdn_enabled ? 0 : 1
+
   bucket_id    = twc_s3_bucket.frontend.id
   subdomain    = "${var.frontend_subdomain}.${var.domain}"
   release_cert = true

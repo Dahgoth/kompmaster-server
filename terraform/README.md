@@ -15,8 +15,8 @@ separate media bucket for product photos.
 | `twc_server_disk_backup_schedule` | Daily disk backups (7 copies) |
 | `twc_s3_bucket.media` | Private hot bucket — product photos (`S3_*` env) |
 | `twc_s3_bucket.frontend` | Public hot bucket — `frontend/dist` with website hosting (404 → `index.html` SPA fallback) |
-| `twc_s3_bucket_subdomain` ×2 | `assets.` / `www.` hostnames + SSL certs |
-| `twc_dns_rr` × 4 | `@`→VPS, `api`→VPS, `www`→S3, `assets`→S3 |
+| `twc_s3_bucket_subdomain` | `assets.` always; `www.` only while CDN is off (S3 issues the cert) |
+| `twc_dns_rr` × 4 | `@`→VPS, `api`→VPS, `www`→S3 (or CDN once enabled), `assets`→S3 |
 
 Resulting topology:
 
@@ -66,20 +66,32 @@ VITE_API_BASE=https://api.compmasone.ru/api npm run build
 aws --endpoint-url https://s3.timeweb.com s3 sync dist/ s3://<frontend_bucket_full_name> --delete
 ```
 
-## CDN (manual step)
+## CDN (manual attach + Terraform toggle)
 
 `terraform-provider-timeweb-cloud` v1.8.2 has **no CDN resource**, so the CDN
-cannot be provisioned here. In the Timeweb panel (or API/CLI) create a CDN
-resource with:
+resource itself is created in the Timeweb panel (or API/CLI):
 
 - **Origin:** the frontend website domain (`terraform output frontend_website_domain`)
-- **Custom domain:** `www.compmasone.ru` (DNS already CNAMEs it to S3; adjust
-  the record to the CDN CNAME target when attaching)
+- **Custom domain:** `www.compmasone.ru`
 - **Cache rules:** long TTL for `/assets/*`, no caching for `/index.html`;
   purge on deploy
 
-Until the CDN is attached, S3 website hosting + SSL serves the storefront
-directly; adding CDN later needs no Terraform or code changes.
+Then switch Terraform to the CDN state — **do not edit the `www` DNS record by
+hand** (Terraform owns it and the next apply would revert the edit, silently
+breaking the CDN):
+
+```hcl
+# terraform.tfvars (gitignored)
+frontend_cdn_enabled = true
+frontend_cdn_cname   = "<CDN CNAME target from the panel>"
+```
+
+```bash
+terraform apply   # www CNAME → CDN target; S3 stops managing the www cert
+```
+
+Until the CDN is attached, S3 website hosting + its own SSL serve the
+storefront directly.
 
 ## Why `www` is canonical
 

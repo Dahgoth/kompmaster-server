@@ -99,3 +99,28 @@ Per maintainer direction 2026-09-16:
 - **Fiscalization (FZ-54):** deferred with payments — Atol/CloudKassir/PayKeeper wiring remains pending; activated after acquiring confirmation.
 - **FE rebuild:** to be built separately (`kompmaster-frontend`); design preserved per PO (`DESIGN.md` regenerated after rebuild); CDN required from launch.
 - **Remaining open for code start:** `FRONTEND_ORIGIN=https://compmasone.ru` must be set in `.env` (fail-closed config); `E14` CORS fix (allowlist); `E17` advisory lock (`pg_advisory_lock` in `src/migrate.js`); `E15` in-process rate limit acceptable at PoC (Redis upgrade deferred); `.recovery/` deleted before any commit.
+
+---
+
+### Amendment 2026-09-17 (implemented in `terraform/`): Option B frontend hosting
+
+The static storefront (completed `frontend/`, Vite build) is served from a
+Timeweb S3 bucket with website hosting; the VPS runs the API only (ADR-001 §1a
+pure C). Consequences locked by provider/DNS constraints:
+
+- **Timeweb DNS allows CNAME only on subdomains** (no apex CNAME/ALIAS), so
+  the canonical storefront is `https://www.compmasone.ru` (CNAME →
+  `s3.timeweb.com` + bucket SSL); the apex A-records to the VPS and Caddy
+  301-redirects it to `www`.
+- **API origin** is `https://api.compmasone.ru` (A → VPS, Caddy
+  reverse_proxy); frontend builds with `VITE_API_BASE=https://api.compmasone.ru/api`.
+- **`FRONTEND_ORIGIN`** lists both origins, canonical first:
+  `https://www.compmasone.ru,https://compmasone.ru` (first entry is used for
+  outbound links, e.g. password reset).
+- **CDN** (1 ₽/mo + 0,6 ₽/GB egress, live pricing 2026-09-16) cannot be
+  provisioned by terraform-provider-timeweb-cloud v1.8.2 — the resource is
+  created in the panel, then Terraform flips the `www` CNAME via
+  `frontend_cdn_enabled`/`frontend_cdn_cname` (no manual DNS edits).
+- Cost delta vs VPS-served statics: ≈ +80 ₽/mo (frontend bucket 10 GB tier;
+  S3 egress ≤ 100 GB/mo free) — within the 2–5k ₽ cap. Details:
+  `terraform/README.md`, `terraform/RUNBOOK.md`.

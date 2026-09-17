@@ -221,8 +221,14 @@ Notes:
   Timeweb DNS forbids apex CNAME, so the apex 301-redirects via Caddy).
 - API origin is `https://api.compmasone.ru` — set
   `VITE_API_BASE=https://api.compmasone.ru/api` when building the frontend.
-- CDN is attached manually (provider v1.8.2 has no CDN resource) — see
-  `terraform/README.md §CDN`.
+- CDN is attached manually (provider v1.8.2 has no CDN resource), then enabled
+  in Terraform via `frontend_cdn_enabled = true` + `frontend_cdn_cname` in
+  `terraform.tfvars` — see `terraform/README.md §CDN`. Never retarget the
+  `www` CNAME by hand: Terraform owns it and a later apply would revert the
+  edit.
+- Caddy reads `DOMAIN`/`PORT` from `/etc/default/caddy` (see `DEPLOY.md` §5);
+  the `Caddyfile` carries PoC defaults so an unset `DOMAIN` cannot break the
+  config.
 - Admin runbook — credential inventory, gitignored secret-file layout
   (`terraform/secrets/`), rotation and day-2 ops: see
   [`terraform/RUNBOOK.md`](terraform/RUNBOOK.md).
