@@ -24,6 +24,10 @@ sudo apt update
 sudo apt install -y ca-certificates curl
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt-get install -y nodejs postgresql postgresql-contrib
+
+# pnpm идёт с Node через Corepack — включаем закреплённую версию
+sudo corepack enable pnpm
+pnpm --version
 ```
 
 ## 3. Загрузка проекта
@@ -60,6 +64,9 @@ openssl rand -hex 48
 ## 5. Запуск
 
 ```bash
+pnpm install --prod --frozen-lockfile
+pnpm run migrate
+
 sudo npm install -g pm2
 pm2 start src/index.js --name kompmaster-api
 pm2 save

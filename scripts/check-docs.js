@@ -21,12 +21,12 @@ const isBackendCode = (f) =>
   f.startsWith("tests/") ||
   f.startsWith("migrations/");
 const isBackendWorkflowFile = (f) =>
-  ["package.json", "package-lock.json", "docker-compose.yml", "Caddyfile"].includes(f) ||
+  ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "docker-compose.yml", "Caddyfile"].includes(f) ||
   f.startsWith("scripts/");
 const isFrontendCode = (f) =>
   f.startsWith("frontend/") && !f.startsWith("frontend/terraform/");
 const isFrontendWorkflowFile = (f) =>
-  ["frontend/package.json", "frontend/package-lock.json", "frontend/vite.config.js"].includes(f);
+  ["frontend/package.json", "frontend/pnpm-lock.yaml", "frontend/pnpm-workspace.yaml", "frontend/vite.config.js"].includes(f);
 const isTerraformCode = (f) =>
   f.startsWith("terraform/") || f.startsWith("frontend/terraform/");
 const isPublicAsset = (f) => f.startsWith("public/");

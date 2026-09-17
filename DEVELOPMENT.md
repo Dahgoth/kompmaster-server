@@ -16,7 +16,7 @@ S3-compatible store for photos. The active entry point is `src/index.js`
 | Tool           | Version / notes                                                    |
 | -------------- | ------------------------------------------------------------------ |
 | Node.js        | 24 LTS or newer                                                    |
-| npm            | ships with Node                                                    |
+| pnpm           | 12.x — enabled via Corepack (`corepack enable pnpm`)               |
 | PostgreSQL     | 16 (see `docker-compose.yml`)                                      |
 | S3-compatible  | MinIO (via Docker), or Selectel Object Storage / Cloudflare R2      |
 | Docker         | optional — for `docker compose`-managed Postgres and MinIO only (not the app) |
@@ -28,11 +28,14 @@ S3-compatible store for photos. The active entry point is `src/index.js`
 ```bash
 git clone git@github.com:Dahgoth/kompmaster-server.git
 cd kompmaster-server
-npm install
+corepack enable pnpm   # activates the pnpm version pinned in package.json
+pnpm install
 ```
 
-`npm install` also runs the `prepare` script, which installs the Husky hooks
-(commit-msg and pre-push).
+`pnpm install` also runs the `prepare` script, which installs the Husky hooks
+(commit-msg and pre-push). pnpm is pinned through `packageManager` in
+`package.json`; Corepack downloads that exact version, so every checkout uses
+the same one. `npm` is not used for project dependencies.
 
 ### 2. Configure environment
 
@@ -58,7 +61,7 @@ variables to an existing bucket.
 ### 4. Apply the schema
 
 ```bash
-npm run migrate
+pnpm run migrate
 ```
 
 The migration runner applies `migrations/*.sql` in order and records applied
@@ -67,9 +70,9 @@ files in `schema_migrations`, so re-runs are safe.
 ### 5. Run and verify
 
 ```bash
-npm run dev      # watch mode
+pnpm run dev      # watch mode
 # or
-npm start        # plain run
+pnpm start        # plain run
 ```
 
 The active entry point listens on `PORT` (default `4000`). Verify with:
@@ -84,28 +87,68 @@ curl http://localhost:4000/api/health
 For production on a VPS, use PM2 (see [README §6](../README.md#6-%D0%97%D0%B0%D0%BF%D1%83%D1%81%D0%BA)):
 
 ```bash
+corepack enable pnpm
+pnpm install --prod --frozen-lockfile
 sudo npm install -g pm2
 pm2 start src/index.js --name kompmaster-api
 pm2 save
 pm2 startup   # выполните команду, которую он покажет — автозапуск после перезагрузки сервера
 ```
 
+(`npm install -g pm2` only installs the global process manager; project
+dependencies are always installed with pnpm. `scripts/deploy.sh` wraps the
+`pnpm install` + `pnpm run migrate` + PM2 steps.)
+
 > **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
 > Production app deployment uses PM2. See
 > [docs/archive/DOCKER_EVALUATION.md](docs/archive/DOCKER_EVALUATION.md)
 > for the full rationale.
 
+## Package manager (pnpm)
+
+The project uses **pnpm**, not npm. pnpm is pinned through `packageManager` in
+`package.json` and activated with Corepack (`corepack enable pnpm`), so local
+and CI runs use the same version. Run project scripts with `pnpm run <script>`.
+
+The backend (repo root) and `frontend/` are **two independent pnpm projects**,
+each with its own `pnpm-lock.yaml` and its own install:
+
+| Project  | Manifest                | Lockfile                  | Settings                       |
+| -------- | ----------------------- | ------------------------- | ------------------------------ |
+| Backend  | `package.json`          | `pnpm-lock.yaml`          | —                              |
+| Frontend | `frontend/package.json` | `frontend/pnpm-lock.yaml` | `frontend/pnpm-workspace.yaml` |
+
+- Install backend deps: `pnpm install` (repo root).
+- Install frontend deps: `pnpm install` inside `frontend/`, or
+  `pnpm --dir frontend install` from the root.
+- The frontend stays a standalone project (not a workspace package) because it
+  builds and deploys independently to S3/CDN. `pnpm --dir frontend <script>`
+  runs its scripts from the repo root and backs `pnpm run test:frontend`.
+
+pnpm blocks dependency build scripts by default. The only approved build is
+`esbuild` (Vite's native binary), declared under `allowBuilds` in
+`frontend/pnpm-workspace.yaml` — pnpm ≥ 11 reads settings from that file, not
+from a `pnpm` field in `package.json`.
+
+`pnpm-lock.yaml` files are committed; do not add a `package-lock.json`. CI runs
+`pnpm install --frozen-lockfile`, so a stale lockfile fails the build instead of
+silently re-resolving.
+
+> Historical records (`docs/adr/`, `docs/research/`, `docs/archive/`) keep the
+> original `npm` commands they were written with; they are dated snapshots and
+> are intentionally not rewritten.
+
 ## Common commands
 
 | Command                 | Description                                      |
 | ----------------------- | ------------------------------------------------ |
-| `npm start`             | Run the server                                   |
-| `npm run dev`           | Run with file watching                           |
-| `npm run migrate`       | Apply pending `migrations/*.sql`                 |
-| `npm test`              | Run backend tests (`node --test`)                |
-| `npm run test:frontend` | Run frontend tests                               |
-| `npm run lint:commit`   | Validate the most recent commit message          |
-| `docker compose up -d postgres minio` | Start local Postgres + MinIO only; app runs via PM2 (`npm start`) |
+| `pnpm start`            | Run the server                                   |
+| `pnpm run dev`          | Run with file watching                           |
+| `pnpm run migrate`      | Apply pending `migrations/*.sql`                 |
+| `pnpm test`             | Run backend tests (`node --test`)                |
+| `pnpm run test:frontend`| Run frontend tests (delegates to `frontend/`)    |
+| `pnpm run lint:commit`  | Validate the most recent commit message          |
+| `docker compose up -d postgres minio` | Start local Postgres + MinIO only; app runs via PM2 (`pnpm start`) |
 
 ## Testing
 
@@ -120,7 +163,8 @@ this section is the detailed reference.
 - Frontend: `frontend/tests/*.test.js` (ESM). Covers `matchRoute` param
   matching, no-Vite `apiBase` fallback, escaping/formatting helpers, and
   category/payment default consistency.
-- Run both suites before committing: `npm test` and `npm run test:frontend`.
+- Run both suites before committing: `pnpm test` and
+  `pnpm run test:frontend`.
   The Husky `pre-push` hook runs only the suites whose area changed in the
   pushed commits, plus `node scripts/check-docs.js`; CI
   (`.github/workflows/ci.yml`) runs path-filtered `backend` / `frontend` /
@@ -175,7 +219,7 @@ There are two server implementations in `src/`, and they are **not** identical:
 
 | File             | Module style | Run via             | Notes                                   |
 | ---------------- | ------------ | ------------------- | --------------------------------------- |
-| `src/index.js`   | CommonJS     | `npm start` / `npm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`. |
+| `src/index.js`   | CommonJS     | `pnpm start` / `pnpm run dev` | **Active.** Modular: `routes/`, `utils/`, `middleware/`, `config.js`. |
 | — | — | — | `docs/legacy/server.js` — archived legacy ESM monolith, cannot boot. See ADR 001 §1. |
 
 Treat `src/index.js` as the source of truth. If you touch one entry point,
@@ -247,7 +291,7 @@ commit conventions.
 
 1. Add a new `migrations/NNN_*.sql` file (increment `NNN`; existing files are
    immutable).
-2. Run `npm run migrate` to apply it.
+2. Run `pnpm run migrate` to apply it.
 3. Mention the migration in your pull request and in `CHANGELOG.md` when the
    change is user-facing.
 
@@ -255,8 +299,8 @@ commit conventions.
 
 ### `node --check` / startup fails with missing module
 
-Make sure you ran `npm install`. If a module still cannot be resolved, you may
-be running the legacy `docs/legacy/server.js` entry — switch to `npm start`.
+Make sure you ran `pnpm install`. If a module still cannot be resolved, you may
+be running the legacy `docs/legacy/server.js` entry — switch to `pnpm start`.
 
 ### `JWT_SECRET` not set
 
@@ -288,4 +332,4 @@ change it. Note: the legacy entry at `docs/legacy/server.js` used port
 ### Migration fails partway
 
 Each migration runs in its own transaction; a failed migration rolls back and
-is not recorded. Fix the SQL and re-run `npm run migrate`.
+is not recorded. Fix the SQL and re-run `pnpm run migrate`.

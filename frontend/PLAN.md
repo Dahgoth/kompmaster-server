@@ -384,15 +384,15 @@ Browser                    Vite dev / dist (S3 CDN)
 
 **Dev server:**
 ```
-npm install
-npm run dev     # Vite dev server on localhost:5173 (proxy /api to localhost:4000)
+pnpm install
+pnpm run dev     # Vite dev server on localhost:5173 (proxy /api to localhost:4000)
 ```
 
 **Vite proxy config:** Proxy `/api/*` to `http://localhost:4000` in dev mode.
 
 **Build:**
 ```
-npm run build   # → dist/ (static files)
+pnpm run build   # → dist/ (static files)
 ```
 
 **Deploy:**

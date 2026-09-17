@@ -61,7 +61,7 @@ has_terraform=false
 
 for f in $changed; do
   case "$f" in
-    src/*|tests/*|migrations/*|scripts/*|package.json|package-lock.json|docker-compose.yml|Caddyfile|.env.example|public/*|seed.json)
+    src/*|tests/*|migrations/*|scripts/*|package.json|pnpm-lock.yaml|pnpm-workspace.yaml|docker-compose.yml|Caddyfile|.env.example|public/*|seed.json)
       has_backend=true ;;
     terraform/*|frontend/terraform/*)
       has_terraform=true ;;
@@ -79,14 +79,14 @@ node scripts/check-docs.js $changed || exit 1
 
 if [ "$has_backend" = true ]; then
   echo "pre-push: backend files changed — running backend tests..."
-  npm test || exit 1
+  pnpm test || exit 1
 else
   echo "pre-push: no backend changes — skipping backend tests."
 fi
 
 if [ "$has_frontend" = true ]; then
   echo "pre-push: frontend files changed — running frontend tests..."
-  npm run test:frontend || exit 1
+  pnpm run test:frontend || exit 1
 else
   echo "pre-push: no frontend changes — skipping frontend tests."
 fi

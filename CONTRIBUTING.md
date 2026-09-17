@@ -51,7 +51,7 @@ Examples:
 - `chore(deps): add commitlint and husky`
 
 Commitlint enforces these rules through the Husky `commit-msg` hook. Validate
-the most recent commit manually with `npm run lint:commit`.
+the most recent commit manually with `pnpm run lint:commit`.
 
 ## Pull requests
 
@@ -79,8 +79,11 @@ suggestion.
 - Use **CommonJS** (`require` / `module.exports`), matching the active entry
   point `src/index.js` and its `routes/`, `utils/`, and `middleware/` modules.
   (Frontend code in `frontend/` is ESM, matching its Vite build.)
-- Run the test suites before committing: `npm test` (backend) and
-  `npm run test:frontend` (frontend).
+- Use **pnpm** for project dependencies (`pnpm install`), pinned through
+  `packageManager` and enabled with Corepack (`corepack enable pnpm`). Commit
+  the `pnpm-lock.yaml` files; do not add `package-lock.json`.
+- Run the test suites before committing: `pnpm test` (backend) and
+  `pnpm run test:frontend` (frontend).
   The Husky `pre-push` hook runs only the suites whose area changed, plus
   `node scripts/check-docs.js` on the pushed files.
 - Docs-in-sync is enforced by `scripts/check-docs.js` (run
