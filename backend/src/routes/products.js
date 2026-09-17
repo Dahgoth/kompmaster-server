@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
+const { adminLimiter } = require("../middleware/rateLimit");
 const { parsePriceFile, findDuplicateNames } = require("../utils/priceImport");
 
 const router = express.Router();
@@ -40,6 +41,7 @@ router.get("/:id", async (req, res) => {
 router.post(
   "/",
   requireAuth,
+  adminLimiter,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -69,6 +71,7 @@ router.post(
 router.put(
   "/:id",
   requireAuth,
+  adminLimiter,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -103,6 +106,7 @@ router.put(
 router.delete(
   "/:id",
   requireAuth,
+  adminLimiter,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -116,6 +120,7 @@ router.delete(
 router.post(
   "/import-price",
   requireAuth,
+  adminLimiter,
   requireRole(["admin"]),
   requireAdminPanelSession,
   upload.single("file"),
@@ -212,6 +217,7 @@ router.post(
 router.get(
   "/export-price/:categoryId",
   requireAuth,
+  adminLimiter,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {

@@ -12,6 +12,7 @@ const {
   registerLimiter,
   smsLimiter,
   passwordResetLimiter,
+  adminPanelVerifyLimiter,
 } = require("../middleware/rateLimit");
 
 const router = express.Router();
@@ -151,6 +152,7 @@ router.post(
   "/admin-panel/verify",
   requireAuth,
   requireRole(["admin", "manager"]),
+  adminPanelVerifyLimiter,
   async (req, res) => {
     const { password } = req.body || {};
     if (password !== config.adminPanelPassword) {

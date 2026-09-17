@@ -1,32 +1,41 @@
 const express = require("express");
 const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
+const { adminLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
 
 // Список пользователей — только настоящий admin, менеджеру не видно.
-router.get("/", requireAuth, requireRole(["admin"]), requireAdminPanelSession, async (req, res) => {
-  const { search } = req.query;
-  const params = [];
-  let where = "";
-  if (search) {
-    params.push(`%${search}%`);
-    where = `WHERE login ILIKE $1 OR display_name ILIKE $1`;
-  }
-  const { rows } = await db.query(
-    `SELECT id, login, display_name, role, created_at,
+router.get(
+  "/",
+  requireAuth,
+  adminLimiter,
+  requireRole(["admin"]),
+  requireAdminPanelSession,
+  async (req, res) => {
+    const { search } = req.query;
+    const params = [];
+    let where = "";
+    if (search) {
+      params.push(`%${search}%`);
+      where = `WHERE login ILIKE $1 OR display_name ILIKE $1`;
+    }
+    const { rows } = await db.query(
+      `SELECT id, login, display_name, role, created_at,
        (SELECT count(*) FROM orders o WHERE o.user_id = u.id) AS orders_count
      FROM users u ${where} ORDER BY created_at DESC`,
-    params,
-  );
-  res.json(rows);
-});
+      params,
+    );
+    res.json(rows);
+  },
+);
 
 // Выдать/снять роль по e-mail/телефону, ровно то, о чём просили: без
 // правки кода, прямо через админку.
 router.put(
   "/:id/role",
   requireAuth,
+  adminLimiter,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {

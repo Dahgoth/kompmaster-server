@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
+const { adminLimiter } = require("../middleware/rateLimit");
 const { notifyAdmin } = require("../utils/telegram");
 
 const router = express.Router();
@@ -113,6 +114,7 @@ router.get("/my/:id", requireAuth, async (req, res) => {
 router.get(
   "/",
   requireAuth,
+  adminLimiter,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -142,6 +144,7 @@ router.get(
 router.put(
   "/:id/status",
   requireAuth,
+  adminLimiter,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -164,6 +167,7 @@ router.put(
 router.post(
   "/:id/cancel",
   requireAuth,
+  adminLimiter,
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
@@ -208,6 +212,7 @@ router.post(
 router.delete(
   "/:id",
   requireAuth,
+  adminLimiter,
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
