@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Removed the ADR-001 quarantined legacy family after recording its behavior
+  in the ADR 001 §1b audit annex: `backend/src/{auth,mail,sheets}.js`,
+  `backend/src/payment-adapters/`, `backend/src/schema.sql`,
+  `backend/src/importFromBeta.js`, `backend/seed.json`,
+  `backend/scripts/{init-db,reset-admin}.js`, and the archived
+  `docs/legacy/` storefront monolith. All were unreferenced by the canonical
+  core (the two ops scripts were ESM files that could not run under the
+  CommonJS runtime at all). `GOOGLE_SERVICE_ACCOUNT_JSON` left the
+  environment surface with `sheets.js`. The ESLint/Prettier quarantine
+  exclusions were dropped — the whole repo is linted again.
 - Migrated dependency management from npm to pnpm. `packageManager` pins
   `pnpm@12.4.2` (run via Corepack); the npm lockfiles are replaced by a single
   `pnpm-lock.yaml` at the root (`frontend/pnpm-lock.yaml` was removed;

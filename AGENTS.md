@@ -96,9 +96,9 @@ Examples:
   `eslint:recommended` scope; style rules are delegated to Prettier) and
   `.prettierrc.json` cover `backend/**`, `frontend/**`, and `scripts/**`.
   Run `pnpm run lint` (or `format` to rewrite) before committing. The CI
-  `backend`/`frontend` jobs lint their area before testing. The six
-  ADR-001-quarantined legacy ESM files in `backend/` are excluded from both
-  tools and must stay frozen.
+  `backend`/`frontend` jobs lint their area before testing. The ADR-001
+  quarantined legacy family was removed from the repository (see ADR 001
+  §1b audit annex); no files are excluded from either tool anymore.
 - **Husky `pre-push`** — blocks pushing directly to `main`; then runs only
   the checks whose area changed in the pushed commits: backend (`pnpm test:backend`),
   frontend (`pnpm run test:frontend`), `node scripts/check-versions.js`
@@ -179,8 +179,7 @@ Corepack (`corepack enable pnpm`). Target a single app with
   domain table below satisfied in the same PR.
 - Database schema changes go into `backend/migrations/` as new `NNN_*.sql`
   files; existing applied migrations must not be edited.
-- Operational scripts live at `backend/scripts/` (`deploy.sh`, `backup.sh`,
-  `init-db.js`, `reset-admin.js`).
+- Operational scripts live at `backend/scripts/` (`deploy.sh`, `backup.sh`).
 - Deploy: the API runs under PM2 with a CWD of `backend/` so `dotenv` loads
   `backend/.env` (template `backend/.env.example`). Start with
   `pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend`.

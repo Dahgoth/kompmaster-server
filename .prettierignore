@@ -3,20 +3,6 @@ node_modules/
 dist/
 uploads/
 
-# Archived and historical snapshots stay frozen
-docs/
-
-# Legacy ESM-syntax files quarantined per ADR 001 — formatting-only edits
-# would add diff noise to code that cannot run under the current CommonJS
-# runtime. They are also excluded from ESLint for the same reason.
-# Mirrored in eslint.config.js (`legacyBackendFiles`) — update both lists.
-backend/src/mail.js
-backend/src/auth.js
-backend/src/sheets.js
-backend/src/payment-adapters/index.js
-backend/scripts/init-db.js
-backend/scripts/reset-admin.js
-
 # Non-code or tool-owned formats
 pnpm-lock.yaml
 *.md
@@ -29,5 +15,4 @@ pnpm-lock.yaml
 .vscode/
 
 # Generated / data files
-backend/seed.json
 frontend/dist/

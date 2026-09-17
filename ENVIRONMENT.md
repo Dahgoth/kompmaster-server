@@ -16,10 +16,8 @@ cp backend/.env.example backend/.env
 Never commit `backend/.env` or any other file containing real secrets. The
 `backend/.env` file is gitignored.
 
-The active entry point (`pnpm start` → `backend/src/index.js`) reads configuration
-through `backend/src/config.js`. The legacy entry at `docs/legacy/server.js` reads some
-variables directly from `process.env` with different names; the differences are
-noted in [Legacy entry point](#legacy-entry-point).
+The entry point (`pnpm start` → `backend/src/index.js`) reads configuration
+through `backend/src/config.js`.
 
 ## Active entry point (via `backend/src/config.js`)
 
@@ -101,26 +99,6 @@ notifications are logged to the console instead of sent.
 ### Analytics
 
 - `YANDEX_METRIKA_ID` — Yandex Metrika counter id for the storefront.
-
-## Legacy entry point
-
-`docs/legacy/server.js` (legacy ESM entry, archived, documented in
-  `docs/archive/DOCKER_EVALUATION.md`) reads these
-  additional variables directly from `process.env`:
-
-- `DOMAIN` — public domain, used to build reset links. Falls back to the
-  request host.
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` — bootstrap admin credentials.
-- `MAX_UPLOAD_MB` — multipart upload size limit. Default `40`.
-- `SMTP_SECURE` — `true` for implicit TLS (port 465).
-- `SMTP_PASS` — SMTP password. **Note:** `config.js` uses `SMTP_PASSWORD`
-  instead; the two entries are inconsistent and should be reconciled.
-- `ADMIN_NOTIFY_EMAIL` — recipient for "order paid" e-mail.
-- `GOOGLE_SERVICE_ACCOUNT_JSON` — service-account JSON for the Google Sheets
-  integration (`backend/src/sheets.js`).
-
-If you work on the legacy entry, keep `ENVIRONMENT.md` in sync with any
-variable you add or rename.
 
 ## Terraform (Timeweb Cloud PoC infra)
 
