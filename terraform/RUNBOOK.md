@@ -152,7 +152,7 @@ YANDEX_METRIKA_ID=
 
 ### 4.3 VPS bootstrap (first apply only)
 
-Follow [`../DEPLOY.md`](../DEPLOY.md) §2–5: install Node 20 + PostgreSQL 16,
+Follow [`../DEPLOY.md`](../DEPLOY.md) §2–5: install Node 24 + PostgreSQL 16,
 upload code to `/opt/compmaster`, copy `secrets/app.env` → `/opt/compmaster/.env`,
 run `npm install --omit=dev`, `npm run migrate`, then PM2. Caddy uses the
 repo's `Caddyfile`; the Debian/Ubuntu package reads `DOMAIN`/`PORT` from

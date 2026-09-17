@@ -37,7 +37,9 @@ inventory, gitignored secret-file layout, deploy/rotate/destroy procedures.
 ## Usage
 
 Prerequisites: Terraform `>= 1.5` and a Timeweb API token with Telegram
-delete-confirmation disabled.
+delete-confirmation disabled. The VPS runs **Node.js 24 LTS** — see
+[`../DEPLOY.md`](../DEPLOY.md) §2 for the install command and
+[`../DEVELOPMENT.md`](../DEVELOPMENT.md) for the full prerequisite table.
 
 ```bash
 export TWC_TOKEN=...            # never commit this value
