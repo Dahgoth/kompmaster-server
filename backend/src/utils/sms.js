@@ -1,4 +1,3 @@
-const fetch = require("node-fetch");
 const config = require("../config");
 
 // Написано под API SMS.ru (https://sms.ru/api/send) — простой GET-запрос.
