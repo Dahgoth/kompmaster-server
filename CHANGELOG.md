@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Bumped minimum Node.js version from 20 LTS to 24 LTS. CI workflows now run
+  on Node 24; install instructions in `README.md`, `DEVELOPMENT.md`, and
+  `DEPLOY.md` updated accordingly. Added `engines.node` field to
+  `package.json` (`>=24.0.0`) and `.nvmrc` pinning Node 24.
+
 ### Added
 - Path-filtered CI (`.github/workflows/ci.yml`): `docs-sync` (always-on
   `scripts/check-docs.js`), `commitlint` (PRs), `backend` / `frontend` /

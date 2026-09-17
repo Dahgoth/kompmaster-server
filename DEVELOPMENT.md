@@ -15,7 +15,7 @@ S3-compatible store for photos. The active entry point is `src/index.js`
 
 | Tool           | Version / notes                                                    |
 | -------------- | ------------------------------------------------------------------ |
-| Node.js        | 20 LTS or newer                                                    |
+| Node.js        | 24 LTS or newer                                                    |
 | npm            | ships with Node                                                    |
 | PostgreSQL     | 16 (see `docker-compose.yml`)                                      |
 | S3-compatible  | MinIO (via Docker), or Selectel Object Storage / Cloudflare R2      |

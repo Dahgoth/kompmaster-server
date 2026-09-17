@@ -54,8 +54,8 @@ Husky-хук `pre-push` прогоняет те же проверки по PR-о
 ## 1. Установка на сервере (Ubuntu, чистый VPS)
 
 ```bash
-# Node.js 20 LTS
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# Node.js 24 LTS
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # PostgreSQL
