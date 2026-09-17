@@ -54,7 +54,11 @@ terraform output                # map S3_*, URLs — see ENVIRONMENT.md
 ```
 
 State is local (`terraform.tfstate`, gitignored). Shared/S3 backend deferred to
-post-PoC. `terraform.tfvars` is gitignored; copy `terraform.tfvars.example` to
+post-PoC. `.terraform.lock.hcl` is committed and, together with the `~> 1.8.2`
+constraint in `versions.tf`, pins the provider to the verified v1.8.2 series —
+the CDN guidance below assumes it, so only move off it deliberately
+(`terraform init -upgrade`) and update the docs in the same change.
+`terraform.tfvars` is gitignored; copy `terraform.tfvars.example` to
 override e.g. `ssh_keys_ids`. Restrict `ssh_allowed_cidr` after first login.
 `terraform destroy` removes the VPS, buckets, and DNS records — snapshot /
 `pg_dump` archives in S3 go with the buckets; back up first.
@@ -135,5 +139,9 @@ Keep both origins in `FRONTEND_ORIGIN` (see ENVIRONMENT.md).
 
 `scripts/check-docs.js` classifies `terraform/**` (and `frontend/terraform/`)
 as the Terraform domain: changes require `DEVELOPMENT.md` and this README in
-the same change set. A dedicated CI job (`terraform fmt -check`,
-`terraform validate`) gated on `terraform/**` can be added when needed.
+the same change set. The CI `terraform` job (gated on `terraform/**`) runs
+`terraform fmt -check -recursive`, `terraform init -backend=false` (verifies
+the committed `.terraform.lock.hcl`), and `terraform validate` — no
+`TWC_TOKEN` is required. The Husky `pre-push` hook runs the fmt check locally
+when the Terraform CLI is installed; `tflint`/`plan` in CI can be added later
+if needed.

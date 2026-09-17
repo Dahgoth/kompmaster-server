@@ -95,7 +95,12 @@ else
 fi
 
 if [ "$has_terraform" = true ]; then
-  echo "pre-push: terraform files changed — no .tf toolchain yet (see terraform/README.md)."
+  if command -v terraform >/dev/null 2>&1; then
+    echo "pre-push: terraform files changed — running terraform fmt check..."
+    (cd terraform && terraform fmt -check -recursive) || exit 1
+  else
+    echo "pre-push: terraform files changed — Terraform CLI not installed; skipping fmt check (CI runs fmt + validate)."
+  fi
 fi
 
 exit 0

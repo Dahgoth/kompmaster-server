@@ -28,8 +28,8 @@ in `.tfvars`, never in the repo**. Source of truth: password manager (e.g.
 Vault / 1Password / Bitwarden); the local gitignored files in §3 are working
 copies for tooling.
 
-| # | Credential / variable | Used by | Source of truth | Local gitignored location |
-| --- | --- | --- | --- | --- |
+| Credential / variable | Used by | Source of truth | Local gitignored location |
+| --- | --- | --- | --- |
 | `TWC_TOKEN` | terraform (all twc resources) | Timeweb panel | `terraform/secrets/twc.env` |
 | Timeweb root SSH password | VPS first login (emailed when `ssh_keys_ids` is empty) | Timeweb e-mail → password manager | `terraform/secrets/vps.env` (note it down once) |
 | `ssh_keys_ids` | `twc_server` provisioning | Timeweb panel → SSH keys (numeric IDs) | `terraform/terraform.tfvars` |

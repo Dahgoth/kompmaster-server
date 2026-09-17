@@ -40,6 +40,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on Node 24; install instructions in `README.md`, `DEVELOPMENT.md`, and
   `DEPLOY.md` updated accordingly. Added `engines.node` field to
   `package.json` (`>=24.0.0`) and `.nvmrc` pinning Node 24.
+- Terraform: the CI `terraform` job now runs `terraform fmt -check -recursive`,
+  a backend-less `terraform init` (verifying the committed
+  `.terraform.lock.hcl`), and `terraform validate` instead of a placeholder
+  asserting that no `.tf` files exist; the Husky `pre-push` hook runs the fmt
+  check when Terraform files changed and the Terraform CLI is installed.
+  `terraform/versions.tf` pins the Timeweb provider with `~> 1.8.2` so
+  `terraform init -upgrade` cannot drift past the verified v1.8.2 series the
+  CDN guidance depends on.
+- Terraform CDN cutover is now a variable toggle (`frontend_cdn_enabled` +
+  `frontend_cdn_cname`) instead of a manual DNS retarget that the next
+  `terraform apply` would revert (drift). Frontend S3 preset defaults to the
+  verified 10 GB tier (1 GB opt-in via `frontend_s3_disk_mb`).
+- `package.json`: set `license` to `MIT`, added dev dependencies
+  (commitlint, Husky), and `prepare`/`lint:commit` scripts.
+- Changed license from AGPL-3.0 to MIT (resolves #6): the AGPL
+  network-use clause (§13) was incompatible with the planned white-label
+  commercial model where clients use the service over the network without
+  receiving source code. MIT is permissive and imposes no
+  source-disclosure obligations.
 
 ### Added
 - Path-filtered CI (`.github/workflows/ci.yml`): `docs-sync` (always-on
@@ -85,19 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + MinIO databases only. Docker-based `backend/scripts/deploy.sh` and
   `backend/scripts/backup.sh` were rewritten for the PM2/host-`pg_dump` flow.
   Rationale: `docs/archive/DOCKER_EVALUATION.md`.
-
-### Changed
-- Terraform CDN cutover is now a variable toggle (`frontend_cdn_enabled` +
-  `frontend_cdn_cname`) instead of a manual DNS retarget that the next
-  `terraform apply` would revert (drift). Frontend S3 preset defaults to the
-  verified 10 GB tier (1 GB opt-in via `frontend_s3_disk_mb`).
-- `package.json`: set `license` to `MIT`, added dev dependencies
-  (commitlint, Husky), and `prepare`/`lint:commit` scripts.
-- Changed license from AGPL-3.0 to MIT (resolves #6): the AGPL
-  network-use clause (§13) was incompatible with the planned white-label
-  commercial model where clients use the service over the network without
-  receiving source code. MIT is permissive and imposes no
-  source-disclosure obligations.
 - Removed legacy `VERSION.txt`; `package.json` version is now the single
   source of truth for the release version.
 
@@ -115,6 +121,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (comma-separated, credentials preserved); wildcard `*` is rejected at
   startup (fail-closed). Requests without `Origin` (curl, health checks)
   are still allowed.
+- `terraform/RUNBOOK.md`: the credential-inventory table header declared a
+  leading `#` column that no row filled, shifting the rendered columns;
+  the header now matches the four-column rows.
 - Migrations (E17): `backend/src/migrate.js` now runs under a PostgreSQL advisory
   lock (`pg_advisory_lock`), so parallel deploys/replicas cannot apply the
   same migration twice. Added reusable `backend/src/utils/advisoryLock.js`
