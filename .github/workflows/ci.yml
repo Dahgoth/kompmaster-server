@@ -163,9 +163,18 @@ jobs:
             terraform:
               - 'terraform/**'
               - 'frontend/terraform/**'
-      - name: Terraform placeholder
+      # Pinned CLI (repo pins node/pnpm the same way); required_version is >= 1.5.
+      - uses: hashicorp/setup-terraform@v3
         if: steps.changes.outputs.terraform == 'true'
-        run: |
-          echo "terraform/ changes detected but no .tf files exist yet."
-          echo "See terraform/README.md — add fmt/validate/tflint here when infra lands."
-          test -z "$(git ls-files 'terraform/**/*.tf' 'frontend/terraform/**/*.tf')"
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+      - name: Terraform fmt
+        if: steps.changes.outputs.terraform == 'true'
+        run: terraform -chdir=terraform fmt -check -recursive
+      - name: Terraform init (no backend; verifies committed provider lockfile)
+        if: steps.changes.outputs.terraform == 'true'
+        run: terraform -chdir=terraform init -backend=false -input=false
+      - name: Terraform validate
+        if: steps.changes.outputs.terraform == 'true'
+        run: terraform -chdir=terraform validate

@@ -96,12 +96,16 @@ Examples:
   the checks whose area changed in the pushed commits: backend (`pnpm test:backend`),
   frontend (`pnpm run test:frontend`), `node scripts/check-versions.js`
   (version alignment), plus the docs-in-sync check (`node scripts/check-docs.js`)
-  on every non-docs-only push. Bypass only with `git push --no-verify` when you
-  can state why, and re-run the suite immediately after.
+  on every non-docs-only push; `terraform fmt -check` runs when Terraform
+  files changed and the Terraform CLI is installed. Bypass only with
+  `git push --no-verify` when you can state why, and re-run the suite
+  immediately after.
 - **CI** — `.github/workflows/ci.yml` runs path-filtered jobs on every push
   and PR: `docs-sync` (always), `commitlint` (PRs), `versions` (version
   alignment), `backend` (backend paths), `frontend` (frontend paths, incl.
-  build), `terraform` (placeholder until `.tf` files land).
+  build), `terraform` (`terraform fmt -check -recursive` + `terraform
+  validate` on `terraform/**` paths; provider pinned by the committed
+  `.terraform.lock.hcl`).
 - Manual check: `pnpm run lint:commit` validates the most recent commit.
 
 ## Workflow

@@ -208,7 +208,10 @@ this section is the detailed reference.
   commitlint on every push and PR. The `backend` job filters on `backend/**`
   plus the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, and
   `scripts/**`; the `frontend` job runs `pnpm --filter kompmaster-frontend
-  test|build`. The backend syntax check inspects only content-changed backend JS
+  test|build`; the `terraform` job runs `terraform fmt -check -recursive` and
+  `terraform validate` (backend-less `init`; the provider is pinned by the
+  committed `.terraform.lock.hcl`). The backend syntax check inspects only
+  content-changed backend JS
   (`git mv` renames are excluded). See
   [`docs/adr/003-monorepo-workspace-and-versioning.md`](docs/adr/003-monorepo-workspace-and-versioning.md).
 
