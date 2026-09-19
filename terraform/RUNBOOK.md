@@ -109,7 +109,7 @@ cd terraform
 set -a; source secrets/twc.env; set +a   # or: export $(cat secrets/twc.env | xargs)
 
 terraform init          # provider tf.timeweb.cloud/timeweb-cloud v1.8.2
-terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 1 backup schedule + 2 buckets + 1–2 subdomains (frontend one only while CDN is off) + 4 DNS records
+terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 2 buckets + 1–2 subdomains (frontend one only while CDN is off) + 4 DNS records — no backup schedule (ADR-005)
 terraform apply         # never use -auto-approve
 terraform output        # copy into the secret files below
 ```
@@ -215,6 +215,7 @@ Never retarget the `www` CNAME by hand: Terraform owns it.
 | Non-secret outputs again | `terraform output` |
 | Sensitive outputs | `terraform output -raw s3_secret_key` (do not paste into shells/logs carelessly) |
 | Backup state before risky ops | `cp terraform.tfstate terraform.tfstate.bak` (state file holds secrets — keep it out of sync/cloud) |
+| Snapshot the VPS before risky ops | free panel snapshot (Timeweb keeps it 7 days) — there are no disk backup schedules by design (ADR-005) |
 | Change shape (e.g. MSK-80) | edit `terraform.tfvars`, `terraform apply` — Timeweb migrates with ~10–15 min downtime |
 | Attach / enable CDN | create the CDN resource in the panel, then `frontend_cdn_enabled = true` + `frontend_cdn_cname = "<target>"` in `terraform.tfvars`, `terraform apply` (www CNAME → CDN, S3 www cert dropped) |
 | Re-issue SSL for a subdomain | `release_cert = true` re-applies; check `twc_s3_bucket_subdomain.*.status` |
@@ -240,7 +241,7 @@ data and DNS history.
 
 - Secrets lost but password manager intact → rebuild `secrets/*` from it; non-secret values from `terraform output`.
 - `terraform.tfstate` lost → resources still exist in Timeweb; re-adopt via `terraform import` rather than re-creating.
-- VPS lost → disk backups (7 daily copies) restore the host; if not, re-apply Terraform (same names) and redo §4.3 + `pg_dump` restore from the media bucket.
+- VPS lost → re-apply Terraform (same names) and redo §4.3 + `pg_dump` restore from the media bucket. There are no disk backup schedules by design (ADR-005 — 6 ₽/GB/copy/mo pricing); take a free panel snapshot before risky operations, and keep the `pg_dump` archives safe (they are the recovery control).
 
 ## 8. Pre-flight checklist (every apply)
 

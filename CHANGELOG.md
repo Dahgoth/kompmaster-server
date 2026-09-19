@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   admin-uploaded price files.
 
 ### Changed
+- PoC Terraform (`terraform/`) drops the daily disk-backup schedule and its
+  `backup_copy_count`/`backup_start_at` variables (ADR-005): Timeweb bills
+  6 ₽/GB of disk per existing copy per month, which priced the previous 7-copy
+  default at ~2,100 ₽/mo — outside the ADR-002 PoC basket. The single-VPS
+  recovery path is the ADR-002 one: daily `pg_dump` → S3 plus free panel
+  snapshots (kept 7 days) before risky operations.
 - Backend dependency cleanup on top of PR #29 (multer 2.4 fixes four upload
   CVEs; nodemailer 9; vite 6): removed `uuid` (S3 object keys now use
   `crypto.randomUUID()` from `node:crypto`) and `node-fetch` (native `fetch`

@@ -1,5 +1,5 @@
 # KompMaster PoC infrastructure — Timeweb Cloud (Option D+A, ADR-002 re-scope).
-# Provisions ONLY infra: project, VPS, firewall, disk autobackups, S3 buckets, DNS.
+# Provisions ONLY infra: project, VPS, firewall, S3 buckets, DNS.
 # App deploy (code, .env, migrations) and secrets stay outside Terraform — see DEVELOPMENT.md.
 #
 # Topology (ADR-001 §1a pure C — backend serves /api/* only, frontend is a
@@ -108,16 +108,10 @@ resource "twc_firewall_rule" "ssh" {
   cidr        = var.ssh_allowed_cidr
 }
 
-# Single-VPS recovery path (ADR-002: no HA — daily disk copies + pg_dump to S3).
-resource "twc_server_disk_backup_schedule" "main" {
-  source_server_id      = twc_server.main.id
-  source_server_disk_id = twc_server.main.disks[0].id
-
-  enabled           = true
-  copy_count        = var.backup_copy_count
-  creation_start_at = var.backup_start_at
-  interval          = "day"
-}
+# Disk backups are intentionally NOT provisioned (ADR-005): the single-VPS
+# recovery path is daily pg_dump → S3 + free panel snapshots before risky ops.
+# Do not re-add a twc_server_disk_backup_schedule without re-costing it —
+# Timeweb bills 6 ₽/GB of disk per existing copy per month (ADR-005 §Context).
 
 resource "twc_s3_bucket" "media" {
   name      = var.s3_bucket_name

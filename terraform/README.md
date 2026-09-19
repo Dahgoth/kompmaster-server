@@ -15,11 +15,16 @@ runtime working directory, and fixed shared versioning decisions.
 | `twc_project.main` | Timeweb project grouping all PoC resources |
 | `twc_server.main` | MSK-50 VPS (2 vCPU / 4 GB / 50 GB NVMe) — Node API + PostgreSQL + Caddy |
 | `twc_firewall` + rules | 80/443 open, SSH via `ssh_allowed_cidr` |
-| `twc_server_disk_backup_schedule` | Daily disk backups (7 copies) |
 | `twc_s3_bucket.media` | Private hot bucket — product photos (`S3_*` env) |
 | `twc_s3_bucket.frontend` | Public hot bucket — `frontend/dist` with website hosting (404 → `index.html` SPA fallback) |
 | `twc_s3_bucket_subdomain` | `assets.` always; `www.` only while CDN is off (S3 issues the cert) |
 | `twc_dns_rr` × 4 | `@`→VPS, `api`→VPS, `www`→S3 (or CDN once enabled), `assets`→S3 |
+
+Disk backups are intentionally **not** provisioned (ADR-005): Timeweb bills
+6 ₽/GB of disk per existing copy per month, which priced the original 7-copy
+schedule at 2,100 ₽/mo — more than the MSK-80 spike lever. The single-VPS
+recovery path is the ADR-002 one: daily `pg_dump` → S3, plus free panel
+snapshots (kept 7 days) before risky operations.
 
 Resulting topology:
 
