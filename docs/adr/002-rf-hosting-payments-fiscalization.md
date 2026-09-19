@@ -4,6 +4,7 @@
 - **Date:** 2026-09-13
 - **Deciders:** @Dahgoth (maintainer), PO (product owner), @annatchijova (collaborator)
 - **Related:** ADR 001 (canonical core, pure C API-only, 5k WAU cheapest HA), Issue #3, Issue #8 Groups B/A6, `docs/2026-hosting-pricing-research.md` §11
+- **Amended by ADR 005** (2026-09-19): FinOps cost tooling rejected; disk-backup pricing (6 ₽/GB per copy per month) itemized — disk backups are dropped entirely for the initial setup and the daily `pg_dump` → S3 path (this ADR's original recovery path) is the standing control; see ADR 005 for the revised budget totals
 
 ## Context
 

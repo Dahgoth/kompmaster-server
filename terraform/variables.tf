@@ -164,14 +164,8 @@ variable "s3_disk_mb" {
   default     = 10240
 }
 
-variable "backup_copy_count" {
-  description = "Kept disk auto-backup copies (single-VPS recovery path per ADR-002)."
-  type        = number
-  default     = 7
-}
-
-variable "backup_start_at" {
-  description = "First auto-backup timestamp (RFC3339)."
+variable "backup_bucket_name" {
+  description = "Offsite DB-backup bucket name (encrypted pg_dump archives; ADR-005)."
   type        = string
-  default     = "2026-09-20T00:00:00Z"
+  default     = "kompmaster-backups"
 }
