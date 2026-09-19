@@ -163,3 +163,9 @@ variable "s3_disk_mb" {
   type        = number
   default     = 10240
 }
+
+variable "backup_bucket_name" {
+  description = "Offsite DB-backup bucket name (encrypted pg_dump archives; ADR-005)."
+  type        = string
+  default     = "kompmaster-backups"
+}

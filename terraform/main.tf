@@ -109,9 +109,25 @@ resource "twc_firewall_rule" "ssh" {
 }
 
 # Disk backups are intentionally NOT provisioned (ADR-005): the single-VPS
-# recovery path is daily pg_dump → S3 + free panel snapshots before risky ops.
-# Do not re-add a twc_server_disk_backup_schedule without re-costing it —
-# Timeweb bills 6 ₽/GB of disk per existing copy per month (ADR-005 §Context).
+# recovery control is the encrypted daily pg_dump → the offsite backup bucket
+# below, plus free panel snapshots before risky ops. Do not re-add a
+# twc_server_disk_backup_schedule without re-costing it — Timeweb bills
+# 6 ₽/GB of disk per existing copy per month (ADR-005 §Context).
+
+# Offsite DB-backup bucket (ADR-005 §Decision 4): separate private bucket that
+# survives VPS loss; its per-bucket key grants no access to the media/frontend
+# buckets. Provider v1.8.2 cannot manage S3 versioning, so backend/scripts/
+# backup.sh re-asserts it via the S3 API on every run (history survives
+# accidental deletion/overwrite).
+resource "twc_s3_bucket" "backups" {
+  name      = var.backup_bucket_name
+  type      = "private"
+  preset_id = data.twc_s3_preset.media.id
+
+  description           = "KompMaster PoC encrypted DB dumps (offsite recovery control, ADR-005)"
+  is_allow_auto_upgrade = true
+  project_id            = twc_project.main.id
+}
 
 resource "twc_s3_bucket" "media" {
   name      = var.s3_bucket_name

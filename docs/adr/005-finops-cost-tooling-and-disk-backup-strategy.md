@@ -87,32 +87,46 @@ manually, with Timeweb's own billing/API as the data source.
    independence that the S3 dump path (Moscow VPS ↔ SPb S3) already provides.
 
    **Chosen (maintainer, 2026-09-19): drop disk backups entirely** for the
-   initial setup — 0 ₽/mo, total ≈ 1,221–1,459 ₽/mo. Condition: §4 (dump-path
-   hardening incl. tested restores) is the standing recovery control. Re-
-   introducing minimal disk copies (1 × weekly 300 ₽/mo or 2 × daily 600 ₽/mo)
-   remains the documented option if RTO tolerance tightens after launch; never
-   restore the 7-copy default without re-costing.
+   initial setup — the recovery control moves to the encrypted offsite backup
+   bucket implemented in the same change (see §4), total ≈ 1,300–1,538 ₽/mo.
+   Re-introducing minimal disk copies (1 × weekly 300 ₽/mo or 2 × daily
+   600 ₽/mo) remains the documented option if RTO tolerance tightens after
+   launch; never restore the 7-copy default without re-costing.
 4. **`pg_dump` → S3 hardening is required in every scenario** (it is the
-   canonical recovery control, per ADR-002):
+   canonical recovery control, per ADR-002) — **implemented in this change
+   set**:
    - dedicated backup bucket with **separate credentials** from the
-     application `S3_*` keys in `/opt/compmaster/backend/.env` (root
-     compromise of the VPS must not permit deleting backup history);
-   - S3 object versioning enabled on the backup bucket;
-   - client-side encryption of dumps (`age`/`gpg`) with the key held off-VPS;
-   - quarterly restore drill, logged in `terraform/RUNBOOK.md`
-     (NIST CSF 2.0 PR.DS-11: "created, protected, maintained, **and tested**").
+     application `S3_*` keys in `/opt/compmaster/backend/.env`: a new private
+     `twc_s3_bucket.backups` whose per-bucket key grants no access to the
+     media/frontend buckets (root compromise of the VPS must not permit
+     deleting backup history across services);
+   - S3 object **versioning** re-asserted by `backend/scripts/backup.sh` on
+     every run (provider v1.8.2 cannot manage it in Terraform) — plain deletes
+     create markers; prior versions stay restorable;
+   - client-side **encryption** of dumps (`openssl enc -aes-256-ctr -pbkdf2`)
+     before anything leaves the VPS; the passphrase (`BACKUP_ENCRYPTION_KEY`)
+     is stored in the password manager off-VPS — without it the archive is
+     unrestorable (residual risk: a fully compromised VPS sees the passphrase
+     at encrypt time; an `age` public-key scheme is the upgrade path);
+   - quarterly **restore drill** (download → decrypt → restore into a scratch
+     DB), logged in `terraform/RUNBOOK.md` §5, per NIST CSF 2.0 PR.DS-11:
+     "created, protected, maintained, **and tested**".
 
 ## Consequences
 
 - ADR-002's budget line is amended: backups become an explicit line item.
-  Revised PoC totals (ex-domain amortization): ~1,221–1,459 ₽/mo with backups
-  dropped (**chosen**), ~1,521–1,759 with one weekly copy, ~1,821–2,059 with
-  two daily copies — all within the 2–5,000 ₽/mo cap.
+  Revised PoC totals (ex-domain amortization): ~1,300–1,538 ₽/mo (**chosen**:
+  disk backups dropped + encrypted offsite backup bucket), ~1,521–1,759 with
+  one weekly copy on top, ~1,821–2,059 with two daily copies — all within the
+  2–5,000 ₽/mo cap.
 - The implementing Terraform change removes the
   `twc_server_disk_backup_schedule` resource and the
-  `backup_copy_count`/`backup_start_at` variables, with `CHANGELOG.md`,
-  `DEVELOPMENT.md`, `terraform/README.md`, and `terraform/RUNBOOK.md` updated
-  in the same change set.
+  `backup_copy_count`/`backup_start_at` variables (operators must delete
+  stale keys from the local gitignored `terraform.tfvars`), adds
+  `twc_s3_bucket.backups` (+79 ₽/mo), and rewrites
+  `backend/scripts/backup.sh` (encrypt + upload + versioning assertion) —
+  with `CHANGELOG.md`, `DEVELOPMENT.md`, `terraform/README.md`, and
+  `terraform/RUNBOOK.md` updated in the same change set.
 - Confidentiality posture is unchanged; availability posture improves via the
   chosen copy count **only if** restore drills are actually executed — the
   control is the drill, not the copy count.
