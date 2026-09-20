@@ -15,6 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   admin-uploaded price files.
 
 ### Changed
+- PoC Terraform (`terraform/`) drops the daily disk-backup schedule and its
+  `backup_copy_count`/`backup_start_at` variables (ADR-005): Timeweb bills
+  6 ₽/GB of disk per existing copy per month, which priced the previous 7-copy
+  default at ~2,100 ₽/mo — outside the ADR-002 PoC basket. **Terraform config
+  migration:** delete those two keys from the local gitignored
+  `terraform.tfvars` before applying (stale keys produce an "undeclared
+  variable" warning).
+- Offsite DB backup flow replaces the VPS-local dump as the recovery control
+  (ADR-005): a new private `twc_s3_bucket.backups` (separate per-bucket key,
+  +79 ₽/mo) and `backend/scripts/backup.sh` now encrypts each daily `pg_dump`
+  (AES-256-CTR + PBKDF2) before uploading it to that versioned bucket —
+  versioning is re-asserted on every run so history survives accidental
+  deletion/overwrite. Quarterly restore drill documented in
+  `terraform/RUNBOOK.md` §5.
 - Backend dependency cleanup on top of PR #29 (multer 2.4 fixes four upload
   CVEs; nodemailer 9; vite 6): removed `uuid` (S3 object keys now use
   `crypto.randomUUID()` from `node:crypto`) and `node-fetch` (native `fetch`

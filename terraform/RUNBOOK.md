@@ -47,6 +47,9 @@ copies for tooling.
 | `S3_BUCKET` | app media bucket | `terraform output s3_bucket_name` (fallback `s3_bucket_full_name`) | `terraform/secrets/app.env` |
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | app media bucket | `terraform output s3_access_key` / `s3_secret_key` | `terraform/secrets/app.env` |
 | `S3_PUBLIC_URL` | public photo base URL | `https://assets.compmasone.ru` | `terraform/secrets/app.env` |
+| `S3_BACKUP_ENDPOINT` / `S3_BACKUP_BUCKET` | offsite DB backups (`backend/scripts/backup.sh`) | `terraform output backup_hostname` / `backup_bucket_full_name` | `terraform/secrets/backup.env` + VPS `scripts-backup.env` |
+| `S3_BACKUP_ACCESS_KEY` / `S3_BACKUP_SECRET_KEY` | backup bucket only — grants no access to media/frontend buckets | `terraform output backup_access_key` / `backup_secret_key` | `terraform/secrets/backup.env` + VPS `scripts-backup.env` |
+| `BACKUP_ENCRYPTION_KEY` | encrypts dumps before upload; **without it the archive is unrestorable** | Password manager (32+ random chars) | `terraform/secrets/backup.env` + VPS `scripts-backup.env` |
 | `VITE_API_BASE` | frontend build (baked at build time) | `<api_url>/api` | `terraform/secrets/frontend.env` |
 | Frontend sync keys | `aws s3 sync` to frontend bucket | `terraform output frontend_access_key` / `frontend_secret_key` | `terraform/secrets/s3-sync.env` |
 | `SMTP_*`, `TELEGRAM_*`, `SMS_*`, `YANDEX_METRIKA_ID` | optional app integrations | Password manager | `terraform/secrets/app.env` (empty at PoC launch) |
@@ -63,7 +66,7 @@ Create the layout once:
 ```bash
 cd terraform
 mkdir -p secrets && chmod 700 secrets
-touch secrets/twc.env secrets/db.env secrets/app.env secrets/s3-sync.env secrets/vps.env
+touch secrets/twc.env secrets/db.env secrets/app.env secrets/s3-sync.env secrets/vps.env secrets/backup.env
 chmod 600 secrets/*.env terraform.tfvars 2>/dev/null || true
 ```
 
@@ -94,6 +97,16 @@ AWS_ACCESS_KEY_ID=<terraform output frontend_access_key>
 AWS_SECRET_ACCESS_KEY=<terraform output frontend_secret_key>
 ```
 
+`secrets/backup.env` (offsite DB backups — becomes the VPS `scripts-backup.env`):
+
+```bash
+S3_BACKUP_ENDPOINT=<terraform output backup_hostname>   # https://s3.timeweb.com
+S3_BACKUP_BUCKET=<terraform output backup_bucket_full_name>
+S3_BACKUP_ACCESS_KEY=<terraform output backup_access_key>
+S3_BACKUP_SECRET_KEY=<terraform output backup_secret_key>
+BACKUP_ENCRYPTION_KEY=$(openssl rand -base64 32)        # copy into the password manager NOW
+```
+
 `secrets/vps.env` (root password / key fingerprint, if password auth was used):
 
 ```bash
@@ -109,7 +122,7 @@ cd terraform
 set -a; source secrets/twc.env; set +a   # or: export $(cat secrets/twc.env | xargs)
 
 terraform init          # provider tf.timeweb.cloud/timeweb-cloud v1.8.2
-terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 1 backup schedule + 2 buckets + 1–2 subdomains (frontend one only while CDN is off) + 4 DNS records
+terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 2 buckets + 1–2 subdomains (frontend one only while CDN is off) + 4 DNS records — no backup schedule (ADR-005)
 terraform apply         # never use -auto-approve
 terraform output        # copy into the secret files below
 ```
@@ -119,6 +132,7 @@ Plan-review checklist:
 - [ ] Only `kompmaster-*` names appear — no accidental parallel projects
 - [ ] `ssh_allowed_cidr` override is staged in `terraform.tfvars` (or set it to your IP right after first login)
 - [ ] Plan shows the expected resource count and **no unexpected replacements**
+- [ ] `terraform.tfvars` no longer defines `backup_copy_count` / `backup_start_at` — ADR-005 removed them; stale keys produce an "undeclared variable" warning. Delete them from the local gitignored file before applying.
 
 ### 4.2 Compose app `.env` (from outputs)
 
@@ -167,8 +181,9 @@ pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend
 ```
 
 `backend/scripts/deploy.sh` performs the install, migrate, and PM2 steps with
-the backend working directory. `backend/scripts/backup.sh` writes database
-archives to `backend/backups/`. Caddy uses the repo's root `Caddyfile`; the
+the backend working directory. `backend/scripts/backup.sh` writes an
+**encrypted** dump locally and uploads it to the offsite backup bucket
+(ADR-005). Caddy uses the repo's root `Caddyfile`; the
 Debian/Ubuntu package reads `DOMAIN`/`PORT` from `/etc/default/caddy`
 (DEPLOY.md §5 — the Caddyfile also carries PoC defaults, so an unset `DOMAIN`
 cannot produce an empty site address). Caddy issues TLS for both
@@ -180,6 +195,25 @@ curl https://api.compmasone.ru/api/health    # {"ok":true,...}
 curl -I https://compmasone.ru                # 301 → https://www.compmasone.ru
 curl -I https://www.compmasone.ru            # 200 from S3 website (after step 4.4)
 ```
+
+### 4.5 Offsite DB backups (first apply)
+
+The disk-backup schedule is intentionally absent (ADR-005 — 6 ₽/GB/copy/mo);
+the recovery control is the encrypted dump in the dedicated backup bucket:
+
+```bash
+# on the VPS — once, after §4.3
+sudo apt-get install -y awscli openssl       # awscli for the S3 API
+install -m 600 /dev/null /opt/compmaster/backend/scripts-backup.env
+# paste the contents of terraform/secrets/backup.env (S3_BACKUP_* + BACKUP_ENCRYPTION_KEY)
+crontab -e
+# 0 3 * * * . /opt/compmaster/backend/scripts-backup.env && /opt/compmaster/backend/scripts/backup.sh >> /var/log/kompmaster-backup.log 2>&1
+```
+
+Run `backend/scripts/backup.sh` once manually and verify the object appears in
+the panel (backup bucket). The script re-asserts bucket versioning on every
+run — if the S3 API ever rejects it, enable versioning in the Timeweb panel
+instead (ADR-005: history must survive accidental deletion/overwrite).
 
 ### 4.4 Deploy the storefront
 
@@ -215,6 +249,9 @@ Never retarget the `www` CNAME by hand: Terraform owns it.
 | Non-secret outputs again | `terraform output` |
 | Sensitive outputs | `terraform output -raw s3_secret_key` (do not paste into shells/logs carelessly) |
 | Backup state before risky ops | `cp terraform.tfstate terraform.tfstate.bak` (state file holds secrets — keep it out of sync/cloud) |
+| Snapshot the VPS before risky ops | free panel snapshot (Timeweb keeps it 7 days) — there are no disk backup schedules by design (ADR-005) |
+| Quarterly restore drill | download the newest `db-*.sql.gz.enc` from the backup bucket, decrypt, restore into a scratch DB — **the control is the drill, not the archive** (ADR-005, NIST CSF 2.0 PR.DS-11); log the result here |
+| Download an offsite copy (monthly) | copy the newest encrypted dump to the admin machine — third copy in the 3-2-1 sense |
 | Change shape (e.g. MSK-80) | edit `terraform.tfvars`, `terraform apply` — Timeweb migrates with ~10–15 min downtime |
 | Attach / enable CDN | create the CDN resource in the panel, then `frontend_cdn_enabled = true` + `frontend_cdn_cname = "<target>"` in `terraform.tfvars`, `terraform apply` (www CNAME → CDN, S3 www cert dropped) |
 | Re-issue SSL for a subdomain | `release_cert = true` re-applies; check `twc_s3_bucket_subdomain.*.status` |
@@ -240,7 +277,16 @@ data and DNS history.
 
 - Secrets lost but password manager intact → rebuild `secrets/*` from it; non-secret values from `terraform output`.
 - `terraform.tfstate` lost → resources still exist in Timeweb; re-adopt via `terraform import` rather than re-creating.
-- VPS lost → disk backups (7 daily copies) restore the host; if not, re-apply Terraform (same names) and redo §4.3 + `pg_dump` restore from the media bucket.
+- VPS lost → the encrypted dumps live in the dedicated backup bucket (separate per-bucket key, versioned) and **survive the VPS** — this is the recovery control (ADR-005; disk backup schedules were dropped because Timeweb bills 6 ₽/GB of disk per existing copy per month). Restore:
+
+  ```bash
+  aws --endpoint-url <S3_BACKUP_ENDPOINT> s3 cp "s3://<S3_BACKUP_BUCKET>/db-<stamp>.sql.gz.enc" .
+  BACKUP_ENCRYPTION_KEY=<key from password manager> \
+    openssl enc -d -aes-256-ctr -pbkdf2 -in db-<stamp>.sql.gz.enc -out db-<stamp>.sql.gz
+  gunzip < db-<stamp>.sql.gz | psql -U kompmaster -d kompmaster   # after §4.3 re-provision
+  ```
+
+  Free panel snapshots (7-day retention) cover recent system-state recovery.
 
 ## 8. Pre-flight checklist (every apply)
 

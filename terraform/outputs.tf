@@ -86,6 +86,35 @@ output "frontend_secret_key" {
   sensitive   = true
 }
 
+# --- Offsite DB backups (ADR-005) ---
+
+output "backup_bucket_name" {
+  description = "Backup bucket name → S3_BACKUP_BUCKET (verify against full_name if the S3 API rejects it)."
+  value       = twc_s3_bucket.backups.name
+}
+
+output "backup_bucket_full_name" {
+  description = "Provider-assigned full backup bucket name (random prefix) — the upload target."
+  value       = twc_s3_bucket.backups.full_name
+}
+
+output "backup_hostname" {
+  description = "Backup bucket S3 endpoint host → S3_BACKUP_ENDPOINT=https://<hostname>."
+  value       = twc_s3_bucket.backups.hostname
+}
+
+output "backup_access_key" {
+  description = "Backup bucket access key → S3_BACKUP_ACCESS_KEY (secret)."
+  value       = twc_s3_bucket.backups.access_key
+  sensitive   = true
+}
+
+output "backup_secret_key" {
+  description = "Backup bucket secret key → S3_BACKUP_SECRET_KEY (secret)."
+  value       = twc_s3_bucket.backups.secret_key
+  sensitive   = true
+}
+
 output "firewall_id" {
   description = "Firewall group identifier."
   value       = twc_firewall.main.id

@@ -1,5 +1,5 @@
 # KompMaster PoC infrastructure — Timeweb Cloud (Option D+A, ADR-002 re-scope).
-# Provisions ONLY infra: project, VPS, firewall, disk autobackups, S3 buckets, DNS.
+# Provisions ONLY infra: project, VPS, firewall, S3 buckets, DNS.
 # App deploy (code, .env, migrations) and secrets stay outside Terraform — see DEVELOPMENT.md.
 #
 # Topology (ADR-001 §1a pure C — backend serves /api/* only, frontend is a
@@ -108,15 +108,25 @@ resource "twc_firewall_rule" "ssh" {
   cidr        = var.ssh_allowed_cidr
 }
 
-# Single-VPS recovery path (ADR-002: no HA — daily disk copies + pg_dump to S3).
-resource "twc_server_disk_backup_schedule" "main" {
-  source_server_id      = twc_server.main.id
-  source_server_disk_id = twc_server.main.disks[0].id
+# Disk backups are intentionally NOT provisioned (ADR-005): the single-VPS
+# recovery control is the encrypted daily pg_dump → the offsite backup bucket
+# below, plus free panel snapshots before risky ops. Do not re-add a
+# twc_server_disk_backup_schedule without re-costing it — Timeweb bills
+# 6 ₽/GB of disk per existing copy per month (ADR-005 §Context).
 
-  enabled           = true
-  copy_count        = var.backup_copy_count
-  creation_start_at = var.backup_start_at
-  interval          = "day"
+# Offsite DB-backup bucket (ADR-005 §Decision 4): separate private bucket that
+# survives VPS loss; its per-bucket key grants no access to the media/frontend
+# buckets. Provider v1.8.2 cannot manage S3 versioning, so backend/scripts/
+# backup.sh re-asserts it via the S3 API on every run (history survives
+# accidental deletion/overwrite).
+resource "twc_s3_bucket" "backups" {
+  name      = var.backup_bucket_name
+  type      = "private"
+  preset_id = data.twc_s3_preset.media.id
+
+  description           = "KompMaster PoC encrypted DB dumps (offsite recovery control, ADR-005)"
+  is_allow_auto_upgrade = true
+  project_id            = twc_project.main.id
 }
 
 resource "twc_s3_bucket" "media" {
