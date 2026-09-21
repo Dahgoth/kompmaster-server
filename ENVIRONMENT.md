@@ -120,6 +120,7 @@ After `terraform apply`, map outputs into `.env`:
 | `s3_secret_key` | `S3_SECRET_KEY` `[SECRET]` |
 | `s3_public_url` | `S3_PUBLIC_URL` |
 | `server_ipv4` | Informational (DNS `@`/`api` A-records already point here) |
+| `server_ipv6` | Informational (DNS `@`/`api` AAAA-records already point here) |
 | `api_url` | Bake `VITE_API_BASE=<api_url>/api` into the frontend build |
 | `frontend_url` | Canonical storefront (include in `FRONTEND_ORIGIN`) |
 

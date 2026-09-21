@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Dual-stack IPv4/IPv6 support for PoC VPS via Terraform-managed floating IP (`twc_floating_ip` resource) in St. Petersburg zone (spb-3). Both A and AAAA records created for apex and `api` subdomain.
+
+### Changed
+- PoC Terraform (`terraform/`) now provisions VPS in St. Petersburg (spb-3) with native IPv6 + floating IPv4, replacing the previous IPv6-only Moscow zone (msk-1). Terraform config updated: `availability_zone = "spb-3"`, `location = "ru-1"`, and added `twc_floating_ip.server_ipv4` resource.
+- Documentation updated across `terraform/RUNBOOK.md`, `terraform/README.md`, `ENVIRONMENT.md`, `DEPLOY.md`, `DEVELOPMENT.md` for dual-stack accuracy and consistency.
+
 ### Security
 - Replaced the abandoned npm `xlsx@0.18.5` (last registry release 2023) with
   the maintained SheetJS CE 0.20.3 from the official SheetJS CDN

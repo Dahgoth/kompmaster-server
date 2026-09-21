@@ -13,13 +13,14 @@ runtime working directory, and fixed shared versioning decisions.
 | Resource | Purpose |
 | --- | --- |
 | `twc_project.main` | Timeweb project grouping all PoC resources |
-| `twc_server.main` | MSK-50 VPS (2 vCPU / 4 GB / 50 GB NVMe) — Node API + PostgreSQL + Caddy |
+| `twc_server.main` | Cloud-50 VPS (2 vCPU / 4 GB / 50 GB NVMe) — Node API + PostgreSQL + Caddy |
+| `twc_floating_ip.server_ipv4` | Portable IPv4 bound to server (SPb zone provides native IPv6 only) |
 | `twc_firewall` + rules | 80/443 open, SSH via `ssh_allowed_cidr` |
 | `twc_s3_bucket.media` | Private hot bucket — product photos (`S3_*` env) |
 | `twc_s3_bucket.backups` | Private hot bucket — **encrypted** `pg_dump` archives (offsite recovery control, ADR-005) |
 | `twc_s3_bucket.frontend` | Public hot bucket — `frontend/dist` with website hosting (404 → `index.html` SPA fallback) |
 | `twc_s3_bucket_subdomain` | `assets.` always; `www.` only while CDN is off (S3 issues the cert) |
-| `twc_dns_rr` × 4 | `@`→VPS, `api`→VPS, `www`→S3 (or CDN once enabled), `assets`→S3 |
+| `twc_dns_rr` × 6 | `@` A+AAAA→VPS, `api` A+AAAA→VPS, `www`→S3 (or CDN once enabled), `assets`→S3 |
 
 Disk backups are intentionally **not** provisioned (ADR-005): Timeweb bills
 6 ₽/GB of disk per existing copy per month, which priced the original 7-copy
@@ -29,18 +30,28 @@ control is instead the encrypted daily `pg_dump` in the dedicated offsite
 `backend/scripts/backup.sh`, quarterly restore drill per `RUNBOOK.md` §5),
 plus free panel snapshots (kept 7 days) before risky operations.
 
-Resulting topology:
+Resulting topology (dual-stack):
 
 ```
-compmasone.ru        A     → VPS   Caddy 301 → https://www.compmasone.ru
-www.compmasone.ru    CNAME → S3    frontend bucket (static website + SSL)
-api.compmasone.ru    A     → VPS   Caddy reverse_proxy → 127.0.0.1:PORT
-assets.compmasone.ru CNAME → S3    media bucket
+compmasone.ru        A     → VPS (floating IP)   Caddy 301 → https://www.compmasone.ru
+compmasone.ru        AAAA  → VPS (native IPv6)   Caddy 301 → https://www.compmasone.ru
+www.compmasone.ru    CNAME → S3                  frontend bucket (static website + SSL)
+api.compmasone.ru    A     → VPS (floating IP)   Caddy reverse_proxy → 127.0.0.1:PORT
+api.compmasone.ru    AAAA  → VPS (native IPv6)   Caddy reverse_proxy → 127.0.0.1:PORT
+assets.compmasone.ru CNAME → S3                  media bucket
 ```
 
 The canonical storefront is `https://www.compmasone.ru` because **Timeweb DNS
 allows CNAME only on subdomains** — the zone apex cannot point at S3, so the
-apex A-records to the VPS and Caddy redirects it.
+apex A/AAAA-records to the VPS and Caddy redirects it.
+
+> **Note on dual-stack**: The Cloud-50 shape in St. Petersburg (spb-3) provisions with native IPv6. IPv4 is provisioned via a Terraform-managed floating IP (`twc_floating_ip` resource) bound to the server. This floating IP is portable and survives server recreation. Both A and AAAA records are created for the apex and `api` subdomain.
+>
+> **Note on S3 bucket subdomains**: After initial apply, the `www` and `assets`
+> CNAME records may need 5–30 min to propagate to Timeweb's S3 service before
+> `twc_s3_bucket_subdomain` resources can be created (SSL cert issuance). If
+> `terraform apply` fails with "empty_cname", wait and re-apply, or create the
+> subdomains manually in the Timeweb panel and `terraform import` them.
 
 Related: [`RUNBOOK.md`](RUNBOOK.md) — admin operating manual: credential
 inventory, gitignored secret-file layout, deploy/rotate/destroy procedures.
@@ -58,7 +69,7 @@ cd terraform
 terraform init
 terraform plan
 terraform apply
-terraform output                # map S3_*, URLs — see ENVIRONMENT.md
+terraform output                # map S3_*, URLs, server_ipv4, server_ipv6 — see ENVIRONMENT.md
 ```
 
 State is local (`terraform.tfstate`, gitignored). Shared/S3 backend deferred to

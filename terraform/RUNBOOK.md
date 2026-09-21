@@ -34,7 +34,8 @@ copies for tooling.
 | Timeweb root SSH password | VPS first login (emailed when `ssh_keys_ids` is empty) | Timeweb e-mail → password manager | `terraform/secrets/vps.env` (note it down once) |
 | `ssh_keys_ids` | `twc_server` provisioning | Timeweb panel → SSH keys (numeric IDs) | `terraform/terraform.tfvars` |
 | `ssh_allowed_cidr` | firewall SSH rule | Your IP /32 | `terraform/terraform.tfvars` |
-| `server_ipv4` | DNS A-records, VPS access | `terraform output server_ipv4` | not secret |
+| `server_ipv4` | DNS A-records, VPS access | `terraform output server_ipv4` (floating IP) | not secret |
+| `server_ipv6` | DNS AAAA-records, VPS access | `terraform output server_ipv6` | not secret |
 | `POSTGRES_PASSWORD` | PostgreSQL on VPS (feeds `DATABASE_URL`) | Password manager | `terraform/secrets/db.env` |
 | `DATABASE_URL` | backend (`backend/src/db.js`) | Composed from `db.env` | `terraform/secrets/app.env` + VPS `/opt/compmaster/backend/.env` |
 | `JWT_SECRET` | backend JWT signing (32-byte hex) | `openssl rand -hex 32` | `terraform/secrets/app.env` + VPS `backend/.env` |
@@ -122,7 +123,7 @@ cd terraform
 set -a; source secrets/twc.env; set +a   # or: export $(cat secrets/twc.env | xargs)
 
 terraform init          # provider tf.timeweb.cloud/timeweb-cloud v1.8.2
-terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 2 buckets + 1–2 subdomains (frontend one only while CDN is off) + 4 DNS records — no backup schedule (ADR-005)
+terraform plan          # REVIEW: expect 1 server + 1 firewall + 3 rules + 3 buckets + 2 subdomains (frontend one only while CDN is off) + 4 DNS records — no backup schedule (ADR-005)
 terraform apply         # never use -auto-approve
 terraform output        # copy into the secret files below
 ```
@@ -133,6 +134,10 @@ Plan-review checklist:
 - [ ] `ssh_allowed_cidr` override is staged in `terraform.tfvars` (or set it to your IP right after first login)
 - [ ] Plan shows the expected resource count and **no unexpected replacements**
 - [ ] `terraform.tfvars` no longer defines `backup_copy_count` / `backup_start_at` — ADR-005 removed them; stale keys produce an "undeclared variable" warning. Delete them from the local gitignored file before applying.
+
+> **Note on dual-stack**: The VPS provisions in a St. Petersburg zone (spb-3) which provides native IPv6. IPv4 is added via a Terraform-managed floating IP (`twc_floating_ip` resource) bound to the server. This yields both A and AAAA records for `@` and `api`. The floating IP is portable and survives server recreation. Caddy and the app stack work transparently over dual-stack.
+>
+> **Note on S3 bucket subdomains**: After initial apply, the `www` and `assets` CNAME records may need 5–30 min to propagate to Timeweb's S3 service before `twc_s3_bucket_subdomain` resources can be created (SSL cert issuance). If `terraform apply` fails with "empty_cname", wait and re-apply, or create the subdomains manually in the Timeweb panel and `terraform import` them.
 
 ### 4.2 Compose app `.env` (from outputs)
 
@@ -188,7 +193,7 @@ Debian/Ubuntu package reads `DOMAIN`/`PORT` from `/etc/default/caddy`
 (DEPLOY.md §5 — the Caddyfile also carries PoC defaults, so an unset `DOMAIN`
 cannot produce an empty site address). Caddy issues TLS for both
 `compmasone.ru` (redirect) and `api.compmasone.ru` (proxy) automatically once
-DNS resolves. Verify:
+DNS resolves (AAAA records). Verify:
 
 ```bash
 curl https://api.compmasone.ru/api/health    # {"ok":true,...}
@@ -255,6 +260,7 @@ Never retarget the `www` CNAME by hand: Terraform owns it.
 | Change shape (e.g. MSK-80) | edit `terraform.tfvars`, `terraform apply` — Timeweb migrates with ~10–15 min downtime |
 | Attach / enable CDN | create the CDN resource in the panel, then `frontend_cdn_enabled = true` + `frontend_cdn_cname = "<target>"` in `terraform.tfvars`, `terraform apply` (www CNAME → CDN, S3 www cert dropped) |
 | Re-issue SSL for a subdomain | `release_cert = true` re-applies; check `twc_s3_bucket_subdomain.*.status` |
+| Create S3 bucket subdomains (if failed initially) | wait for CNAME propagation, then `terraform apply -target twc_s3_bucket_subdomain.frontend -target twc_s3_bucket_subdomain.media` or create manually in panel + `terraform import` |
 | Adopt resources created manually | `terraform import` (see provider docs; e.g. `terraform import twc_s3_bucket.media 42`) |
 | Full teardown | `terraform destroy` — deletes VPS, buckets (with backups inside!), DNS records. Back up `pg_dump` archives first |
 
@@ -298,5 +304,7 @@ set -a; source secrets/twc.env; set +a
 terraform fmt -check -recursive && terraform validate
 terraform plan                             # read it fully
 terraform apply
-terraform output
+terraform output                           # verify server_ipv4, server_ipv6, S3 keys, bucket names
 ```
+
+> **Dual-stack note**: `terraform output server_ipv4` and `server_ipv6` should return valid addresses. DNS A/AAAA records for `@` and `api` point to them. Caddy listens on `[::]:4000` and `0.0.0.0:4000` by default.

@@ -16,9 +16,23 @@
 # frontend_cdn_enabled = true + frontend_cdn_cname in terraform.tfvars and
 # re-apply — Terraform stays the source of truth for the www CNAME (no drift).
 
+resource "twc_floating_ip" "server_ipv4" {
+  availability_zone = var.availability_zone
+  comment           = "KompMaster PoC IPv4 for VPS"
+
+  resource {
+    type = "server"
+    id   = twc_server.main.id
+  }
+}
+
 locals {
   # www points at S3 directly until the CDN resource exists; then at the CDN.
   frontend_cname_target = var.frontend_cdn_enabled ? var.frontend_cdn_cname : "s3.timeweb.com"
+
+  # Server IPs for DNS records — floating IP for IPv4, native for IPv6
+  server_ipv4 = twc_floating_ip.server_ipv4.ip
+  server_ipv6 = twc_server.main.networks[0].ips[0].ip
 }
 
 data "twc_configurator" "server" {
@@ -141,21 +155,43 @@ resource "twc_s3_bucket" "media" {
 
 # DNS is managed in Timeweb (zone pre-exists) — no manual registrar records needed.
 #
-# Apex: A-record to the VPS only because Timeweb DNS forbids CNAME at the zone
-# apex; Caddy 301-redirects apex traffic to the canonical frontend subdomain.
+# Apex: A-record (IPv4 from floating IP) + AAAA-record (IPv6 native) to the VPS.
+# Caddy 301-redirects apex traffic to the canonical frontend subdomain.
 resource "twc_dns_rr" "root_a" {
   zone_id = data.twc_dns_zone.main.id
   name    = "@"
   type    = "A"
-  value   = twc_server.main.main_ipv4
+  value   = local.server_ipv4
+
+  depends_on = [twc_floating_ip.server_ipv4]
+}
+
+resource "twc_dns_rr" "root_aaaa" {
+  zone_id = data.twc_dns_zone.main.id
+  name    = "@"
+  type    = "AAAA"
+  value   = local.server_ipv6
+
+  depends_on = [twc_server.main]
 }
 
 # API hostname — same VPS, dedicated origin for CORS clarity and later LB swap.
-resource "twc_dns_rr" "api" {
+resource "twc_dns_rr" "api_a" {
   zone_id = data.twc_dns_zone.main.id
   name    = var.api_subdomain
   type    = "A"
-  value   = twc_server.main.main_ipv4
+  value   = local.server_ipv4
+
+  depends_on = [twc_floating_ip.server_ipv4]
+}
+
+resource "twc_dns_rr" "api_aaaa" {
+  zone_id = data.twc_dns_zone.main.id
+  name    = var.api_subdomain
+  type    = "AAAA"
+  value   = local.server_ipv6
+
+  depends_on = [twc_server.main]
 }
 
 # Static frontend: while CDN is off, CNAME → s3.timeweb.com (bucket website +

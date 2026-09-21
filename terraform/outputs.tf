@@ -1,8 +1,13 @@
 # After `terraform apply`, map these into `.env` — see ENVIRONMENT.md.
 
 output "server_ipv4" {
-  description = "Public IPv4 of the PoC VPS (also the @ A-record value)."
+  description = "Public IPv4 of the PoC VPS (also the @ A-record value). SPb zone provides dual-stack."
   value       = twc_server.main.main_ipv4
+}
+
+output "server_ipv6" {
+  description = "Public IPv6 of the PoC VPS (also the @ AAAA-record value)."
+  value       = twc_server.main.networks[0].ips[0].ip
 }
 
 output "server_id" {

@@ -3,13 +3,15 @@
 ## 1. DNS
 
 DNS создается автоматически через Terraform (`terraform/`) — см.
-[terraform/README.md](terraform/README.md). Итоговая топология:
+[terraform/README.md](terraform/README.md). Итоговая топология (dual-stack):
 
 | Имя | Тип | Значение | Назначение |
 | --- | --- | --- | --- |
-| `@` | A | IPv4 VPS | 301-редирект на `www` (Caddy) |
+| `@` | A | IPv4 VPS (floating IP) | 301-редирект на `www` (Caddy) |
+| `@` | AAAA | IPv6 VPS (native) | 301-редирект на `www` (Caddy) |
 | `www` | CNAME | `s3.timeweb.com` | Статический фронтенд (S3-сайт + SSL) |
-| `api` | A | IPv4 VPS | API (Caddy → 127.0.0.1:PORT) |
+| `api` | A | IPv4 VPS (floating IP) | API (Caddy → 127.0.0.1:PORT) |
+| `api` | AAAA | IPv6 VPS (native) | API (Caddy → 127.0.0.1:PORT) |
 | `assets` | CNAME | `s3.timeweb.com` | Медиа-бакет (фото товаров) |
 
 Канонический адрес магазина — `https://www.compmasone.ru` (Timeweb DNS не
