@@ -86,6 +86,18 @@ variable "frontend_cdn_cname" {
   default     = ""
 }
 
+variable "media_cdn_enabled" {
+  description = "Set true after attaching the Timeweb CDN resource for the media bucket. Then assets CNAMEs to media_cdn_cname instead of s3.timeweb.com, the CDN terminates TLS, and Terraform stops managing the assets bucket-subdomain SSL binding."
+  type        = bool
+  default     = false
+}
+
+variable "media_cdn_cname" {
+  description = "CDN CNAME target for the media hostname (given by Timeweb when the CDN resource is created). Required when media_cdn_enabled = true."
+  type        = string
+  default     = ""
+}
+
 variable "location" {
   description = "Timeweb location for server configurator and S3 preset."
   type        = string

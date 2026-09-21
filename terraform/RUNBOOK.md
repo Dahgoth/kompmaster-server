@@ -54,6 +54,7 @@ copies for tooling.
 | Frontend sync keys | `aws s3 sync` to frontend bucket | `terraform output frontend_access_key` / `frontend_secret_key` | `terraform/secrets/s3-sync.env` |
 | `SMTP_*`, `TELEGRAM_*`, `SMS_*`, `YANDEX_METRIKA_ID` | optional app integrations | Password manager | `terraform/secrets/app.env` (empty at PoC launch) |
 | `terraform.tfstate` | **contains sensitive outputs** (bucket keys) | Terraform local state | `terraform/terraform.tfstate` (gitignored) — treat as a secret |
+| `kompmaster_ed25519` / `.pub` | SSH key pair for VPS access | Generated locally (`ssh-keygen -t ed25519`) | `terraform/secrets/` |
 
 Rule of thumb: the password manager is the durable copy; the `secrets/` files
 are disposable tooling conveniences. Losing a `secrets/` file must never mean
@@ -68,6 +69,10 @@ cd terraform
 mkdir -p secrets && chmod 700 secrets
 touch secrets/twc.env secrets/db.env secrets/app.env secrets/s3-sync.env secrets/vps.env secrets/backup.env
 chmod 600 secrets/*.env terraform.tfvars 2>/dev/null || true
+
+# Generate SSH key pair for VPS access (once):
+ssh-keygen -t ed25519 -f secrets/kompmaster_ed25519 -N "" -C "kompmaster-poc-$(date +%Y%m%d)"
+chmod 600 secrets/kompmaster_ed25519 secrets/kompmaster_ed25519.pub
 ```
 
 `.gitignore` already excludes `terraform/secrets/`, `terraform.tfvars`,
@@ -111,6 +116,13 @@ BACKUP_ENCRYPTION_KEY=$(openssl rand -base64 32)        # copy into the password
 
 ```bash
 VPS_ROOT_PASSWORD=...
+```
+
+`secrets/kompmaster_ed25519` / `secrets/kompmaster_ed25519.pub` (SSH key pair for VPS):
+
+```bash
+# Private key (chmod 600) — add public key to Timeweb panel → SSH keys
+# Public key — paste into Timeweb panel → SSH keys → numeric ID goes to ssh_keys_ids
 ```
 
 ## 4. Provisioning workflow
@@ -288,7 +300,36 @@ data and DNS history.
 
   Free panel snapshots (7-day retention) cover recent system-state recovery.
 
-## 8. Pre-flight checklist (every apply)
+## 8. Operational lessons learned (2026-09-21 deployment)
+
+**Infrastructure provisioning:**
+- Timeweb MSK-50 in Moscow (ru-1/msk-1) provisions servers in ru-3 zone (IPv6 only). For dual-stack, use St. Petersburg zone (spb-3) which provides native IPv6 + Terraform-managed floating IPv4 via `twc_floating_ip` resource.
+- Floating IP is portable, survives server recreation, and enables dual-stack DNS (A + AAAA for apex and api).
+- S3 bucket subdomains (`www`, `assets`) require CNAME propagation to Timeweb's S3 service (5–30 min). Terraform `twc_s3_bucket_subdomain` fails with `empty_cname` until propagation completes.
+- Timeweb panel requires CDN resource for custom domains on S3 website hosting. CDN provides custom domain SSL; Terraform toggles via `frontend_cdn_enabled` + `frontend_cdn_cname` / `media_cdn_enabled` + `media_cdn_cname` in `terraform.tfvars`.
+
+**VPS bootstrap:**
+- Server may become unreachable after IP change (floating IP attach). Reboot via Timeweb API or panel if SSH/API time out.
+- Caddy auto-provisions Let's Encrypt certs for apex and api within ~30 s on first run with valid DNS.
+- PM2 `startup` must be run and the emitted `systemctl enable` command executed for persistence.
+- Advisory lock in `migrate.js` requires `hashtext('...')::bigint` cast for `pg_advisory_lock` (int4 → int8).
+
+**Secrets & credentials:**
+- S3 secret keys are NOT returned by Terraform output after initial creation — must retrieve from Timeweb panel → S3 → bucket → Access keys.
+- Generate SSH key pair locally (`ssh-keygen -t ed25519`), add public key to Timeweb panel, use numeric ID in `ssh_keys_ids`.
+- All secret files in `terraform/secrets/` are gitignored; sync between worktree and main repo manually.
+
+**Frontend deploy:**
+- Build with `VITE_API_BASE=https://api.compmasone.ru/api` baked at build time.
+- Sync via `aws --endpoint-url https://s3.twcstorage.ru s3 sync` to frontend bucket.
+- CDN cache purge needed after each deploy (Timeweb panel or API).
+
+**Backup:**
+- Offsite encrypted `pg_dump` to dedicated backup bucket is the primary recovery control (ADR-005).
+- Backup script re-asserts S3 versioning on each run; enable in panel if API fails.
+- Test restore quarterly — the drill is the control, not the archive.
+
+## 9. Pre-flight checklist (every apply)
 
 ```bash
 git status --porcelain                     # clean tree; no secret files staged
@@ -298,5 +339,7 @@ set -a; source secrets/twc.env; set +a
 terraform fmt -check -recursive && terraform validate
 terraform plan                             # read it fully
 terraform apply
-terraform output
+terraform output                           # verify server_ipv4, server_ipv6, S3 keys, bucket names
 ```
+
+> **Dual-stack note**: `terraform output server_ipv4` and `server_ipv6` should return valid addresses. DNS A/AAAA records for `@` and `api` point to them. Caddy listens on `[::]:4000` and `0.0.0.0:4000` by default.

@@ -16,8 +16,11 @@ async function withAdvisoryLock(client, key, fn) {
   }
 }
 
-function migrationLockKey() {
-  return "hashtext('kompmaster:migrations')";
+async function getMigrationLockKey(client) {
+  // Compute hashtext as bigint via SQL
+  const { rows } = await client.query("SELECT hashtext('kompmaster:migrations')::bigint AS key");
+  if (!rows[0]?.key) throw new Error("Failed to compute migration lock key");
+  return rows[0].key;
 }
 
-module.exports = { withAdvisoryLock, migrationLockKey };
+module.exports = { withAdvisoryLock, getMigrationLockKey };

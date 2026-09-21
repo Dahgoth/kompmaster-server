@@ -4,14 +4,15 @@ const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
 const config = require("./config");
-const { withAdvisoryLock, migrationLockKey } = require("./utils/advisoryLock");
+const { withAdvisoryLock, getMigrationLockKey } = require("./utils/advisoryLock");
 
 async function main() {
   const pool = new Pool({ connectionString: config.databaseUrl });
   const client = await pool.connect();
   try {
     // Лидер-лок: параллельные деплои/реплики не применяют миграции дважды.
-    await withAdvisoryLock(client, migrationLockKey(), async () => {
+    const lockKey = await getMigrationLockKey(client);
+    await withAdvisoryLock(client, lockKey, async () => {
       await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         filename TEXT PRIMARY KEY,
