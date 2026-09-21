@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - PoC Terraform (`terraform/`) now provisions VPS in St. Petersburg (spb-3) with native IPv6 + floating IPv4, replacing the previous IPv6-only Moscow zone (msk-1). Terraform config updated: `availability_zone = "spb-3"`, `location = "ru-1"`, and added `twc_floating_ip.server_ipv4` resource.
-- Documentation updated across `terraform/RUNBOOK.md`, `terraform/README.md`, `ENVIRONMENT.md`, `DEPLOY.md`, `DEVELOPMENT.md` for dual-stack accuracy and consistency.
+- Documentation updated across `terraform/RUNBOOK.md`, `terraform/README.md`, `DEPLOY.md`, `DEVELOPMENT.md` for dual-stack accuracy and consistency.
 - `backend/src/migrate.js` and `backend/src/utils/advisoryLock.js`: advisory lock key now computed via `hashtext('kompmaster:migrations')::bigint` cast to int8 for `pg_advisory_lock` compatibility.
 
 ### Security

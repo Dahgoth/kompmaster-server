@@ -169,7 +169,7 @@ curl -I https://compmasone.ru        # 301 → https://www.compmasone.ru
 
 **VPS bootstrap:**
 - Сервер может стать недоступным после смены IP (floating IP attach).
-  Ребут через Timeweb API или панель если SSH/API таймаут.
+  Ребут через Timeweb API или панель, если SSH/API таймаут.
 - Caddy авто-выпускает Let's Encrypt для apex и api за ~30 сек при валидном DNS.
 - PM2 `startup` нужно выполнить + запустить выданную `systemctl enable` команду.
 - Advisory lock в `migrate.js` требует `hashtext('...')::bigint` cast для `pg_advisory_lock`.
