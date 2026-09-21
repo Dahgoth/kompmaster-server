@@ -164,8 +164,14 @@ jobs:
         run: pnpm --filter kompmaster-frontend run typecheck
       - run: pnpm --filter kompmaster-frontend test
         if: steps.changes.outputs.frontend == 'true'
-      - run: pnpm --filter kompmaster-frontend run build
+      # Production builds fail closed without a baked API base (RUNBOOK §4.4);
+      # the URL is public and non-secret.
+      - name: Build storefront
         if: steps.changes.outputs.frontend == 'true'
+        run: pnpm --filter kompmaster-frontend run build
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://www.compmasone.ru
 
   terraform:
     runs-on: ubuntu-latest

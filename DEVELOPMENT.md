@@ -258,8 +258,10 @@ this section is the detailed reference.
   admin routes must place the limiter **first** in the route chain, before
   `requireAuth` (CodeQL models every middleware as a route handler and
   requires the limiter to precede all of them; `js/missing-rate-limiting`
-  is enforced in CI). The public `POST /api/telemetry` sink uses its own
-  IP-keyed limiter.
+  is   enforced in CI). The public `POST /api/telemetry` sink uses its own
+  IP-keyed limiter. The CI `frontend` job bakes `API_BASE`/`SITE_URL` into
+  `next build` (production builds fail closed without them — see
+  `frontend/src/config.ts`).
 - Frontend: `frontend/tests/*.test.{ts,tsx}` — Vitest + React Testing
   Library (ADR 006 §stack). Covers build-time config resolution
   (`src/config.ts` — server vs browser API bases), the Zod response-schema
