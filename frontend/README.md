@@ -24,6 +24,8 @@ for the decision log.
   `/reset-password` (consumes emailed tokens), session in the v1
   `km_auth_token`/`km_user` storage keys (per ADR 007 decision: token
   hardening is a later `feat(auth)` follow-up)
+- **Order flow landed (plan phase 3)**: cart, checkout (offer gate + 409
+  stock handling), orders list/detail with R11 status pills, `/payment/manual`
 - **Zustand** for cart/UI state (lands with the cart feature, phase 3)
 - Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,
   `X-Admin-Panel-Token` for admin routes (ADR 001 pure C)

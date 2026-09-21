@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`/auth`), and a working `/reset-password` route that consumes the emailed
   token — the v1 storefront lacked this route entirely, so emailed reset
   links landed on the home page and never reset anything (ADR 006 §Context).
+- Storefront order flow (phase 3): cart page with quantity steppers and
+  persisted state, checkout with pickup/delivery + public-offer acceptance
+  gate, atomic order creation with per-item 409 stock-conflict messages, my
+  orders list and detail with the server-owned status pills (tint + text +
+  label), and the manual-payment instructions page (ADR 002: providers still
+  deferred).
 
 ### Changed
 - Storefront rebuild started on the Next.js SSR/ISR stack (ADR 006/007):

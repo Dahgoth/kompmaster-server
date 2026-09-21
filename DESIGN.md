@@ -7,9 +7,9 @@
 > `frontend/src/app/globals.css` and will be **regenerated from the
 > implemented v2 UI** once the storefront pages are complete (plan phase 3 in
 > progress: catalog read path, header/footer shell, cards, pagination, search
-> form, auth forms), per ADR 001 §1a. The rules below remain binding
-> regardless of styling; the previous full contract (colors, typography,
-> shape tables) is preserved in git history.
+> form, auth forms, cart/checkout/orders with status pills), per ADR 001 §1a.
+> The rules below remain binding regardless of styling; the previous full
+> contract (colors, typography, shape tables) is preserved in git history.
 
 This document will again become the UX/UI contract for the KompMaster
 storefront once the v2 implementation is complete and this file is rewritten
