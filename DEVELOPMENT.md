@@ -266,7 +266,9 @@ this section is the detailed reference.
   contract (`src/api/schemas.ts`
   — NUMERIC coercion, JSONB, both register/login user shapes), and the fetch
   client (`src/api/client.ts` — ApiError normalization, scope-based auth
-  headers). Component and hook tests grow with the pages; the E2E matrix
+  headers), and the auth session provider (`src/features/auth/context.tsx`
+  — v1 key migration, stale-session cleanup on 401 via `/auth/me`).
+  Component and hook tests grow with the pages; the E2E matrix
   (Playwright, `frontend/e2e/`) is phase 5 of `docs/frontend-v2-plan.md`.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.

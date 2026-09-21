@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   generated from the catalog (5,000-product cap per ADR 007) and `robots.txt`
   blocks account/admin surfaces; persistent cart state keeps the v1
   `km_cart` storage shape.
+- Storefront auth slice (phase 3): login/registration/password-restore tabs
+  (`/auth`), and a working `/reset-password` route that consumes the emailed
+  token — the v1 storefront lacked this route entirely, so emailed reset
+  links landed on the home page and never reset anything (ADR 006 §Context).
 
 ### Changed
 - Storefront rebuild started on the Next.js SSR/ISR stack (ADR 006/007):

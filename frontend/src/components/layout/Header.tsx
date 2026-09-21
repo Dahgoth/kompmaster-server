@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountLink } from "@/components/layout/AccountLink";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
 import { NAV_LINKS } from "@/lib/site";
 
@@ -29,6 +30,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <AccountLink />
           <Link
             href="/cart"
             className="hidden h-11 items-center rounded-btn bg-gradient-to-r from-pink to-violet px-5 text-sm font-extrabold text-white shadow-card hover:shadow-lift sm:flex"

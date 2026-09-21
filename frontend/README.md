@@ -20,6 +20,10 @@ for the decision log.
   home/catalog/category/product pages with ISR (60s) + on-demand
   revalidation, Product JSON-LD, sitemap/robots, cart store (Zustand,
   `km_cart`-compatible)
+- **Auth slice landed (plan phase 3)**: `/auth` (login/register/forgot tabs),
+  `/reset-password` (consumes emailed tokens), session in the v1
+  `km_auth_token`/`km_user` storage keys (per ADR 007 decision: token
+  hardening is a later `feat(auth)` follow-up)
 - **Zustand** for cart/UI state (lands with the cart feature, phase 3)
 - Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,
   `X-Admin-Panel-Token` for admin routes (ADR 001 pure C)
