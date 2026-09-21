@@ -258,10 +258,12 @@ this section is the detailed reference.
   requires the limiter to precede all of them; `js/missing-rate-limiting`
   is enforced in CI).
 - Frontend: `frontend/tests/*.test.{ts,tsx}` — Vitest + React Testing
-  Library (ADR 006 §stack). Phase-1 scope: build-time config resolution
-  (`src/config.ts`). Component and hook tests grow with the pages; the E2E
-  matrix (Playwright, `frontend/e2e/`) is phase 5 of
-  `docs/frontend-v2-plan.md`.
+  Library (ADR 006 §stack). Covers build-time config resolution
+  (`src/config.ts`), the Zod response-schema contract (`src/api/schemas.ts`
+  — NUMERIC coercion, JSONB, both register/login user shapes), and the fetch
+  client (`src/api/client.ts` — ApiError normalization, scope-based auth
+  headers). Component and hook tests grow with the pages; the E2E matrix
+  (Playwright, `frontend/e2e/`) is phase 5 of `docs/frontend-v2-plan.md`.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

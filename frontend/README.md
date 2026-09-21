@@ -13,8 +13,10 @@ for the decision log.
 - **TypeScript (strict)** + **Tailwind CSS v4** (`@theme` tokens in
   `src/app/globals.css`) + shadcn/ui primitives (copied into
   `src/components/ui/` as they are needed)
-- TanStack Query for client islands, Zustand for cart/UI state, Zod at the
-  API boundary (added with the API layer, plan phase 2)
+- **API layer landed (plan phase 2)**: Zod schemas for every backend resource
+  (`src/api/schemas.ts`), typed fetch client (`src/api/client.ts`) with
+  scope-based auth headers, TanStack Query provider for client islands
+- **Zustand** for cart/UI state (lands with the cart feature, phase 3)
 - Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,
   `X-Admin-Panel-Token` for admin routes (ADR 001 pure C)
 
