@@ -262,7 +262,8 @@ this section is the detailed reference.
   IP-keyed limiter.
 - Frontend: `frontend/tests/*.test.{ts,tsx}` — Vitest + React Testing
   Library (ADR 006 §stack). Covers build-time config resolution
-  (`src/config.ts`), the Zod response-schema contract (`src/api/schemas.ts`
+  (`src/config.ts` — server vs browser API bases), the Zod response-schema
+  contract (`src/api/schemas.ts`
   — NUMERIC coercion, JSONB, both register/login user shapes), and the fetch
   client (`src/api/client.ts` — ApiError normalization, scope-based auth
   headers). Component and hook tests grow with the pages; the E2E matrix

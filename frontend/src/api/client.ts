@@ -45,7 +45,10 @@ function readToken(scope: AuthScope): string | null {
 
 export function buildUrl(path: string): string {
   const clean = path.startsWith("/") ? path : `/${path}`;
-  return `${config.apiBase}${clean}`;
+  // Server components hit the absolute API base (baked at build); browser
+  // islands call same-origin /api proxied by next.config.ts rewrites.
+  const base = typeof window === "undefined" ? config.apiBase : config.clientApiBase;
+  return `${base}${clean}`;
 }
 
 export function buildHeaders(scope: AuthScope): HeadersInit {

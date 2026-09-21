@@ -5,10 +5,11 @@
 > (`docs/frontend-v2-plan.md`). This file is **not** an input to the rebuild —
 > the visual language is defined by the `@theme` tokens in
 > `frontend/src/app/globals.css` and will be **regenerated from the
-> implemented v2 UI** when the storefront pages land (plan phase 3), per
-> ADR 001 §1a. The rules below remain binding regardless of styling; the
-> previous full contract (colors, typography, shape tables) is preserved in
-> git history.
+> implemented v2 UI** once the storefront pages are complete (plan phase 3 in
+> progress: catalog read path, header/footer shell, cards, pagination, search
+> form), per ADR 001 §1a. The rules below remain binding regardless of
+> styling; the previous full contract (colors, typography, shape tables) is
+> preserved in git history.
 
 This document will again become the UX/UI contract for the KompMaster
 storefront once the v2 implementation is complete and this file is rewritten

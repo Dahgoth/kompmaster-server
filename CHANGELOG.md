@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Storefront v2 catalog read path (Next.js, phase 3 of `docs/frontend-v2-plan.md`;
+  not yet deployed — the live static build still serves production): server-
+  rendered home/catalog/category/product pages against the existing REST API,
+  ISR with a 60s TTL plus an on-demand invalidation route
+  (`/api/revalidate`, secret-gated) and an IndexNow key endpoint; product
+  pages render Product/Offer JSON-LD, absolute canonicals, and 308-redirect
+  legacy `/product/:uuid` links to the canonical slug URL; `sitemap.xml` is
+  generated from the catalog (5,000-product cap per ADR 007) and `robots.txt`
+  blocks account/admin surfaces; persistent cart state keeps the v1
+  `km_cart` storage shape.
+
 ### Changed
 - Storefront rebuild started on the Next.js SSR/ISR stack (ADR 006/007):
   vanilla Vite app replaced by a TypeScript Next.js App Router scaffold with

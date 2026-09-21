@@ -6,6 +6,19 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
+  // Lint is gated by the CI `frontend` job (eslint.config.js + typecheck);
+  // next build's integrated lint pass would double-run it with a divergent
+  // plugin set.
+  eslint: { ignoreDuringBuilds: true },
+
+  // Client islands call the API same-origin; unmatched /api/* paths proxy to
+  // the backend (own /api/revalidate and /api/indexnow routes win because
+  // filesystem routes are matched before rewrites). App routes run first.
+  async rewrites() {
+    const destination = `${process.env.API_BASE ?? "http://localhost:4000/api"}/:path*`;
+    return [{ source: "/api/:path*", destination }];
+  },
+
   // No image-resize pipeline exists backend-side yet (plan gap §11.5);
   // revisit when the media origin serves WebP/resize variants.
   images: { unoptimized: true },

@@ -5,9 +5,11 @@ import "./globals.css";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { config } from "@/config";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(config.siteUrl),
   title: {
     default: "КомпМастер — Восстановленная электроника",
     template: "%s — КомпМастер",

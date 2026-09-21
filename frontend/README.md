@@ -16,6 +16,10 @@ for the decision log.
 - **API layer landed (plan phase 2)**: Zod schemas for every backend resource
   (`src/api/schemas.ts`), typed fetch client (`src/api/client.ts`) with
   scope-based auth headers, TanStack Query provider for client islands
+- **Catalog read path landed (plan phase 3)**: server-rendered
+  home/catalog/category/product pages with ISR (60s) + on-demand
+  revalidation, Product JSON-LD, sitemap/robots, cart store (Zustand,
+  `km_cart`-compatible)
 - **Zustand** for cart/UI state (lands with the cart feature, phase 3)
 - Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,
   `X-Admin-Panel-Token` for admin routes (ADR 001 pure C)
