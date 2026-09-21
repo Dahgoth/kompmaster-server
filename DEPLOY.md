@@ -3,17 +3,30 @@
 ## 1. DNS
 
 DNS создается автоматически через Terraform (`terraform/`) — см.
-[terraform/README.md](terraform/README.md). Итоговая топология:
+[terraform/README.md](terraform/README.md). Итоговая топология (dual-stack):
 
 | Имя | Тип | Значение | Назначение |
 | --- | --- | --- | --- |
-| `@` | A | IPv4 VPS | 301-редирект на `www` (Caddy) |
-| `www` | CNAME | `s3.timeweb.com` | Статический фронтенд (S3-сайт + SSL) |
-| `api` | A | IPv4 VPS | API (Caddy → 127.0.0.1:PORT) |
-| `assets` | CNAME | `s3.timeweb.com` | Медиа-бакет (фото товаров) |
+| `@` | A | IPv4 VPS (floating IP) | 301-редирект на `www` (Caddy) |
+| `@` | AAAA | IPv6 VPS (native) | 301-редирект на `www` (Caddy) |
+| `www` | CNAME | CDN target / `s3.timeweb.com` | Статический фронтенд (S3-сайт + SSL) |
+| `api` | A | IPv4 VPS (floating IP) | API (Caddy → 127.0.0.1:PORT) |
+| `api` | AAAA | IPv6 VPS (native) | API (Caddy → 127.0.0.1:PORT) |
+| `assets` | CNAME | CDN target / `s3.timeweb.com` | Медиа-бакет (фото товаров) |
 
 Канонический адрес магазина — `https://www.compmasone.ru` (Timeweb DNS не
 позволяет CNAME на апексе, поэтому апекс редиректит на `www`).
+
+> **Note on dual-stack**: VPS в St. Petersburg (spb-3) получает нативный IPv6.
+> IPv4 добавляется через Terraform-managed floating IP (`twc_floating_ip`),
+> привязанный к серверу. Это даёт A + AAAA записи для апекса и `api`.
+> Caddy слушает на `[::]:4000` и `0.0.0.0:4000`.
+
+> **Note on CDN**: Timeweb требует CDN-ресурс для custom domains на S3 website
+> hosting. После создания CDN в панели, задайте `frontend_cdn_enabled = true`,
+> `frontend_cdn_cname`, `media_cdn_enabled = true`, `media_cdn_cname` в
+> `terraform.tfvars` и выполните `terraform apply`. Terraform управляет CNAME
+> записями — не редактируйте их в панели вручную.
 
 ## 2. Установка сервера
 
@@ -140,3 +153,40 @@ curl -I https://compmasone.ru        # 301 → https://www.compmasone.ru
 > used locally for PostgreSQL + MinIO development databases. See
 > [docs/archive/DOCKER_EVALUATION.md](docs/archive/DOCKER_EVALUATION.md)
 > for the full rationale.
+
+## 7. Операционные уроки (опыт развёртывания 2026-09-21)
+
+**Инфраструктура:**
+- Timeweb MSK-50 в Москве (ru-1/msk-1) создаёт серверы в зоне ru-3 (только IPv6).
+  Для dual-stack используйте зону St. Petersburg (spb-3) — нативный IPv6 +
+  Terraform-managed floating IPv4 через `twc_floating_ip`.
+- Floating IP переносим, выживает при пересоздании сервера, даёт dual-stack DNS.
+- S3 bucket subdomains (`www`, `assets`) требуют CNAME propagation к S3 сервису
+  (5–30 мин). `twc_s3_bucket_subdomain` падает с `empty_cname` до завершения.
+- Timeweb панель требует CDN для custom domains на S3 website hosting.
+  После создания CDN в панели, включите в `terraform.tfvars`:
+  `frontend_cdn_enabled`, `frontend_cdn_cname`, `media_cdn_enabled`, `media_cdn_cname`.
+
+**VPS bootstrap:**
+- Сервер может стать недоступным после смены IP (floating IP attach).
+  Ребут через Timeweb API или панель если SSH/API таймаут.
+- Caddy авто-выпускает Let's Encrypt для apex и api за ~30 сек при валидном DNS.
+- PM2 `startup` нужно выполнить + запустить выданную `systemctl enable` команду.
+- Advisory lock в `migrate.js` требует `hashtext('...')::bigint` cast для `pg_advisory_lock`.
+
+**Секреты и доступы:**
+- S3 secret keys НЕ возвращаются Terraform output после создания — получать в панели:
+  S3 → bucket → Access keys.
+- SSH ключ генерировать локально (`ssh-keygen -t ed25519`), публичный — в Timeweb
+  панель → SSH keys, числовой ID → `ssh_keys_ids` в `terraform.tfvars`.
+- Все секреты в `terraform/secrets/` — gitignored; синхронизируйте worktree ↔ main repo вручную.
+
+**Фронтенд:**
+- Сборка с `VITE_API_BASE=https://api.compmasone.ru/api` (запекается при билде).
+- Деплой через `aws --endpoint-url https://s3.twcstorage.ru s3 sync` в frontend bucket.
+- После каждого деплоя — purge CDN кэша (панель или API).
+
+**Бэкап:**
+- Offsite зашифрованный `pg_dump` в dedicated backup bucket — основной recovery control (ADR-005).
+- Скрипт бэкапа ре-ассертит S3 versioning каждый запуск; включите в панели если API фейлит.
+- Тестируйте восстановление ежеквартально — drill is the control, not the archive.
