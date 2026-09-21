@@ -1,14 +1,22 @@
 # KompMaster Frontend
 
-Static storefront frontend for the KompMaster PC parts / restored electronics shop.
+Storefront for the KompMaster PC parts / restored electronics shop.
+**Rebuild in progress** per ADR 006 (library stack) and ADR 007 (SEO-driven
+rendering): self-hosted Next.js SSR/ISR, see `../docs/frontend-v2-plan.md`
+for the authoritative implementation plan and `../docs/adr/007-seo-rendering-nextjs.md`
+for the decision log.
 
 ## Architecture
 
-- **Vite** + vanilla ES modules (no framework — pure C per ADR-001)
-- Static build output to `dist/` for S3 + CDN hosting
-- Communicates with the backend via REST API (`/api/*`)
-- Bearer JWT auth for storefront endpoints
-- `X-Admin-Panel-Token` for admin panel endpoints
+- **Next.js 15 (App Router)**, `output: "standalone"` — server-rendered HTML
+  on the Timeweb VPS behind Caddy (SEO acceptance criteria in ADR 007 §3)
+- **TypeScript (strict)** + **Tailwind CSS v4** (`@theme` tokens in
+  `src/app/globals.css`) + shadcn/ui primitives (copied into
+  `src/components/ui/` as they are needed)
+- TanStack Query for client islands, Zustand for cart/UI state, Zod at the
+  API boundary (added with the API layer, plan phase 2)
+- Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,
+  `X-Admin-Panel-Token` for admin routes (ADR 001 pure C)
 
 ## Development
 
@@ -22,95 +30,67 @@ corepack enable pnpm
 pnpm install
 ```
 
-Run frontend scripts from the repository root with the workspace filter:
+Environment: copy `.env.example` to `.env.local` (`API_BASE` defaults to
+`http://localhost:4000/api` against the backend dev server).
 
 ```bash
-pnpm --filter kompmaster-frontend dev
-pnpm --filter kompmaster-frontend test
-pnpm --filter kompmaster-frontend build
-pnpm --filter kompmaster-frontend preview
+pnpm --filter kompmaster-frontend dev        # next dev on http://localhost:3000
+pnpm --filter kompmaster-frontend typecheck  # tsc --noEmit (strict)
+pnpm --filter kompmaster-frontend test       # Vitest
+pnpm --filter kompmaster-frontend build      # next build (standalone)
+pnpm --filter kompmaster-frontend start      # next start (after build)
 ```
-
-The equivalent `pnpm run dev`, `pnpm run test`, `pnpm run build`, and
-`pnpm run preview` commands continue to work from `frontend/`. The root also
-provides `pnpm build:frontend` as a convenience alias for the filtered build.
 
 ## Linting
 
 The frontend is linted by the workspace-root ESLint flat config
-(`eslint.config.js` — ESM, browser globals) and formatted by the root
-Prettier config (`.prettierrc.json`). Run from the repository root:
+(`eslint.config.js` — typescript-eslint, `react-hooks`, `jsx-a11y`) and
+formatted by the root Prettier config (`.prettierrc.json`). Run from the
+repository root:
 
 ```bash
 pnpm run lint:frontend   # ESLint over frontend/
 pnpm run format          # Prettier rewrite (format:check verifies only)
 ```
 
-`pnpm run lint` (root) covers both apps plus the Prettier check; CI runs
-`lint:frontend` in the `frontend` job before tests and build. The `lint`
-script inside `frontend/package.json` delegates to the workspace root.
+CI runs `lint:frontend`, `typecheck`, tests, and `next build` in the
+`frontend` job.
 
-## Deployment
+## Deployment (target topology, ADR 007 §Decision 1)
 
-Production remains a static artifact on Timeweb S3 website hosting with the CDN
-attached manually. Infrastructure is provisioned by the repository root's
-`../terraform/` (see `../terraform/README.md`). From the repository root:
+- `www.compmasone.ru` → Caddy on the VPS → Next.js standalone server under
+  PM2; Caddy owns TLS, CSP/HSTS, and immutable caching for `_next/static`.
+- `assets.compmasone.ru` (product media) stays on Timeweb S3 + CDN.
+- The current S3 website hosting for `www` is retired with the v2 cutover
+  (plan phase 6); until then the v1 static build remains live.
+- Vercel hosts PR previews and staging; production personal data never
+  touches Vercel (ADR 001 152-FZ, review R6/C-1).
 
-```bash
-VITE_API_BASE=https://api.compmasone.ru/api pnpm run build:frontend
-aws --endpoint-url https://s3.timeweb.com s3 sync frontend/dist/ s3://<frontend-bucket> --delete
-```
-
-Vercel is used for storefront preview, staging, and fallback deployments. In
-the Vercel project, set **Root Directory** to `frontend`, run the install
-command from the repository root as `pnpm install --frozen-lockfile`, and build
-with `pnpm --filter kompmaster-frontend build` (or run `pnpm run build` from
-`frontend/`). Production traffic remains on Timeweb S3 + CDN.
-
-- Storefront is canonical at `https://www.compmasone.ru`; the apex
-  `compmasone.ru` 301-redirects to it (Timeweb DNS forbids apex CNAME).
-- The S3 website config maps 404 → `index.html`, so path-based deep links
-  (`/catalog`, `/admin`) boot the SPA directly.
-- Purge CDN cache after each deploy once the CDN resource is attached.
-
-## Key Decisions
-
-- No framework — vanilla JS for zero-runtime bundle size
-- Design tokens extracted from legacy `docs/legacy/public/index.html`
-- Site content (FAQ, About, Warranty) hardcoded since modular API has no content endpoints
-- Manual payment mode only (external providers deferred per ADR-002)
+Deploy steps will be documented in `../DEPLOY.md` and `../terraform/RUNBOOK.md`
+when phase 6 lands; the current S3 sync procedure is unchanged until then.
 
 ## Project Structure
 
 ```
-repository root/
-  pnpm-workspace.yaml       — workspace packages + build settings
-  pnpm-lock.yaml            — single lockfile for both apps
-  terraform/                — repository-wide IaC for the TF stack
-  frontend/.env.example     — environment template
+frontend/
+  next.config.ts          — standalone output, images config
+  postcss.config.mjs      — Tailwind v4 via @tailwindcss/postcss
+  vitest.config.ts        — Vitest (jsdom) + @/ alias
+  tsconfig.json           — strict TS, @/* → src/*
+  .env.example            — API_BASE, METRIKA_ID, REVALIDATE_SECRET, INDEXNOW_KEY
 
-  frontend/
-    index.html              — entry point
-    package.json            — deps + scripts
-    vite.config.js          — build config
-    
-    src/                    — frontend application code
-      main.js               — app entry
-      config.js             — config + localStorage helpers
-      api.js                — API client (Bearer JWT + admin token)
-      store.js              — reactive state management
-      router.js             — client-side router
-      utils.js              — formatting, DOM, helpers
-      
-      data/
-        categories.js       — default categories + menu
-        content.js          — hardcoded site content (FAQ, About, Warranty)
-        payment.js          — payment configuration defaults
-      
-      styles/               — CSS modules (tokens, base, layout, components, pages, admin, utilities)
-      components/           — reusable UI components
-      pages/                — page renderers
-        admin/              — admin panel pages
-    
-    public/                 — static assets (favicon, images)
+  src/
+    app/                  — App Router pages, layouts, sitemap/robots (phases 3–4)
+      globals.css         — Tailwind v4 @theme tokens (design source)
+    components/
+      layout/             — Header, Footer, MobileDrawer, SkipLink
+      ui/                 — shadcn/ui primitives (added as needed)
+      common/             — Price, StatusPill, QuantityStepper, … (phase 3)
+    features/             — auth, catalog, cart, checkout, orders, admin (phases 2–4)
+    api/                  — fetch client, Zod schemas, query hooks (phase 2)
+    lib/                  — format, order-status, telemetry, seo, site
+    config.ts             — build-time env resolution
+
+  tests/                  — Vitest (component + unit)
+  e2e/                    — Playwright specs (phase 5, incl. seo.spec.ts)
 ```

@@ -7,10 +7,11 @@ local environment.
 ## Overview
 
 KompMaster is a pnpm workspace with a Node.js/Express backend (`backend/`,
-package `kompmaster-server`) that serves the `/api/*` REST API, and a static
-storefront (`frontend/`) built separately for S3 + CDN. The backend talks to
-PostgreSQL for data and an S3-compatible store for photos. The only entry
-point is `backend/src/index.js` (see [Entry points](#entry-points)).
+package `kompmaster-server`) that serves the `/api/*` REST API, and a
+self-hosted Next.js storefront (`frontend/`) rendered on the VPS behind Caddy
+(ADR 007; rebuild in progress — see `docs/frontend-v2-plan.md`). The backend
+talks to PostgreSQL for data and an S3-compatible store for photos. The only
+entry point is `backend/src/index.js` (see [Entry points](#entry-points)).
 
 ## Prerequisites
 
@@ -141,8 +142,8 @@ The repo is a **pnpm workspace** with two workspace packages:
   or `pnpm --filter kompmaster-frontend <script>`.
 
 pnpm blocks dependency build scripts by default. The only approved build is
-`esbuild` (Vite's native binary), declared under `allowBuilds` in the root
-`pnpm-workspace.yaml` — pnpm ≥ 11 reads settings from that file, not
+`esbuild` (Vitest/Vite's native binary), declared under `allowBuilds` in the
+root `pnpm-workspace.yaml` — pnpm ≥ 11 reads settings from that file, not
 from a `pnpm` field in `package.json`.
 
 `pnpm-lock.yaml` is committed (single file at the root); do not add a
@@ -197,18 +198,22 @@ scripts.
   `format:check`.
 - `pnpm run lint:backend` — ESLint over `backend/**` (CommonJS, Node globals)
   and `scripts/**`.
-- `pnpm run lint:frontend` — ESLint over `frontend/**` (ESM, browser globals).
+- `pnpm run lint:frontend` — ESLint over `frontend/**` (TypeScript/React:
+  typescript-eslint recommended, `react-hooks`, `jsx-a11y`; browser globals).
 - `pnpm run format` — rewrite files with Prettier; `pnpm run format:check` —
   verify only (used by CI). See `.prettierignore` for what is excluded
   (Markdown/HTML/YAML/Terraform, `docs/`, build output).
 
-Rule scope is deliberately minimal: `eslint:recommended` equivalents (parse
-errors, `no-undef`, unused vars, dead logic) plus `argsIgnorePattern: "^_"`
-and `allowEmptyCatch`. Style is fully delegated to Prettier — do not add
-stylistic rules to `eslint.config.js`. CI runs `lint:backend` in the `backend`
-job and `lint:frontend` in the `frontend` job; the shared config files
-(`eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig`)
-are part of both jobs' path filters, so config changes re-trigger linting.
+Rule scope is deliberately minimal: `eslint:recommended` equivalents for
+backend JS and `typescript-eslint` recommended + `react-hooks` + `jsx-a11y`
+for the frontend — parse errors, `no-undef`, unused vars, dead logic, hook
+rules, accessibility — plus `argsIgnorePattern: "^_"` and `allowEmptyCatch`.
+Style is fully delegated to Prettier — do not add stylistic rules to
+`eslint.config.js`. CI runs `lint:backend` in the `backend` job and
+`lint:frontend` + a `tsc --noEmit` typecheck in the `frontend` job; the
+shared config files (`eslint.config.js`, `.prettierrc.json`,
+`.prettierignore`, `.editorconfig`) are part of both jobs' path filters, so
+config changes re-trigger linting.
 
 Run `pnpm run lint && pnpm run format` before committing; CI fails on lint or
 formatting errors.
@@ -222,8 +227,8 @@ formatting errors.
 | `pnpm run migrate`      | Apply pending `backend/migrations/*.sql`         |
 | `pnpm test`             | Run backend and frontend tests                   |
 | `pnpm test:backend`     | Run backend tests (`node --test`, `node:backend`) |
-| `pnpm test:frontend`    | Run frontend tests (`node:frontend`)             |
-| `pnpm build:frontend`   | Build the storefront (`pnpm --filter kompmaster-frontend build`) |
+| `pnpm test:frontend`    | Run frontend tests (Vitest, `frontend/tests/`)   |
+| `pnpm build:frontend`   | Build the storefront (`next build`, standalone output) |
 | `pnpm run lint`         | ESLint (backend + frontend) and Prettier check   |
 | `pnpm run lint:backend` | ESLint over `backend/**` + `scripts/**`          |
 | `pnpm run lint:frontend`| ESLint over `frontend/**`                        |
@@ -252,9 +257,13 @@ this section is the detailed reference.
   `requireAuth` (CodeQL models every middleware as a route handler and
   requires the limiter to precede all of them; `js/missing-rate-limiting`
   is enforced in CI).
-- Frontend: `frontend/tests/*.test.js` (ESM). Covers `matchRoute` param
-  matching, no-Vite `apiBase` fallback, escaping/formatting helpers, and
-  category/payment default consistency.
+- Frontend: `frontend/tests/*.test.{ts,tsx}` — Vitest + React Testing
+  Library (ADR 006 §stack). Phase-1 scope: build-time config resolution
+  (`src/config.ts`). Component and hook tests grow with the pages; the E2E
+  matrix (Playwright, `frontend/e2e/`) is phase 5 of
+  `docs/frontend-v2-plan.md`.
+- `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
+  (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and
   `pnpm test:frontend`.
   The Husky `pre-push` hook runs only the suites whose area changed in the

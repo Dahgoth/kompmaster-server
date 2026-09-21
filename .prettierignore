@@ -1,6 +1,7 @@
 # Build output and vendored code
 node_modules/
 dist/
+.next/
 uploads/
 
 # Non-code or tool-owned formats

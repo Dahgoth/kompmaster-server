@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Storefront rebuild started on the Next.js SSR/ISR stack (ADR 006/007):
+  vanilla Vite app replaced by a TypeScript Next.js App Router scaffold with
+  Tailwind v4 design tokens, workspace ESLint upgraded to typescript-eslint +
+  react-hooks + jsx-a11y, tests moved to Vitest, CI gained a `tsc --noEmit`
+  gate. Storefront behavior is unchanged until the storefront pages land
+  (plan phases 2–4); the deployed static build still serves production.
+
 ### Added
 - Dual-stack IPv4/IPv6 support for PoC VPS via Terraform-managed floating IP (`twc_floating_ip` resource) in St. Petersburg zone (spb-3). Both A and AAAA records created for apex and `api` subdomain.
 - SSH key pair generation documented in `terraform/RUNBOOK.md` (`ssh-keygen -t ed25519`) with public key registration in Timeweb panel.

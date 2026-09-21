@@ -159,6 +159,9 @@ jobs:
       - name: Lint frontend
         if: steps.changes.outputs.frontend == 'true'
         run: pnpm run lint:frontend
+      - name: Typecheck frontend
+        if: steps.changes.outputs.frontend == 'true'
+        run: pnpm --filter kompmaster-frontend run typecheck
       - run: pnpm --filter kompmaster-frontend test
         if: steps.changes.outputs.frontend == 'true'
       - run: pnpm --filter kompmaster-frontend run build
