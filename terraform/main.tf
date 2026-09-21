@@ -31,7 +31,7 @@ resource "twc_floating_ip" "server_ipv4" {
 locals {
   # www points at S3 directly until the CDN resource exists; then at the CDN.
   frontend_cname_target = var.frontend_cdn_enabled ? var.frontend_cdn_cname : "s3.timeweb.com"
-  media_cname_target    = var.media_cdn_enabled    ? var.media_cdn_cname    : "s3.timeweb.com"
+  media_cname_target    = var.media_cdn_enabled ? var.media_cdn_cname : "s3.timeweb.com"
 
   # Server IPs for DNS records — floating IP for IPv4, native for IPv6
   server_ipv4 = twc_floating_ip.server_ipv4.ip

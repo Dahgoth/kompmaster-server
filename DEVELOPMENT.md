@@ -341,11 +341,13 @@ with local volumes:
 ## Terraform (PoC infrastructure)
 
 `/terraform/` provisions the PoC runtime on Timeweb Cloud (ADR-002, Option
-D+A) for **Option B**: one MSK-50-shape VPS running the API only, two S3
-buckets (media + static storefront with website hosting), and DNS records in
-the Timeweb-managed `compmasone.ru` zone. Disk backups are intentionally not
-provisioned — the recovery path is daily `pg_dump` → S3 plus free panel
-snapshots (ADR-005). App code,
+D+A) for **Option B**: one Cloud-50-shape VPS in St. Petersburg (spb-3) running
+the API only, two S3 buckets (media + static storefront with website hosting),
+and DNS records in the Timeweb-managed `compmasone.ru` zone. The VPS provisions
+with native IPv6; IPv4 is added via a Terraform-managed floating IP bound to the
+server, yielding dual-stack (A + AAAA) records for the apex and `api` subdomain.
+Disk backups are intentionally not provisioned — the recovery path is daily
+`pg_dump` → S3 plus free panel snapshots (ADR-005). App code,
 `backend/.env`, and `backend/migrations/` are NOT managed by Terraform. Full stack details live in
 [`terraform/README.md`](terraform/README.md).
 
@@ -353,9 +355,9 @@ snapshots (ADR-005). App code,
 export TWC_TOKEN=...   # never commit this value
 cd terraform
 terraform init
-terraform plan         # 1 VPS + firewall + 2 buckets + 4 DNS records (no backup schedule)
+terraform plan         # 1 VPS + floating IP + firewall + 2 buckets + 6 DNS records (no backup schedule)
 terraform apply
-  terraform output       # map S3_* into `backend/.env` — see ENVIRONMENT.md
+terraform output       # map S3_* into `backend/.env` — see ENVIRONMENT.md
 ```
 
 Notes:
