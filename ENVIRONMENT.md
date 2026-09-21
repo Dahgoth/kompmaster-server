@@ -100,6 +100,18 @@ notifications are logged to the console instead of sent.
 
 - `YANDEX_METRIKA_ID` — Yandex Metrika counter id for the storefront.
 
+### Storefront hook (optional)
+
+One-way hook used by admin mutations to trigger on-demand ISR invalidation on
+the storefront (ADR 007). Both values are optional — when either is unset the
+hook is a no-op (the storefront's ISR TTL is the backstop) and startup does
+not warn.
+
+- `STOREFRONT_REVALIDATE_URL` — storefront revalidate endpoint, e.g.
+  `https://www.compmasone.ru/api/revalidate`.
+- `STOREFRONT_REVALIDATE_SECRET` — shared secret; the storefront compares it
+  against its own `REVALIDATE_SECRET` (header `x-revalidate-secret`). `[SECRET]`
+
 ## Terraform (Timeweb Cloud PoC infra)
 
 Infrastructure in `/terraform/` (ADR-002, Option D+A — Option B topology) is

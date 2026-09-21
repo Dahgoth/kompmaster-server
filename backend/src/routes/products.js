@@ -4,11 +4,16 @@ const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
 const { adminLimiter } = require("../middleware/rateLimit");
 const { parsePriceFile, findDuplicateNames } = require("../utils/priceImport");
+const { slugify } = require("../utils/slugify");
+const { revalidateStorefront } = require("../utils/revalidate");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 // Публичный каталог: ?category=gpus&search=rtx&page=1&pageSize=30
+// Форма ответа (массив) сохранена — статическая витрина v1 ещё живёт в
+// проде и читает голый массив. Общее число строк отдаётся заголовком
+// X-Total-Count (см. Access-Control-Expose-Headers в index.js).
 router.get("/", async (req, res) => {
   const { category, search, page = 1, pageSize = 30 } = req.query;
   const conditions = [];
@@ -29,8 +34,38 @@ router.get("/", async (req, res) => {
     `SELECT * FROM products ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
+  const countParams = params.slice(0, params.length - 2);
+  const { rows: totals } = await db.query(
+    `SELECT count(*)::int AS total FROM products ${where}`,
+    countParams,
+  );
+  res.setHeader("X-Total-Count", String(totals[0]?.total ?? rows.length));
   res.json(rows);
 });
+
+// /:id принимает и UUID, и слаг (ADR 007 §2) — старые UUID-ссылки из
+// Telegram-постов продолжают работать без карты редиректов.
+router.get("/:id", async (req, res) => {
+  const { rows } = await db.query("SELECT * FROM products WHERE id::text = $1 OR slug = $1", [
+    req.params.id,
+  ]);
+  if (!rows.length) return res.status(404).json({ error: "Товар не найден" });
+  res.json(rows[0]);
+});
+
+// Слаг уникален; коллизия транслита разрешается коротким суффиксом id.
+async function uniqueSlug(client, candidate, excludeId) {
+  let slug = candidate;
+  if (!slug) return slug;
+  for (;;) {
+    const { rows } = await client.query(
+      "SELECT 1 FROM products WHERE slug = $1 AND ($2::uuid IS NULL OR id <> $2::uuid)",
+      [slug, excludeId ?? null],
+    );
+    if (!rows.length) return slug;
+    slug = `${candidate}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+}
 
 router.get("/:id", async (req, res) => {
   const { rows } = await db.query("SELECT * FROM products WHERE id = $1", [req.params.id]);
@@ -45,14 +80,17 @@ router.post(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
-    const { categoryId, name, price, oldPrice, available, image, description, specs } =
+    const { categoryId, name, price, oldPrice, available, image, description, specs, slug } =
       req.body || {};
     if (!categoryId || !name || price === undefined) {
       return res.status(400).json({ error: "Нужны categoryId, name, price" });
     }
+    // Слаг генерируется один раз (иммутабелен при переименованиях — ADR 007);
+    // админ может задать его явно.
+    const finalSlug = await uniqueSlug(db, slug || slugify(name), null);
     const { rows } = await db.query(
-      `INSERT INTO products (category_id, name, price, old_price, available, image, description, specs)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      `INSERT INTO products (category_id, name, price, old_price, available, image, description, specs, slug)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
         categoryId,
         name,
@@ -62,8 +100,11 @@ router.post(
         image || null,
         description || null,
         specs ? JSON.stringify(specs) : null,
+        finalSlug,
       ],
     );
+    revalidateStorefront(["products", `product:${rows[0].id}`]);
+    if (rows[0].slug) revalidateStorefront([`product:${rows[0].slug}`]);
     res.json(rows[0]);
   },
 );
@@ -75,9 +116,21 @@ router.put(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
-    const { name, price, oldPrice, available, image, description, categoryId } = req.body || {};
-    const existing = await db.query("SELECT price FROM products WHERE id = $1", [req.params.id]);
+    const { name, price, oldPrice, available, image, description, categoryId, slug } =
+      req.body || {};
+    const existing = await db.query(
+      "SELECT id, price, slug FROM products WHERE id::text = $1 OR slug = $1",
+      [req.params.id],
+    );
     if (!existing.rows.length) return res.status(404).json({ error: "Товар не найден" });
+    const product = existing.rows[0];
+
+    // Слаг иммутабелен по умолчанию; явная смена слага — осознанное действие
+    // администратора (внешние ссылки теряют актуальность без 301).
+    let finalSlug = product.slug;
+    if (slug !== undefined && slug !== product.slug) {
+      finalSlug = await uniqueSlug(db, slug || null, product.id);
+    }
 
     const { rows } = await db.query(
       `UPDATE products SET
@@ -88,17 +141,20 @@ router.put(
        image = COALESCE($5, image),
        description = COALESCE($6, description),
        category_id = COALESCE($7, category_id),
+       slug = COALESCE($8, slug),
        updated_at = now()
-     WHERE id = $8 RETURNING *`,
-      [name, price, oldPrice, available, image, description, categoryId, req.params.id],
+     WHERE id = $9 RETURNING *`,
+      [name, price, oldPrice, available, image, description, categoryId, finalSlug, product.id],
     );
     // История изменения цены — только если цена реально поменялась.
     if (price !== undefined && Number(price) !== Number(existing.rows[0].price)) {
       await db.query(
         "INSERT INTO price_history (product_id, old_price, new_price) VALUES ($1,$2,$3)",
-        [req.params.id, existing.rows[0].price, price],
+        [product.id, existing.rows[0].price, price],
       );
     }
+    revalidateStorefront(["products", `product:${product.id}`]);
+    if (rows[0]?.slug) revalidateStorefront([`product:${rows[0].slug}`]);
     res.json(rows[0]);
   },
 );
@@ -110,7 +166,14 @@ router.delete(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
-    await db.query("DELETE FROM products WHERE id = $1", [req.params.id]);
+    const { rows } = await db.query(
+      "DELETE FROM products WHERE id::text = $1 OR slug = $1 RETURNING id, slug",
+      [req.params.id],
+    );
+    if (rows.length) {
+      revalidateStorefront(["products", `product:${rows[0].id}`]);
+      if (rows[0].slug) revalidateStorefront([`product:${rows[0].slug}`]);
+    }
     res.json({ ok: true });
   },
 );
@@ -177,9 +240,18 @@ router.post(
           seenIds.add(prod.id);
           updated++;
         } else {
+          // Транслит-слаг генерируется сразу (ADR 007): импорт должен
+          // создавать SEO-совместимые URL, а не UUID.
+          let slug = slugify(row.name) || null;
+          if (slug) {
+            const taken = await client.query("SELECT 1 FROM products WHERE slug = $1", [slug]);
+            if (taken.rows.length) {
+              slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+            }
+          }
           const inserted = await client.query(
-            "INSERT INTO products (category_id, name, price, available) VALUES ($1,$2,$3,$4) RETURNING id",
-            [categoryId, row.name, row.price, row.available],
+            "INSERT INTO products (category_id, name, price, available, slug) VALUES ($1,$2,$3,$4,$5) RETURNING id",
+            [categoryId, row.name, row.price, row.available, slug],
           );
           seenIds.add(inserted.rows[0].id);
           added++;
@@ -210,6 +282,7 @@ router.post(
       blankStock: parsed.blankStock,
       duplicates: dup,
     });
+    revalidateStorefront(["products"]);
   },
 );
 

@@ -10,6 +10,8 @@ const ordersRoutes = require("./routes/orders");
 const reviewsRoutes = require("./routes/reviews");
 const usersRoutes = require("./routes/users");
 const uploadsRoutes = require("./routes/uploads");
+const pagesRoutes = require("./routes/pages");
+const telemetryRoutes = require("./routes/telemetry");
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use(
       callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
+    // X-Total-Count читает витрина для пагинации каталога (plan §4).
+    exposedHeaders: ["X-Total-Count"],
   }),
 );
 app.use(express.json({ limit: "2mb" }));
@@ -42,6 +46,8 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/uploads", uploadsRoutes);
+app.use("/api/pages", pagesRoutes);
+app.use("/api/telemetry", telemetryRoutes);
 
 // Единая обработка ошибок — чтобы упавший запрос не ронял процесс и не
 // отдавал клиенту голый стек-трейс.

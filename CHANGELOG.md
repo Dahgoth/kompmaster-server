@@ -16,6 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (plan phases 2–4); the deployed static build still serves production.
 
 ### Added
+- Product slugs (latin transliteration, ADR 007): migration 002 backfills
+  slugs from product names (collisions get ordinal suffixes, symbol-only
+  names fall back to the UUID — legacy `/product/:uuid` links keep working
+  with no redirects), `GET /api/products/:id` now accepts slug or UUID, and
+  created/imported products receive slugs automatically. Admin can set a
+  slug explicitly on create/update; slugs are immutable on rename otherwise.
+- `X-Total-Count` response header on `GET /api/products` for pagination (the
+  array body shape is preserved for the live v1 storefront).
+- `POST /api/telemetry` — rate-limited frontend telemetry sink (errors, Web
+  Vitals), log-only with strict body caps.
+- Content pages API (`/api/pages`, admin + public `GET /api/pages/:slug`)
+  backing the SEO publishing surface (`content_pages` table, migration 002).
+- Catalog indexes: `pg_trgm` GIN on `products.name` (serves the ILIKE search
+  the old tsvector index could not), `(category_id, created_at DESC)` and
+  `created_at DESC` sort indexes (migration 002).
 - Dual-stack IPv4/IPv6 support for PoC VPS via Terraform-managed floating IP (`twc_floating_ip` resource) in St. Petersburg zone (spb-3). Both A and AAAA records created for apex and `api` subdomain.
 - SSH key pair generation documented in `terraform/RUNBOOK.md` (`ssh-keygen -t ed25519`) with public key registration in Timeweb panel.
 - CDN configuration variables for media bucket (`media_cdn_enabled`, `media_cdn_cname`) alongside existing frontend CDN toggle.
