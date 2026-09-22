@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { AuthProvider } from "@/features/auth/context";
+import { AdminPanelProvider } from "@/features/admin/session";
 
 /**
  * Client-island data layer (plan §4): TanStack Query for cart/forms/admin.
@@ -25,7 +26,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <AdminPanelProvider>{children}</AdminPanelProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

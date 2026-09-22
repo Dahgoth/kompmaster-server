@@ -274,11 +274,14 @@ this section is the detailed reference.
   v1 `km_cart` shape), and the status-pill mapping
   (`src/lib/order-status.ts` — R11 tint+text+label with neutral fallback for
   unknown server statuses); profile and review feature APIs follow the same
-  contract-verbatim error pattern. Static content (`src/lib/content.ts`) is
-  ported verbatim from the v1 storefront — FAQ, warranty, contacts, about —
-  with the FAQ page rendering FAQPage JSON-LD. Component and hook tests grow
-  with the pages; the E2E matrix (Playwright, `frontend/e2e/`) is phase 5 of
-  `docs/frontend-v2-plan.md`.
+  contract-verbatim error pattern; the admin shell (`src/features/admin/` —
+  second-password session in sessionStorage, role gates, admin-scoped
+  queries) mirrors the backend's triple protection
+  (requireAuth + requireRole + requireAdminPanelSession). Static content
+  (`src/lib/content.ts`) is ported verbatim from the v1 storefront — FAQ,
+  warranty, contacts, about — with the FAQ page rendering FAQPage JSON-LD.
+  Component and hook tests grow with the pages; the E2E matrix (Playwright,
+  `frontend/e2e/`) is phase 5 of `docs/frontend-v2-plan.md`.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

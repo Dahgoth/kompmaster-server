@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/faq` with FAQPage JSON-LD, `/contacts`, `/warranty`): source of truth is
   `src/lib/content.ts` until the DB-backed `/p/[slug]` program (ADR 007)
   supersedes them with 301s.
+- Admin panel shell (phase 4): `/admin/login` (second-password gate,
+  sessionStorage panel session), role-gated shell (manager sees orders
+  only), `/admin/products` with create/list/delete + category filter.
 - Storefront auth slice (phase 3): login/registration/password-restore tabs
   (`/auth`), and a working `/reset-password` route that consumes the emailed
   token — the v1 storefront lacked this route entirely, so emailed reset
