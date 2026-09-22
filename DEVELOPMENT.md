@@ -278,7 +278,8 @@ this section is the detailed reference.
   second-password session in sessionStorage, role gates, admin-scoped
   queries) mirrors the backend's triple protection
   (requireAuth + requireRole + requireAdminPanelSession) — products CRUD,
-  orders filter/status/cancel/delete included. Static content
+  orders filter/status/cancel/delete, categories with kind/parent handling,
+  users search + audited role changes, review moderation + manual publish. Static content
   (`src/lib/content.ts`) is ported verbatim from the v1 storefront — FAQ,
   warranty, contacts, about — with the FAQ page rendering FAQPage JSON-LD.
   Component and hook tests grow with the pages; the E2E matrix (Playwright,

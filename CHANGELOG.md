@@ -26,7 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sessionStorage panel session), role-gated shell (manager sees orders
   only), `/admin/products` with create/list/delete + category filter,
   `/admin/orders` with status filter + number search, status transitions,
-  cancel-with-reason (restores stock) and admin-only delete.
+  cancel-with-reason (restores stock) and admin-only delete,
+  `/admin/categories` (create with kind/parent/image + delete, backend FK
+  guard surfaced verbatim), `/admin/users` (login/name search + role changes
+  confirmed with the audit notice), `/admin/reviews` (pending queue with
+  publish/delete + manual reviews published immediately).
 - Storefront auth slice (phase 3): login/registration/password-restore tabs
   (`/auth`), and a working `/reset-password` route that consumes the emailed
   token — the v1 storefront lacked this route entirely, so emailed reset

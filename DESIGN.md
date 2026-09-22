@@ -8,8 +8,8 @@
 > implemented v2 UI** once the storefront pages are complete (plan phase 3 in
 > progress: catalog read path, header/footer shell, cards, pagination, search
 > form, auth forms, cart/checkout/orders with status pills, profile, product
-> reviews, static content pages, admin shell + products), per ADR 001 §1a.
-> The rules below remain binding regardless of styling; the previous full
+> reviews, static content pages, full admin panel (login, products, orders,
+> categories, users, reviews)), per ADR 001 §1a. The rules below remain binding regardless of styling; the previous full
 > contract (colors, typography, shape tables) is preserved in git history.
 
 This document will again become the UX/UI contract for the KompMaster
