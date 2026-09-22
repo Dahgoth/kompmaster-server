@@ -37,8 +37,8 @@ for the decision log.
   role-gated shell, `/admin/products` (CRUD + dry-run-first price import),
   `/admin/orders` (filter + status transitions + cancel + admin-only
   delete), `/admin/categories` (CRUD with kinds), `/admin/users`
-  (search + roles), `/admin/reviews` (moderation + manual) — content-page
-  editor still to come
+  (search + roles), `/admin/reviews` (moderation + manual),
+  `/admin/pages` (SEO content editor) with public `/p/[slug]` pages
 - **Zustand** for cart/UI state (lands with the cart feature, phase 3)
 - Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,
   `X-Admin-Panel-Token` for admin routes (ADR 001 pure C)

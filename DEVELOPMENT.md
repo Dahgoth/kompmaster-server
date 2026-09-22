@@ -280,7 +280,9 @@ this section is the detailed reference.
   (requireAuth + requireRole + requireAdminPanelSession) — products CRUD,
   orders filter/status/cancel/delete, categories with kind/parent handling,
   users search + audited role changes, review moderation + manual publish,
-  and the mandatory dry-run price import (sync/merge, multipart — R9). Static content
+  and the mandatory dry-run price import (sync/merge, multipart — R9); the
+  `/admin/pages` editor stores markdown in `content_pages`, served publicly
+  at `/p/[slug]` by a server-side renderer (no client JS). Static content
   (`src/lib/content.ts`) is ported verbatim from the v1 storefront — FAQ,
   warranty, contacts, about — with the FAQ page rendering FAQPage JSON-LD.
   Component and hook tests grow with the pages; the E2E matrix (Playwright,

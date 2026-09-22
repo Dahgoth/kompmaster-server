@@ -18,6 +18,7 @@ const NAV = [
   { href: "/admin/categories", label: "Категории", roles: ["admin"] as const },
   { href: "/admin/users", label: "Пользователи", roles: ["admin"] as const },
   { href: "/admin/reviews", label: "Отзывы", roles: ["admin"] as const },
+  { href: "/admin/pages", label: "Страницы", roles: ["admin"] as const },
 ] as const;
 
 export type AdminRole = "admin" | "manager";

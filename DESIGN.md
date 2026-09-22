@@ -9,7 +9,8 @@
 > progress: catalog read path, header/footer shell, cards, pagination, search
 > form, auth forms, cart/checkout/orders with status pills, profile, product
 > reviews, static content pages, full admin panel (login, products + import,
-> orders, categories, users, reviews)), per ADR 001 §1a. The rules below remain binding regardless of styling; the previous full
+> orders, categories, users, reviews, content pages), public /p/[slug]
+> surface), per ADR 001 §1a. The rules below remain remain binding regardless of styling; the previous full
 > contract (colors, typography, shape tables) is preserved in git history.
 
 This document will again become the UX/UI contract for the KompMaster
