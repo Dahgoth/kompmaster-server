@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   generated from the catalog (5,000-product cap per ADR 007) and `robots.txt`
   blocks account/admin surfaces; persistent cart state keeps the v1
   `km_cart` storage shape.
+- Static content pages ported verbatim from the v1 storefront (`/about`,
+  `/faq` with FAQPage JSON-LD, `/contacts`, `/warranty`): source of truth is
+  `src/lib/content.ts` until the DB-backed `/p/[slug]` program (ADR 007)
+  supersedes them with 301s.
 - Storefront auth slice (phase 3): login/registration/password-restore tabs
   (`/auth`), and a working `/reset-password` route that consumes the emailed
   token — the v1 storefront lacked this route entirely, so emailed reset

@@ -27,6 +27,9 @@ for the decision log.
   hardening is a later `feat(auth)` follow-up)
 - **Order flow landed (plan phase 3)**: cart, checkout (offer gate + 409
   stock handling), orders list/detail with R11 status pills, `/payment/manual`
+- **Static pages landed (plan phase 3)**: `/about`, `/faq` (with FAQPage
+  JSON-LD), `/contacts`, `/warranty` — content in `src/lib/content.ts`
+  (ported verbatim from v1; the `/p/[slug]` DB program supersedes them later)
 - **Profile + reviews (plan phase 3)**: `/profile` (account data + SMS
   verification), review lists with AggregateRating JSON-LD and gated
   submission
