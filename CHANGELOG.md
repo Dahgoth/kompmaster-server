@@ -30,7 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/admin/categories` (create with kind/parent/image + delete, backend FK
   guard surfaced verbatim), `/admin/users` (login/name search + role changes
   confirmed with the audit notice), `/admin/reviews` (pending queue with
-  publish/delete + manual reviews published immediately).
+  publish/delete + manual reviews published immediately), price import
+  inside `/admin/products` with mandatory dry-run preview (sync/merge modes,
+  multipart upload; verified live incl. slug auto-generation for new rows).
 - Storefront auth slice (phase 3): login/registration/password-restore tabs
   (`/auth`), and a working `/reset-password` route that consumes the emailed
   token — the v1 storefront lacked this route entirely, so emailed reset

@@ -34,10 +34,11 @@ for the decision log.
   verification), review lists with AggregateRating JSON-LD and gated
   submission
 - **Admin shell (plan phase 4)**: `/admin/login` (second password),
-  role-gated shell, `/admin/products` (CRUD), `/admin/orders` (filter +
-  status transitions + cancel + admin-only delete), `/admin/categories`
-  (CRUD with kinds), `/admin/users` (search + roles), `/admin/reviews`
-  (moderation + manual) — price import still to come
+  role-gated shell, `/admin/products` (CRUD + dry-run-first price import),
+  `/admin/orders` (filter + status transitions + cancel + admin-only
+  delete), `/admin/categories` (CRUD with kinds), `/admin/users`
+  (search + roles), `/admin/reviews` (moderation + manual) — content-page
+  editor still to come
 - **Zustand** for cart/UI state (lands with the cart feature, phase 3)
 - Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,
   `X-Admin-Panel-Token` for admin routes (ADR 001 pure C)

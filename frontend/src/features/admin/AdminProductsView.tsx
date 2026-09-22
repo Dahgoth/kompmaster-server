@@ -6,6 +6,7 @@ import { ApiError, apiRequest } from "@/api/client";
 import { z } from "zod";
 import { productSchema, type Product } from "@/api/schemas";
 import { AdminShell } from "@/features/admin/AdminShell";
+import { PriceImport } from "@/features/admin/PriceImport";
 import { formatPrice } from "@/lib/format";
 import { queryKeys } from "@/api/categories";
 
@@ -101,6 +102,7 @@ export function AdminProductsView() {
   return (
     <AdminShell active="/admin/products">
       <div className="space-y-6">
+        <PriceImport />
         <section className="rounded-panel border border-line bg-white p-6 shadow-card">
           <h2 className="mb-4 text-lg font-extrabold">Новый товар</h2>
           {formError ? (
