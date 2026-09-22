@@ -34,7 +34,8 @@ for the decision log.
   verification), review lists with AggregateRating JSON-LD and gated
   submission
 - **Admin shell (plan phase 4)**: `/admin/login` (second password),
-  role-gated shell, `/admin/products` (CRUD) — orders/categories/users/
+  role-gated shell, `/admin/products` (CRUD), `/admin/orders` (filter +
+  status transitions + cancel + admin-only delete) — categories/users/
   reviews/import still to come
 - **Zustand** for cart/UI state (lands with the cart feature, phase 3)
 - Backend contract unchanged: REST `/api/*`, Bearer JWT for user routes,

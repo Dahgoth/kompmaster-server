@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   supersedes them with 301s.
 - Admin panel shell (phase 4): `/admin/login` (second-password gate,
   sessionStorage panel session), role-gated shell (manager sees orders
-  only), `/admin/products` with create/list/delete + category filter.
+  only), `/admin/products` with create/list/delete + category filter,
+  `/admin/orders` with status filter + number search, status transitions,
+  cancel-with-reason (restores stock) and admin-only delete.
 - Storefront auth slice (phase 3): login/registration/password-restore tabs
   (`/auth`), and a working `/reset-password` route that consumes the emailed
   token — the v1 storefront lacked this route entirely, so emailed reset

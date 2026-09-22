@@ -277,7 +277,8 @@ this section is the detailed reference.
   contract-verbatim error pattern; the admin shell (`src/features/admin/` —
   second-password session in sessionStorage, role gates, admin-scoped
   queries) mirrors the backend's triple protection
-  (requireAuth + requireRole + requireAdminPanelSession). Static content
+  (requireAuth + requireRole + requireAdminPanelSession) — products CRUD,
+  orders filter/status/cancel/delete included. Static content
   (`src/lib/content.ts`) is ported verbatim from the v1 storefront — FAQ,
   warranty, contacts, about — with the FAQ page rendering FAQPage JSON-LD.
   Component and hook tests grow with the pages; the E2E matrix (Playwright,
