@@ -273,8 +273,9 @@ this section is the detailed reference.
   store (`src/features/cart/store.ts` — add/remove/quantity/persist with the
   v1 `km_cart` shape), and the status-pill mapping
   (`src/lib/order-status.ts` — R11 tint+text+label with neutral fallback for
-  unknown server statuses). Component and hook tests grow with the pages; the
-  E2E matrix (Playwright, `frontend/e2e/`) is phase 5 of
+  unknown server statuses); profile and review feature APIs follow the same
+  contract-verbatim error pattern. Component and hook tests grow with the
+  pages; the E2E matrix (Playwright, `frontend/e2e/`) is phase 5 of
   `docs/frontend-v2-plan.md`.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.

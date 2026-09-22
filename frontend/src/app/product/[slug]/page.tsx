@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+import { fetchProductReviews } from "@/api/reviews";
 import { fetchProduct } from "@/api/products";
 import { formatPrice } from "@/lib/format";
 import { config } from "@/config";
 import { AddToCartButton } from "@/features/cart/AddToCartButton";
+import { ProductReviews } from "@/features/reviews/ProductReviews";
+import type { Product } from "@/api/schemas";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -148,6 +151,38 @@ export default async function ProductPage({ params }: ProductPageProps) {
           ) : null}
         </div>
       </div>
+
+      <ProductReviewsSection product={product} />
     </div>
+  );
+}
+
+/**
+ * AggregateRating JSON-LD (ADR 007 §3): server-side review fetch feeds the
+ * rating/review-count of products that have approved reviews. A failure here
+ * must never 500 the product page — reviews arrive best-effort.
+ */
+async function ProductReviewsSection({ product }: { product: Product }) {
+  const reviews = await fetchProductReviews(product.id).catch(() => null);
+  return (
+    <>
+      {reviews && reviews.length ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "AggregateRating",
+              itemReviewed: { "@type": "Product", name: product.name },
+              ratingValue: (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(
+                1,
+              ),
+              reviewCount: reviews.length,
+            }),
+          }}
+        />
+      ) : null}
+      <ProductReviews productId={product.id} />
+    </>
   );
 }

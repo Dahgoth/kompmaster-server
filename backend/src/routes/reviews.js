@@ -7,10 +7,22 @@ const { notifyAdmin } = require("../utils/telegram");
 const router = express.Router();
 
 // Публично — только одобренные отзывы конкретного товара.
+// Слаг вставляется безопасно: reviews.product_id хранит UUID, поэтому слаг
+// сначала резолвится в id; неизвестный слаг/UUID даёт чистый 404, а не 500
+// (22P02 invalid input syntax for type uuid — crash в prod 2026-09-22).
+async function resolveProductId(client, idOrSlug) {
+  const { rows } = await client.query("SELECT id FROM products WHERE id::text = $1 OR slug = $1", [
+    idOrSlug,
+  ]);
+  return rows[0]?.id ?? null;
+}
+
 router.get("/product/:productId", async (req, res) => {
+  const productId = await resolveProductId(db, req.params.productId);
+  if (!productId) return res.status(404).json({ error: "Товар не найден" });
   const { rows } = await db.query(
     "SELECT * FROM reviews WHERE product_id = $1 AND status = 'approved' ORDER BY created_at DESC",
-    [req.params.productId],
+    [productId],
   );
   res.json(rows);
 });
@@ -21,12 +33,14 @@ router.post("/product/:productId", requireAuth, async (req, res) => {
   if (!rating || rating < 1 || rating > 5)
     return res.status(400).json({ error: "Оценка от 1 до 5" });
 
+  const productId = await resolveProductId(db, req.params.productId);
+  if (!productId) return res.status(404).json({ error: "Товар не найден" });
   const purchased = await db.query(
     `SELECT 1 FROM orders
      WHERE user_id = $1 AND payment_status = 'Оплачено'
        AND items @> jsonb_build_array(jsonb_build_object('productId', $2::text))
      LIMIT 1`,
-    [req.user.id, req.params.productId],
+    [req.user.id, productId],
   );
   if (!purchased.rows.length) {
     return res
@@ -34,7 +48,7 @@ router.post("/product/:productId", requireAuth, async (req, res) => {
       .json({ error: "Оставить отзыв можно только после покупки этого товара" });
   }
   const already = await db.query("SELECT 1 FROM reviews WHERE product_id=$1 AND user_id=$2", [
-    req.params.productId,
+    productId,
     req.user.id,
   ]);
   if (already.rows.length)
@@ -43,9 +57,9 @@ router.post("/product/:productId", requireAuth, async (req, res) => {
   const { rows } = await db.query(
     `INSERT INTO reviews (product_id, user_id, author_name, rating, text, source, status)
      VALUES ($1,$2,$3,$4,$5,'customer','pending') RETURNING *`,
-    [req.params.productId, req.user.id, req.user.display_name, rating, text || null],
+    [productId, req.user.id, req.user.display_name, rating, text || null],
   );
-  notifyAdmin(`⭐ Новый отзыв ждёт модерации (товар ${req.params.productId})`);
+  notifyAdmin(`⭐ Новый отзыв ждёт модерации (товар ${productId})`);
   res.json(rows[0]);
 });
 

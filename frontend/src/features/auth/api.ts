@@ -46,12 +46,15 @@ export async function fetchMe(): Promise<User> {
   return normalizeUser(res.user);
 }
 
-export async function forgotPassword(loginName: string): Promise<string> {
+export async function forgotPassword(email: string): Promise<string> {
   const res = await apiRequest(
     z.object({ ok: z.boolean(), message: z.string().optional() }),
     "POST",
     "/auth/forgot-password",
-    { body: { login: loginName } },
+    // Backend reads `email`, not `login` (routes/auth.js:112). Every
+    // request with the wrong key falls into the "не сообщаем" branch and
+    // the reset email is never sent — contract bug fixed here.
+    { body: { email } },
   );
   return res.message ?? "Если аккаунт существует, письмо отправлено.";
 }

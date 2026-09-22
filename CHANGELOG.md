@@ -22,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`/auth`), and a working `/reset-password` route that consumes the emailed
   token — the v1 storefront lacked this route entirely, so emailed reset
   links landed on the home page and never reset anything (ADR 006 §Context).
+  Fixed the forgot-password contract (`{email}`, not `{login}` — the backend
+  reads `email`, so every restore request silently no-op'd before).
+- Profile (`/profile`): read-only account data + optional SMS phone
+  verification (request/confirm with 400/429 backend messages verbatim).
+- Product reviews: approved-review lists on product pages with
+  AggregateRating JSON-LD, purchase-gated submission with the pending-
+  moderation notice (403/409 surfaced as-is).
+- `GET|POST /api/reviews/product/:id` now resolves slug-or-UUID to the
+  product id first: unknown or non-UUID values return 404 instead of
+  crashing the process with `22P02 invalid input syntax for type uuid`
+  (found live 2026-09-22 — any crawler/typo on that route killed the API).
 - Storefront order flow (phase 3): cart page with quantity steppers and
   persisted state, checkout with pickup/delivery + public-offer acceptance
   gate, atomic order creation with per-item 409 stock-conflict messages, my
