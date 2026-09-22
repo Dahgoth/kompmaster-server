@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   // standalone output gives a deployable server bundle for PM2.
   output: "standalone",
   reactStrictMode: true,
+  // Worktree-local builds: the tracing root must be the worktree, not the
+  // cheapest common ancestor of the user's lockfile copies.
+  outputFileTracingRoot: __dirname,
 
   // Lint is gated by the CI `frontend` job (eslint.config.js + typecheck);
   // next build's integrated lint pass would double-run it with a divergent

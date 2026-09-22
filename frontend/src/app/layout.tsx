@@ -31,7 +31,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Providers>
           <SkipLink />
           <Header />
-          <main id="main" className="mx-auto w-full max-w-6xl scroll-mt-24 px-4 pb-16 sm:px-6">
+          <main
+            id="main"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-6xl scroll-mt-24 px-4 pb-16 outline-none sm:px-6"
+          >
             {children}
           </main>
           <Footer />

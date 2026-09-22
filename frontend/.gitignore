@@ -7,3 +7,5 @@ next-env.d.ts
 .cache/
 *.local
 *.tsbuildinfo
+test-results/
+playwright-report/

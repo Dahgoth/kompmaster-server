@@ -120,15 +120,13 @@ export function AuthTabs() {
       ) : null}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {tab !== "forgot" ? (
-          <Field
-            name="login"
-            label={tab === "login" ? "E-mail или телефон" : "E-mail"}
-            type="text"
-            required
-            autoComplete="username"
-          />
-        ) : null}
+        <Field
+          name="login"
+          label={tab === "forgot" ? "E-mail" : tab === "login" ? "E-mail или телефон" : "E-mail"}
+          type="text"
+          required
+          autoComplete="username"
+        />
         {tab !== "forgot" ? (
           <Field
             name="password"
@@ -200,8 +198,8 @@ function Field({
   autoComplete?: string;
 }) {
   return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-bold">
+    <label className="block" htmlFor={`field-${name}`}>
+      <span id={`field-${name}-label`} className="mb-1 block text-sm font-bold">
         {label}
         {required ? (
           <span aria-hidden="true" className="text-pink">
@@ -211,6 +209,8 @@ function Field({
         ) : null}
       </span>
       <input
+        id={`field-${name}`}
+        aria-labelledby={`field-${name}-label`}
         name={name}
         type={type}
         required={required}

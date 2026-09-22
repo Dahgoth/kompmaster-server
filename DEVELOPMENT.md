@@ -286,7 +286,31 @@ this section is the detailed reference.
   (`src/lib/content.ts`) is ported verbatim from the v1 storefront — FAQ,
   warranty, contacts, about — with the FAQ page rendering FAQPage JSON-LD.
   Component and hook tests grow with the pages; the E2E matrix (Playwright,
-  `frontend/e2e/`) is phase 5 of `docs/frontend-v2-plan.md`.
+  `frontend/e2e/`, Tier A specs + MSW fixtures in `frontend/e2e/mocks.ts`)
+  is phase 5 of `docs/frontend-v2-plan.md`. Run Tier A locally against a
+  production build of the storefront plus the dev backend:
+
+  ```bash
+  # terminal 1 — backend (dev defaults: local Postgres, JWT_SECRET required)
+  cd backend && DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster \
+    JWT_SECRET=dev-only pnpm start
+  # terminal 2 — storefront production build + start
+  cd frontend && API_BASE=http://localhost:4000/api SITE_URL=http://localhost:3000 \
+    pnpm build && API_BASE=http://localhost:4000/api pnpm start -- --port 3002
+  # terminal 3 — Tier A matrix (both browser projects)
+  cd frontend && E2E_STORE_URL=http://localhost:3002 E2E_API_BASE=http://localhost:4000/api \
+    npx playwright test
+  ```
+
+  Environment contract: `E2E_STORE_URL` is the storefront under test
+  (default `http://localhost:3000`); `E2E_API_BASE` must match the API the
+  storefront build was baked with, otherwise MSW handlers miss and the
+  store's `/api/*` rewrite proxies to the wrong backend (CORS 500s). The
+  backend's `FRONTEND_ORIGIN` must allowlist the `E2E_STORE_URL` origin for
+  any spec that posts through the rewrite (auth/reset). Server-rendered
+  pages fetch at build/request time, so MSW (a Node-side interceptor in the
+  Playwright process) only covers browser-initiated requests — specs that
+  need server-side mock data belong to Tier B (staging API).
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

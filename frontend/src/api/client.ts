@@ -46,9 +46,13 @@ function readToken(scope: AuthScope): string | null {
 export function buildUrl(path: string): string {
   const clean = path.startsWith("/") ? path : `/${path}`;
   // Server components hit the absolute API base (baked at build); browser
-  // islands call same-origin /api proxied by next.config.ts rewrites.
-  const base = typeof window === "undefined" ? config.apiBase : config.clientApiBase;
-  return `${base}${clean}`;
+  // islands call same-origin /api proxied by next.config.ts rewrites. The
+  // window check is load-bearing: config.apiBase throws in the browser by
+  // design (see src/config.ts), so it must never be touched client-side.
+  if (typeof window === "undefined") {
+    return `${config.apiBase}${clean}`;
+  }
+  return `${config.clientApiBase}${clean}`;
 }
 
 export function buildHeaders(scope: AuthScope): HeadersInit {

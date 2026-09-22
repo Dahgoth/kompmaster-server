@@ -93,3 +93,13 @@ describe("buildHeaders", () => {
     expect(headers["Content-Type"]).toBe("application/json");
   });
 });
+
+describe("buildUrl", () => {
+  it("targets the same-origin proxy in the browser", async () => {
+    const { buildUrl } = await import("@/api/client");
+    // jsdom defines window: the browser branch must never touch the
+    // server-only apiBase getter (it throws by design).
+    expect(buildUrl("/auth/login")).toBe("/api/auth/login");
+    expect(buildUrl("products/x")).toBe("/api/products/x");
+  });
+});

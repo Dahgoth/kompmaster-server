@@ -1,8 +1,11 @@
 /**
- * Build/runtime configuration. Values are resolved at build time (R2):
- * `API_BASE` is baked by the deploy pipeline for SERVER-side fetches.
- * Browser islands always call the same-origin `/api` (proxied to the
- * backend by next.config.ts rewrites) — no CORS surface for client fetches.
+ * Build/runtime configuration.
+ * - Server (RSC/route handlers): absolute API_BASE, baked at build.
+ * - Browser islands: same-origin /api proxied by next.config.ts rewrites —
+ *   the browser bundle must NEVER read API_BASE (it is undefined client-side
+ *   after inlining; the crash "API_BASE is required for production builds"
+ *   in E2E proved that). apiBase access is guarded: reading it in the
+ *   browser throws with a message that names the fix.
  */
 function clean(value: string | undefined): string | undefined {
   return value && value.trim() !== "" ? value.replace(/\/+$/, "") : undefined;
@@ -21,15 +24,47 @@ function apiBase(): string {
   return "http://localhost:4000/api";
 }
 
-export const config = {
-  /** Absolute base for server-side (RSC) fetches. */
-  apiBase: apiBase(),
+class ClientConfigProxy {
+  /** Absolute base for server-side (RSC) fetches. Browser access = bug. */
+  get apiBase(): string {
+    if (typeof window !== "undefined") {
+      throw new Error(
+        "config.apiBase is server-only — browser code must use config.clientApiBase (same-origin /api)",
+      );
+    }
+    return apiBase();
+  }
+
   /** Same-origin base for browser islands (proxied by rewrites). */
-  clientApiBase: "/api",
-  siteUrl: clean(process.env.SITE_URL) || "https://www.compmasone.ru",
-  // On-demand ISR invalidation (ADR 007): backend mutations POST tags here
-  // with the shared secret. Unset disables the route (401) — supported mode.
-  revalidateSecret: process.env.REVALIDATE_SECRET ?? "",
-  indexNowKey: process.env.INDEXNOW_KEY ?? "",
-  metrikaId: process.env.METRIKA_ID ?? null,
-} as const;
+  readonly clientApiBase = "/api";
+
+  get siteUrl(): string {
+    return clean(process.env.SITE_URL) || "https://www.compmasone.ru";
+  }
+
+  get revalidateSecret(): string {
+    return process.env.REVALIDATE_SECRET ?? "";
+  }
+
+  get indexNowKey(): string {
+    return process.env.INDEXNOW_KEY ?? "";
+  }
+
+  get metrikaId(): string | null {
+    return process.env.METRIKA_ID ?? null;
+  }
+}
+
+/**
+ * Test hook (TDD seam): lets the jsdom test module evaluate the server-side
+ * resolution without a real server. Production code must never call this —
+ * browser code uses config.clientApiBase; server code reads config.apiBase
+ * normally. Exported for tests/config.test.ts only.
+ *
+ * @internal
+ */
+export function __resolveApiBaseForTests(): string {
+  return apiBase();
+}
+
+export const config = new ClientConfigProxy();

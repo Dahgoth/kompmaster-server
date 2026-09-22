@@ -80,9 +80,13 @@ export function ResetPasswordForm() {
           {error}
         </p>
       ) : null}
-      <label className="block">
-        <span className="mb-1 block text-sm font-bold">Новый пароль</span>
+      <label className="block" htmlFor="reset-password">
+        <span id="reset-password-label" className="mb-1 block text-sm font-bold">
+          Новый пароль
+        </span>
         <input
+          id="reset-password"
+          aria-labelledby="reset-password-label"
           name="password"
           type="password"
           required
@@ -91,9 +95,13 @@ export function ResetPasswordForm() {
           className="h-12 w-full rounded-btn border border-line bg-white px-4 text-base focus:border-pink"
         />
       </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-bold">Повторите пароль</span>
+      <label className="block" htmlFor="reset-confirm">
+        <span id="reset-confirm-label" className="mb-1 block text-sm font-bold">
+          Повторите пароль
+        </span>
         <input
+          id="reset-confirm"
+          aria-labelledby="reset-confirm-label"
           name="confirm"
           type="password"
           required

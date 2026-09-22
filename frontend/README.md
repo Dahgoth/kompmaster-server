@@ -66,6 +66,22 @@ pnpm --filter kompmaster-frontend build      # next build (standalone)
 pnpm --filter kompmaster-frontend start      # next start (after build)
 ```
 
+E2E (Tier A, plan §8 — 20 specs + 3 Tier-B skips across 8 files):
+
+```bash
+# storefront production build + backend required (see DEVELOPMENT.md for the
+# full three-terminal setup and the E2E_STORE_URL/E2E_API_BASE contract)
+cd frontend && E2E_STORE_URL=http://localhost:3002 E2E_API_BASE=http://localhost:4000/api \
+  npx playwright test                        # chromium + mobile projects
+npx playwright test --project=chromium e2e/specs/seo.spec.ts  # SEO gate alone
+```
+
+`e2e/mocks.ts` holds the MSW fixture handlers (categories, products, auth,
+reset, reviews); `e2e/fixtures.ts` adds the axe `assertNoViolations` check
+(zero critical/serious). Specs that need server-side mock data or seeded
+DB rows are marked `test.skip` with a Tier-B reason instead of asserting
+against unreachable mocks.
+
 ## Linting
 
 The frontend is linted by the workspace-root ESLint flat config
@@ -117,5 +133,6 @@ frontend/
     config.ts             — build-time env resolution
 
   tests/                  — Vitest (component + unit)
-  e2e/                    — Playwright specs (phase 5, incl. seo.spec.ts)
+  e2e/                    — Playwright Tier A matrix (fixtures.ts, mocks.ts, specs/)
+  playwright.config.ts    — chromium + mobile projects, E2E_STORE_URL baseURL
 ```

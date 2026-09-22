@@ -9,5 +9,6 @@ packages:
 # esbuild (a Vite transitive dependency) ships a native binary via a
 # postinstall script. pnpm blocks dependency build scripts by default, so
 # approve exactly this one package instead of opening the installer up.
+# (msw needs no build script: its postinstall only prints a message.)
 allowBuilds:
   esbuild: true

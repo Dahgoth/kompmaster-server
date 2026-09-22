@@ -58,6 +58,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   orders list and detail with the server-owned status pills (tint + text +
   label), and the manual-payment instructions page (ADR 002: providers still
   deferred).
+- Tier A E2E matrix (phase 5 of `docs/frontend-v2-plan.md`): 20 Playwright
+  specs + 3 Tier-B skips across 8 files (home, catalog, product, auth,
+  reset-password, cart, seo, navigation incl. mobile drawer and skip-link),
+  MSW fixture handlers, axe `assertNoViolations` on key flows; every label
+  wired via `aria-labelledby` so `getByLabel` resolves deterministically;
+  server/client API-base split hardened (`config.apiBase` throws in the
+  browser by design, covered by unit tests) after E2E exposed a production
+  crash from reading `API_BASE` client-side.
 
 ### Changed
 - Storefront rebuild started on the Next.js SSR/ISR stack (ADR 006/007):
