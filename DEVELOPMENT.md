@@ -423,7 +423,11 @@ or git history (`git log --follow docs/legacy/`).
 ## Docker-based setup (databases only)
 
 `docker-compose.yml` provides PostgreSQL 16 (`postgres`) and MinIO (`minio`)
-with local volumes:
+with local volumes. The MinIO image is pulled from
+`quay.io/minio/minio:latest`: MinIO removed its Docker Hub organization
+(2025-06), so `minio/minio` now fails every pull with
+`pull access denied / repository does not exist`. Do not revert to the
+Docker Hub tag; if the image is ever pinned, use a Quay `RELEASE.*` tag.
 
 - Postgres: `localhost:5432`, user/db `kompmaster`, password `kompmaster`
   (dev-only defaults — change before any real deployment).

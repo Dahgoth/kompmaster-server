@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Local dev: `docker-compose.yml` now pulls MinIO from
+  `quay.io/minio/minio:latest` — MinIO removed its Docker Hub organization
+  (2025-06), so `minio/minio` fails every `docker compose up` with
+  `pull access denied / repository does not exist`. Also drops the obsolete
+  `version:` key that warned on every Compose command.
 - Storefront contact data now has a single owner (`src/lib/content.ts`, the
   verbatim v1 port): the duplicate `BRAND` constants had drifted, shipping a
   wrong Telegram handle (`compmasoneone` instead of the live

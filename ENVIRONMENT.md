@@ -58,7 +58,9 @@ through `backend/src/config.js`.
 ### S3 / object storage
 
 Used by `backend/src/utils/storage.js` for photo uploads. Works with MinIO, Selectel
-Object Storage, and Cloudflare R2 (`forcePathStyle` is enabled).
+Object Storage, and Cloudflare R2 (`forcePathStyle` is enabled). The bundled local
+MinIO container (docker-compose) is pulled from `quay.io/minio/minio:latest` —
+MinIO's Docker Hub organization was removed 2025-06.
 
 - `S3_ENDPOINT` — S3 endpoint URL. **Required.**
 - `S3_REGION` — region. Default `us-east-1`.
