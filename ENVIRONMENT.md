@@ -43,6 +43,9 @@ through `backend/src/config.js`.
 - `DATABASE_URL` — PostgreSQL connection string, e.g.
   `postgres://kompmaster:kompmaster@localhost:5432/kompmaster`. **Required.**
   `[SECRET]`
+  The bundled local Postgres container (docker-compose, dev-only) is pinned to
+  `postgres:16.15-alpine`, with a verify-then-bump upgrade procedure in
+  `DEVELOPMENT.md` §Docker-based setup.
 
 ### Auth
 

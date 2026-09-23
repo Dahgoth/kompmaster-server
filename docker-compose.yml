@@ -1,6 +1,9 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    # Local Postgres — dev only (production is managed/VPS Postgres, ADR 002).
+    # Image is PINNED to the release verified working here; see DEVELOPMENT.md
+    # §Docker-based setup for the verify-then-bump upgrade procedure.
+    image: postgres:16.15-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: kompmaster

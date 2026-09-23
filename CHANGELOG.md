@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   repository does not exist`. The dead reference dated from the first backend
   commit and survived because no CI job or test ever pulled the compose stack;
   a new path-filtered `compose` CI job now pulls it on every compose change.
+  Postgres is pinned to `16.15-alpine` the same way, and DEVELOPMENT.md
+  documents a verify-then-bump upgrade procedure for both dev-stack images.
   Also drops the obsolete `version:` key that warned on every Compose command.
 - Storefront contact data now has a single owner (`src/lib/content.ts`, the
   verbatim v1 port): the duplicate `BRAND` constants had drifted, shipping a

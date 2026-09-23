@@ -425,9 +425,11 @@ or git history (`git log --follow docs/legacy/`).
 
 ## Docker-based setup (databases only)
 
-`docker-compose.yml` provides PostgreSQL 16 (`postgres`) and MinIO (`minio`)
-with local volumes. Both are **dev-only** — production object storage is
-Timeweb S3 (ADR 002) and production Postgres is the managed/VPS instance.
+`docker-compose.yml` provides PostgreSQL 16.15 (`postgres`) and MinIO
+(`minio`) with local volumes. Both are **dev-only** — production object
+storage is Timeweb S3 (ADR 002) and production Postgres is the managed/VPS
+instance. Both images are **pinned to exact versions** (see the upgrade
+procedure below).
 
 The MinIO image is pinned to `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`:
 
@@ -443,10 +445,18 @@ The MinIO image is pinned to `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`:
 - **Why pinned, not `latest`.** An unpinned tag makes the dev stack
   non-reproducible and can break `docker compose up` with no repo change.
 
-**Upgrade procedure:** pull the candidate `RELEASE.*` tag from Quay, run
-`docker compose up -d minio`, confirm `curl -sf localhost:9000/minio/health/live`
-returns 200 and the S3 console answers on `:9001`, then bump the tag here and
-in `docker-compose.yml` in the same commit.
+**Upgrade procedure (verify-then-bump, applies to both images):**
+
+1. Pull the candidate tag (`RELEASE.*` from Quay for MinIO,
+   `postgres:<version>-alpine` from Docker Hub for Postgres).
+2. `docker compose up -d` and verify: MinIO — `curl -sf
+   localhost:9000/minio/health/live` returns 200 and the console answers on
+   `:9001`; Postgres — `SHOW server_version` matches the pinned tag and the
+   `pgdata` volume still serves the seeded data.
+3. Only then bump the tag in `docker-compose.yml` and in this section, in the
+   same commit.
+
+Current pins: MinIO `RELEASE.2025-09-07T16-13-09Z`, Postgres `16.15-alpine`.
 
 - Postgres: `localhost:5432`, user/db `kompmaster`, password `kompmaster`
   (dev-only defaults — change before any real deployment).
