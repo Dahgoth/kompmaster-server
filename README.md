@@ -33,6 +33,15 @@ Node.js/Express + PostgreSQL + S3-совместимое хранилище фо
 - **[DEVELOPMENT.md](DEVELOPMENT.md)** — настройка рабочего окружения (установка, запуск, миграции, отладка, тесты).
 - **[ENVIRONMENT.md](ENVIRONMENT.md)** — справочник по переменным окружения (`.env`).
 - **[DESIGN.md](DESIGN.md)** — UX/UI-контракт витрины (цвета, типографика, компоненты).
+- **[docs/adr/](docs/adr/)** — архитектурные решения (ADR 001–007), включая
+  [ADR 007](docs/adr/007-seo-rendering-nextjs.md) — рендеринг витрины
+  (Next.js SSR/ISR) под SEO-программу; [ADR 006](docs/adr/006-frontend-v2-react-spa.md) —
+  стек фронтенда.
+- **[docs/frontend-v2-plan.md](docs/frontend-v2-plan.md)** — план пересборки
+  фронтенда (стек, структура, E2E-матрица, бюджеты, этапы миграции, открытые вопросы).
+- **[docs/research/2026-09-21-platform-review.md](docs/research/2026-09-21-platform-review.md)** —
+  обзор платформы: Node на origin витрины, стратегия Vercel, изменения бэкенда,
+  стек телеметрии, приоритизированная дорожная карта.
 - **[AGENTS.md](AGENTS.md)** — обязательные правила для AI-агентов и контрибьюторов.
 - **[CHANGELOG.md](CHANGELOG.md)** — история изменений (Keep a Changelog).
 
@@ -74,6 +83,8 @@ sudo -u postgres psql -c "CREATE DATABASE kompmaster OWNER kompmaster;"
 
 ```bash
 # Быстрый вариант через Docker (нужен docker + docker-compose):
+# образ MinIO зафиксирован и берётся с quay.io — тег minio/minio из Docker Hub
+# больше не существует (организация удалена в 2025-06).
 docker compose up -d postgres minio
 ```
 

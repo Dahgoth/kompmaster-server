@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
+const { revalidateStorefront } = require("../utils/revalidate");
 
 const router = express.Router();
 
@@ -24,6 +25,7 @@ router.post(
        ON CONFLICT (id) DO UPDATE SET name = $2, parent_id = $3, kind = $4, image = $5`,
       [id, name, parentId || null, kind || "catalog", image || null],
     );
+    revalidateStorefront(["categories", "products"]);
     res.json({ ok: true });
   },
 );
@@ -35,6 +37,7 @@ router.delete(
   requireAdminPanelSession,
   async (req, res) => {
     await db.query("DELETE FROM categories WHERE id = $1", [req.params.id]);
+    revalidateStorefront(["categories", "products"]);
     res.json({ ok: true });
   },
 );

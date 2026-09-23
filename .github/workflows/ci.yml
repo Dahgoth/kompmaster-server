@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: ["main"]
 
+# Least privilege: every job only reads the repo (checkout, lint, tests,
+# compose/terraform checks). No job writes to the API or pushes artifacts.
+permissions:
+  contents: read
+
 jobs:
   # Always runs: cheap guard that the docs-in-sync hard rule holds for the
   # pushed change set (AGENTS.md §6). Scopes itself via `git diff`, so it
@@ -159,10 +164,140 @@ jobs:
       - name: Lint frontend
         if: steps.changes.outputs.frontend == 'true'
         run: pnpm run lint:frontend
+      - name: Typecheck frontend
+        if: steps.changes.outputs.frontend == 'true'
+        run: pnpm --filter kompmaster-frontend run typecheck
       - run: pnpm --filter kompmaster-frontend test
         if: steps.changes.outputs.frontend == 'true'
-      - run: pnpm --filter kompmaster-frontend run build
+      # Production builds fail closed without a baked API base (RUNBOOK §4.4);
+      # the URL is public and non-secret.
+      - name: Build storefront
         if: steps.changes.outputs.frontend == 'true'
+        run: pnpm --filter kompmaster-frontend run build
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://www.compmasone.ru
+
+  # Tier A E2E matrix (plan §8). The specs assert fixed categories/products
+  # and an `e2e@example.com` login, and they run against a real backend — MSW
+  # in the Playwright process cannot intercept SSR or the store's `/api/*`
+  # rewrite — so this job provisions a throwaway Postgres, applies migrations,
+  # seeds the fixtures (backend/scripts/seed-e2e.js), builds the storefront
+  # against that API and drives both browser projects (chromium + WebKit
+  # mobile). Exists because the 20 specs had no runner: no `e2e` script and no
+  # workflow executed them, so the matrix could rot silently.
+  e2e:
+    runs-on: ubuntu-latest
+    # The job boots Postgres, two browsers, and two Node servers; guard against
+    # a hang burning runner minutes (the happy path takes ~2 minutes).
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16.15-alpine
+        env:
+          POSTGRES_USER: kompmaster
+          POSTGRES_PASSWORD: kompmaster
+          POSTGRES_DB: kompmaster_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kompmaster -d kompmaster_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            e2e:
+              - 'frontend/**'
+              - '!frontend/terraform/**'
+              - 'backend/**'
+              - 'scripts/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'docker-compose.yml'
+              - 'eslint.config.js'
+              - '.prettierrc.json'
+              - '.prettierignore'
+              - '.editorconfig'
+      - uses: pnpm/action-setup@v4
+        if: steps.changes.outputs.e2e == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.e2e == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: steps.changes.outputs.e2e == 'true'
+      - name: Install Playwright browsers
+        if: steps.changes.outputs.e2e == 'true'
+        run: pnpm --filter kompmaster-frontend exec playwright install --with-deps chromium webkit
+      - name: Apply migrations
+        if: steps.changes.outputs.e2e == 'true'
+        run: pnpm --filter kompmaster-server run migrate
+        env:
+          DATABASE_URL: postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e
+      - name: Seed E2E fixtures
+        if: steps.changes.outputs.e2e == 'true'
+        run: pnpm run seed:e2e
+        env:
+          DATABASE_URL: postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e
+      # One step on purpose: the backend must be up *before* the storefront
+      # build (home, catalog and the sitemap prerender from the API — building
+      # without it bakes an empty catalog), and a backgrounded process does not
+      # reliably survive the end of a step on the runner.
+      - name: Build and run Tier A E2E
+        if: steps.changes.outputs.e2e == 'true'
+        run: |
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+          DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e \
+            JWT_SECRET=e2e-ci-only PORT=4000 FRONTEND_ORIGIN=http://localhost:3002 \
+            NODE_ENV=development node backend/src/index.js > /tmp/e2e-backend.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:4000/api/health && break; sleep 1; done
+          # Fail loudly instead of building/running against a dead service.
+          curl -sf http://localhost:4000/api/health > /dev/null \
+            || { echo "::error::backend did not become healthy"; cat /tmp/e2e-backend.log; exit 1; }
+          API_BASE=http://localhost:4000/api SITE_URL=http://localhost:3002 \
+            pnpm --filter kompmaster-frontend run build
+          API_BASE=http://localhost:4000/api SITE_URL=http://localhost:3002 \
+            pnpm --filter kompmaster-frontend exec next start --port 3002 > /tmp/e2e-store.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3002/ && break; sleep 1; done
+          curl -sf http://localhost:3002/ > /dev/null \
+            || { echo "::error::storefront did not become ready"; cat /tmp/e2e-store.log; exit 1; }
+          E2E_STORE_URL=http://localhost:3002 E2E_API_BASE=http://localhost:4000/api pnpm run test:e2e
+      - name: Server logs (on failure)
+        if: failure() && steps.changes.outputs.e2e == 'true'
+        run: |
+          echo "===== backend ====="; cat /tmp/e2e-backend.log || true
+          echo "===== storefront ====="; cat /tmp/e2e-store.log || true
+
+  # Runs only when the local dev stack changes: validates the compose file
+  # schema and verifies every pinned image actually resolves on its registry.
+  # Exists because a dead image reference (`minio/minio` after MinIO removed
+  # its Docker Hub org, 2025-06) shipped and survived — nothing ever pulled
+  # the compose images before a developer ran `docker compose up`.
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            compose:
+              - 'docker-compose.yml'
+      - name: Validate compose config
+        if: steps.changes.outputs.compose == 'true'
+        run: docker compose config -q
+      - name: Verify pinned images resolve
+        if: steps.changes.outputs.compose == 'true'
+        run: docker compose pull --quiet
 
   terraform:
     runs-on: ubuntu-latest

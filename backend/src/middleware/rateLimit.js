@@ -71,6 +71,15 @@ const orderCreateLimiter = rateLimit({
   keyGenerator: accountKey,
 });
 
+// Публичный ингест телеметрии витрины: щедрый на браузер, жёсткий на абьюз.
+const telemetryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { error: "Слишком много пакетов телеметрии. Попробуйте позже." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 module.exports = {
   loginLimiter,
   registerLimiter,
@@ -79,4 +88,5 @@ module.exports = {
   adminPanelVerifyLimiter,
   adminLimiter,
   orderCreateLimiter,
+  telemetryLimiter,
 };

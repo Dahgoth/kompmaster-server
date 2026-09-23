@@ -1,7 +1,9 @@
-version: "3.8"
 services:
   postgres:
-    image: postgres:16-alpine
+    # Local Postgres — dev only (production is managed/VPS Postgres, ADR 002).
+    # Image is PINNED to the release verified working here; see DEVELOPMENT.md
+    # §Docker-based setup for the verify-then-bump upgrade procedure.
+    image: postgres:16.15-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: kompmaster
@@ -13,7 +15,14 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   minio:
-    image: minio/minio
+    # MinIO removed its org from Docker Hub: `minio/minio` fails every pull with
+    # "pull access denied / repository does not exist". The official
+    # distribution is Quay.io. The tag is PINNED to the release verified
+    # working here (`docker compose up -d minio` + /minio/health/live 200).
+    # To upgrade: pull the new RELEASE.* tag from Quay, re-verify health, then
+    # bump it here and in DEVELOPMENT.md §Docker-based setup. Never revert to
+    # the Docker Hub tag or to an unpinned `latest`.
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:

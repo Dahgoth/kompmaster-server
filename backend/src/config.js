@@ -75,4 +75,11 @@ module.exports = {
     chatId: required("TELEGRAM_CHAT_ID"),
   },
   yandexMetrikaId: required("YANDEX_METRIKA_ID"),
+  // One-way hook to the storefront's on-demand ISR invalidation (ADR 007).
+  // Both values optional: when either is unset the hook is a no-op (TTL is
+  // the backstop) and startup does not warn — skipping is a supported mode.
+  storefront: {
+    revalidateUrl: process.env.STOREFRONT_REVALIDATE_URL || "",
+    revalidateSecret: process.env.STOREFRONT_REVALIDATE_SECRET || "",
+  },
 };

@@ -7,7 +7,128 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Non-UUID route parameters no longer crash the API with `22P02 invalid input
+  syntax for type uuid`. The 2026-09-22 `reviews/product/:id` fix is now closed
+  class-wide: one shared `backend/src/utils/uuid.js#isUuid` guard replaces the
+  duplicated per-file regexes and covers every uuid-column lookup —
+  `products/:id`, `reviews/:id/approve|delete` and the manual-review body,
+  `orders` (create item ids, `my/:id`, `:id/status`, `:id/cancel`, delete) and
+  `users/:id/role`. Malformed values return 400 or 404 before the query runs
+  (previously an unhandled error killed the process); verified live on all six
+  routes, with `backend/tests/uuid.test.js` pinning the guard.
+- Local dev: `docker-compose.yml` now pulls MinIO from Quay.io, pinned to
+  `RELEASE.2025-09-07T16-13-09Z` — MinIO removed its Docker Hub organization,
+  so `minio/minio` fails every `docker compose up` with `pull access denied /
+  repository does not exist`. The dead reference dated from the first backend
+  commit and survived because no CI job or test ever pulled the compose stack;
+  a new path-filtered `compose` CI job now pulls it on every compose change.
+  Postgres is pinned to `16.15-alpine` the same way, and DEVELOPMENT.md
+  documents a verify-then-bump upgrade procedure for both dev-stack images.
+  Also drops the obsolete `version:` key that warned on every Compose command.
+- Sitemap product cap now counts only product entries (static route entries
+  excluded), and admin create/delete mutations invalidate queries through the
+  central `queryKeys` factory — ad-hoc `["products"]` key literals could leave
+  stale cached data after product changes.
+- Storefront contact data now has a single owner (`src/lib/content.ts`, the
+  verbatim v1 port): the duplicate `BRAND` constants had drifted, shipping a
+  wrong Telegram handle (`compmasoneone` instead of the live
+  `compmasterone`) on the manual-payment page and a fabricated
+  `+7 (900) 000-00-00` phone in the global footer. The phone block is now
+  rendered only when a real number exists, matching v1 behavior.
+- Cart persistence reads the storage key from `STORAGE_KEYS.cart` instead of a
+  second hardcoded `"km_cart"` literal, so the key that must survive the v1
+  cutover has one source of truth.
+
 ### Added
+- Storefront v2 catalog read path (Next.js, phase 3 of `docs/frontend-v2-plan.md`;
+  not yet deployed — the live static build still serves production): server-
+  rendered home/catalog/category/product pages against the existing REST API,
+  ISR with a 60s TTL plus an on-demand invalidation route
+  (`/api/revalidate`, secret-gated) and an IndexNow key endpoint; product
+  pages render Product/Offer JSON-LD, absolute canonicals, and 308-redirect
+  legacy `/product/:uuid` links to the canonical slug URL; `sitemap.xml` is
+  generated from the catalog (5,000-product cap per ADR 007) and `robots.txt`
+  blocks account/admin surfaces; persistent cart state keeps the v1
+  `km_cart` storage shape.
+- Static content pages ported verbatim from the v1 storefront (`/about`,
+  `/faq` with FAQPage JSON-LD, `/contacts`, `/warranty`): source of truth is
+  `src/lib/content.ts` until the DB-backed `/p/[slug]` program (ADR 007)
+  supersedes them with 301s.
+- Admin panel shell (phase 4): `/admin/login` (second-password gate,
+  sessionStorage panel session), role-gated shell (manager sees orders
+  only), `/admin/products` with create/list/delete + category filter,
+  `/admin/orders` with status filter + number search, status transitions,
+  cancel-with-reason (restores stock) and admin-only delete,
+  `/admin/categories` (create with kind/parent/image + delete, backend FK
+  guard surfaced verbatim), `/admin/users` (login/name search + role changes
+  confirmed with the audit notice), `/admin/reviews` (pending queue with
+  publish/delete + manual reviews published immediately), price import
+  inside `/admin/products` with mandatory dry-run preview (sync/merge modes,
+  multipart upload; verified live incl. slug auto-generation for new rows),
+  `/admin/pages` content editor (markdown + live preview, noindex flag,
+  ISR revalidate + IndexNow on save) with the public `/p/[slug]` surface
+  (server-rendered markdown without client JS, per-page canonicals,
+  noindex honored; verified live end-to-end).
+- Storefront auth slice (phase 3): login/registration/password-restore tabs
+  (`/auth`), and a working `/reset-password` route that consumes the emailed
+  token — the v1 storefront lacked this route entirely, so emailed reset
+  links landed on the home page and never reset anything (ADR 006 §Context).
+  Fixed the forgot-password contract (`{email}`, not `{login}` — the backend
+  reads `email`, so every restore request silently no-op'd before).
+- Profile (`/profile`): read-only account data + optional SMS phone
+  verification (request/confirm with 400/429 backend messages verbatim).
+- Product reviews: approved-review lists on product pages with
+  AggregateRating JSON-LD, purchase-gated submission with the pending-
+  moderation notice (403/409 surfaced as-is).
+- `GET|POST /api/reviews/product/:id` now resolves slug-or-UUID to the
+  product id first: unknown or non-UUID values return 404 instead of
+  crashing the process with `22P02 invalid input syntax for type uuid`
+  (found live 2026-09-22 — any crawler/typo on that route killed the API).
+- Storefront order flow (phase 3): cart page with quantity steppers and
+  persisted state, checkout with pickup/delivery + public-offer acceptance
+  gate, atomic order creation with per-item 409 stock-conflict messages, my
+  orders list and detail with the server-owned status pills (tint + text +
+  label), and the manual-payment instructions page (ADR 002: providers still
+  deferred).
+- Tier A E2E matrix (phase 5 of `docs/frontend-v2-plan.md`): 20 Playwright
+  specs + 2 Tier-B skips across 8 files (home, catalog, product, auth,
+  reset-password, cart, seo, navigation incl. mobile drawer and skip-link),
+  MSW fixture handlers, axe `assertNoViolations` on key flows; every label
+  wired via `aria-labelledby` so `getByLabel` resolves deterministically;
+  server/client API-base split hardened (`config.apiBase` throws in the
+  browser by design, covered by unit tests) after E2E exposed a production
+  crash from reading `API_BASE` client-side. The matrix is now executable
+  (`pnpm e2e`, chromium + WebKit mobile) and enforced in CI: the `e2e` job
+  provisions a throwaway Postgres, applies migrations, seeds deterministic
+  fixtures (`backend/scripts/seed-e2e.js`) and runs the suite against a real
+  backend — previously the specs had no runner at all.
+
+### Changed
+- Storefront rebuild started on the Next.js SSR/ISR stack (ADR 006/007):
+  vanilla Vite app replaced by a TypeScript Next.js App Router scaffold with
+  Tailwind v4 design tokens, workspace ESLint upgraded to typescript-eslint +
+  react-hooks + jsx-a11y, tests moved to Vitest, CI gained a `tsc --noEmit`
+  gate. Storefront behavior is unchanged until the storefront pages land
+  (plan phases 2–4); the deployed static build still serves production.
+
+### Added
+- Product URLs are opaque UUIDs (`/product/<id>`, ADR 007 amendment
+  2026-09-23): product transliteration slugs are removed as overengineering —
+  the v1 storefront was never a working public path, so there is no legacy
+  traffic to preserve and no keyword-URL value to repay the transliteration
+  machinery. Migration 003 drops the `products.slug` column + index added by
+  migration 002 §1 (002 ran only in local dev DBs); product reads are single
+  UUID-guarded queries where non-UUID values 404 before touching the DB.
+  `content_pages.slug` is unaffected (human-authored).
+- `X-Total-Count` response header on `GET /api/products` for pagination.
+- `POST /api/telemetry` — rate-limited frontend telemetry sink (errors, Web
+  Vitals), log-only with strict body caps.
+- Content pages API (`/api/pages`, admin + public `GET /api/pages/:slug`)
+  backing the SEO publishing surface (`content_pages` table, migration 002).
+- Catalog indexes: `pg_trgm` GIN on `products.name` (serves the ILIKE search
+  the old tsvector index could not), `(category_id, created_at DESC)` and
+  `created_at DESC` sort indexes (migration 002).
 - Dual-stack IPv4/IPv6 support for PoC VPS via Terraform-managed floating IP (`twc_floating_ip` resource) in St. Petersburg zone (spb-3). Both A and AAAA records created for apex and `api` subdomain.
 - SSH key pair generation documented in `terraform/RUNBOOK.md` (`ssh-keygen -t ed25519`) with public key registration in Timeweb panel.
 - CDN configuration variables for media bucket (`media_cdn_enabled`, `media_cdn_cname`) alongside existing frontend CDN toggle.

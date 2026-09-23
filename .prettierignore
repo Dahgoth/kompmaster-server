@@ -1,6 +1,7 @@
 # Build output and vendored code
 node_modules/
 dist/
+.next/
 uploads/
 
 # Non-code or tool-owned formats
@@ -16,3 +17,7 @@ pnpm-lock.yaml
 
 # Generated / data files
 frontend/dist/
+
+# Playwright run artifacts (traces, screenshots, retry contexts)
+frontend/test-results/
+test-results/

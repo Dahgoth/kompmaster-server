@@ -4,11 +4,16 @@ const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
 const { adminLimiter } = require("../middleware/rateLimit");
 const { parsePriceFile, findDuplicateNames } = require("../utils/priceImport");
+const { revalidateStorefront } = require("../utils/revalidate");
+const { isUuid } = require("../utils/uuid");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 // Публичный каталог: ?category=gpus&search=rtx&page=1&pageSize=30
+// Форма ответа (массив) сохранена — статическая витрина v1 ещё живёт в
+// проде и читает голый массив. Общее число строк отдаётся заголовком
+// X-Total-Count (см. Access-Control-Expose-Headers в index.js).
 router.get("/", async (req, res) => {
   const { category, search, page = 1, pageSize = 30 } = req.query;
   const conditions = [];
@@ -29,10 +34,22 @@ router.get("/", async (req, res) => {
     `SELECT * FROM products ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
+  const countParams = params.slice(0, params.length - 2);
+  const { rows: totals } = await db.query(
+    `SELECT count(*)::int AS total FROM products ${where}`,
+    countParams,
+  );
+  res.setHeader("X-Total-Count", String(totals[0]?.total ?? rows.length));
   res.json(rows);
 });
 
+// /:id принимает product id (UUID). Транслит-слаги удалены (ADR 007,
+// поправка 2026-09-23 — см. docs/adr/007-seo-rendering-nextjs.md §5): URL
+// используется как непрозрачный идентификатор, как и категории (/category/:id).
 router.get("/:id", async (req, res) => {
+  if (!isUuid(req.params.id)) {
+    return res.status(404).json({ error: "Товар не найден" });
+  }
   const { rows } = await db.query("SELECT * FROM products WHERE id = $1", [req.params.id]);
   if (!rows.length) return res.status(404).json({ error: "Товар не найден" });
   res.json(rows[0]);
@@ -64,6 +81,7 @@ router.post(
         specs ? JSON.stringify(specs) : null,
       ],
     );
+    revalidateStorefront(["products", `product:${rows[0].id}`]);
     res.json(rows[0]);
   },
 );
@@ -76,8 +94,14 @@ router.put(
   requireAdminPanelSession,
   async (req, res) => {
     const { name, price, oldPrice, available, image, description, categoryId } = req.body || {};
-    const existing = await db.query("SELECT price FROM products WHERE id = $1", [req.params.id]);
+    if (!isUuid(req.params.id)) {
+      return res.status(404).json({ error: "Товар не найден" });
+    }
+    const existing = await db.query("SELECT id, price FROM products WHERE id = $1", [
+      req.params.id,
+    ]);
     if (!existing.rows.length) return res.status(404).json({ error: "Товар не найден" });
+    const product = existing.rows[0];
 
     const { rows } = await db.query(
       `UPDATE products SET
@@ -90,15 +114,16 @@ router.put(
        category_id = COALESCE($7, category_id),
        updated_at = now()
      WHERE id = $8 RETURNING *`,
-      [name, price, oldPrice, available, image, description, categoryId, req.params.id],
+      [name, price, oldPrice, available, image, description, categoryId, product.id],
     );
     // История изменения цены — только если цена реально поменялась.
     if (price !== undefined && Number(price) !== Number(existing.rows[0].price)) {
       await db.query(
         "INSERT INTO price_history (product_id, old_price, new_price) VALUES ($1,$2,$3)",
-        [req.params.id, existing.rows[0].price, price],
+        [product.id, existing.rows[0].price, price],
       );
     }
+    revalidateStorefront(["products", `product:${product.id}`]);
     res.json(rows[0]);
   },
 );
@@ -110,7 +135,15 @@ router.delete(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
-    await db.query("DELETE FROM products WHERE id = $1", [req.params.id]);
+    if (!isUuid(req.params.id)) {
+      return res.status(404).json({ error: "Товар не найден" });
+    }
+    const { rows } = await db.query("DELETE FROM products WHERE id = $1 RETURNING id", [
+      req.params.id,
+    ]);
+    if (rows.length) {
+      revalidateStorefront(["products", `product:${rows[0].id}`]);
+    }
     res.json({ ok: true });
   },
 );
@@ -210,6 +243,7 @@ router.post(
       blankStock: parsed.blankStock,
       duplicates: dup,
     });
+    revalidateStorefront(["products"]);
   },
 );
 

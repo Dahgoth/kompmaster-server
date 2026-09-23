@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (Tailwind v4 @theme) — the single source for the rebuilt
+ * storefront's visual language. DESIGN.md will be regenerated from the
+ * implemented UI once pages land (ADR 006/007, plan phase 3).
+ * Soft retail surface: white canvas, hairlines, one accent per surface.
+ */
+@theme {
+  --font-sans:
+    "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* Surfaces and text */
+  --color-bg: #ffffff;
+  --color-soft: #f8f8fb;
+  --color-ink: #111114;
+  --color-muted: #71717a;
+  --color-line: #dedee5;
+
+  /* Brand accents (fixed set — one primary per surface) */
+  --color-pink: #ff18a8;
+  --color-violet: #7a5cff;
+  --color-cyan: #0ccdf1;
+  --color-lime: #8fe24b;
+
+  /* Radii scale (generous retail rounding; pills stay 999px) */
+  --radius-input: 12px;
+  --radius-btn: 14px;
+  --radius-row: 16px;
+  --radius-card: 18px;
+  --radius-block: 20px;
+  --radius-panel: 24px;
+
+  /* Elevation: border + shadow, never gray fills */
+  --shadow-card: 0 12px 35px rgb(17 17 20 / 0.035);
+  --shadow-lift: 0 16px 40px rgb(17 17 20 / 0.06);
+}
+
+body {
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-pink);
+  outline-offset: 2px;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

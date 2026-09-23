@@ -19,6 +19,8 @@
     "test": "pnpm run test:backend && pnpm run test:frontend",
     "test:backend": "pnpm --filter kompmaster-server test",
     "test:frontend": "pnpm --filter kompmaster-frontend test",
+    "test:e2e": "pnpm --filter kompmaster-frontend run e2e",
+    "seed:e2e": "pnpm --filter kompmaster-server run seed:e2e",
     "build:frontend": "pnpm --filter kompmaster-frontend build",
     "lint": "pnpm run lint:backend && pnpm run lint:frontend && pnpm run format:check",
     "lint:backend": "eslint backend scripts eslint.config.js",
@@ -35,8 +37,11 @@
     "@commitlint/config-conventional": "^21.2.2",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.10.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.12.0",
     "husky": "^9.1.7",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.6",
+    "typescript-eslint": "^8.70.0"
   }
 }
