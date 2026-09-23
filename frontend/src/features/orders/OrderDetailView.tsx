@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMyOrder } from "@/api/orders";
+import { queryKeys } from "@/api/categories";
 import { StatusPill } from "@/components/common/StatusPill";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { useAuth } from "@/features/auth/context";
@@ -19,7 +20,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
   }, [ready, user, orderId, router]);
 
   const query = useQuery({
-    queryKey: ["order", orderId],
+    queryKey: queryKeys.order(orderId),
     queryFn: ({ signal }) => fetchMyOrder(orderId, { signal }),
     enabled: !!user,
     staleTime: 15_000,

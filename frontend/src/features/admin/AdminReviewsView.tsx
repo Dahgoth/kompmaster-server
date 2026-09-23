@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ApiError, apiRequest } from "@/api/client";
 import { z } from "zod";
 import { reviewSchema } from "@/api/schemas";
+import { queryKeys } from "@/api/categories";
 import { AdminShell } from "@/features/admin/AdminShell";
 import { formatDateTime } from "@/lib/format";
 
@@ -21,7 +22,7 @@ export function AdminReviewsView() {
   const [error, setError] = useState<string | null>(null);
 
   const pending = useQuery({
-    queryKey: ["admin-reviews", "pending"],
+    queryKey: queryKeys.adminReviewsPending,
     queryFn: ({ signal }) =>
       apiRequest(z.array(pendingReviewSchema), "GET", "/reviews/pending", {
         scope: "admin",
@@ -32,7 +33,7 @@ export function AdminReviewsView() {
 
   function onError(err: unknown) {
     setError(err instanceof ApiError ? err.message : "Ошибка сети, попробуйте позже");
-    queryClient.invalidateQueries({ queryKey: ["admin-reviews"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.adminReviewsPending });
   }
 
   const approveMutation = useMutation({
@@ -58,7 +59,7 @@ export function AdminReviewsView() {
       apiRequest(reviewSchema, "POST", "/reviews/manual", { scope: "admin", body: input }),
     onSuccess: () => {
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-reviews"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminReviewsPending });
     },
     onError,
   });

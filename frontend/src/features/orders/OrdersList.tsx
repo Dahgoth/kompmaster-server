@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMyOrders } from "@/api/orders";
+import { queryKeys } from "@/api/categories";
 import { StatusPill } from "@/components/common/StatusPill";
 import { formatPrice } from "@/lib/format";
 import { useAuth } from "@/features/auth/context";
@@ -20,7 +21,7 @@ export function OrdersList() {
   }, [ready, user, router]);
 
   const query = useQuery({
-    queryKey: ["orders", "my"],
+    queryKey: queryKeys.ordersMine,
     queryFn: ({ signal }) => fetchMyOrders({ signal }),
     enabled: !!user,
     staleTime: 15_000,

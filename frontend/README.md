@@ -130,7 +130,8 @@ frontend/
       ui/                 — shadcn/ui primitives (added as needed)
       common/             — Price, StatusPill, QuantityStepper, … (phase 3)
     features/             — auth, catalog, cart, checkout, orders, admin (phases 2–4)
-    api/                  — fetch client, Zod schemas, query hooks (phase 2)
+    api/                  — fetch client, Zod schemas, query keys (queryKeys =
+                            single source for cache keys/invalidations)
     lib/                  — format, markdown (escaped renderer for /p/[slug];
                             a security boundary — see tests/markdown.test.ts),
                             order-status, telemetry, seo,

@@ -338,6 +338,12 @@ this section is the detailed reference.
   directives, and both read the row count from the backend's
   `X-Total-Count` header. Do not reintroduce `total: items.length` in
   admin list views.
+- Query keys must come from `frontend/src/api/categories.ts#queryKeys` —
+  raw array literals bypassed the factory with incompatible shapes, so a
+  factory-based invalidation would silently miss hardcoded views.
+- `backend/src/utils/revalidate.js` fires the ISR hook with a 3s
+  `AbortSignal.timeout`; a hung storefront must not pin the admin request's
+  event loop, and the ISR TTL is the invalidation backstop.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

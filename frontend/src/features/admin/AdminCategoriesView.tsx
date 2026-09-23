@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ApiError, apiRequest } from "@/api/client";
 import { z } from "zod";
 import { AdminShell } from "@/features/admin/AdminShell";
-import { fetchCategories } from "@/api/categories";
+import { fetchCategories, queryKeys } from "@/api/categories";
 
 /**
  * /admin/categories: create (id + name + kind + optional parent/image) and
@@ -17,7 +17,7 @@ export function AdminCategoriesView() {
   const [error, setError] = useState<string | null>(null);
 
   const list = useQuery({
-    queryKey: ["categories", "admin"],
+    queryKey: queryKeys.categoriesAdmin,
     queryFn: ({ signal }) => fetchCategories({ signal }),
     staleTime: 30_000,
   });

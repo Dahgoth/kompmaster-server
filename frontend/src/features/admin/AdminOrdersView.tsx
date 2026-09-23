@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, apiRequest } from "@/api/client";
 import { z } from "zod";
+import { queryKeys } from "@/api/categories";
 import { orderSchema } from "@/api/schemas";
 import { AdminShell } from "@/features/admin/AdminShell";
 import { StatusPill } from "@/components/common/StatusPill";
@@ -33,7 +34,11 @@ export function AdminOrdersView({ role }: { role: "admin" | "manager" }) {
   const [error, setError] = useState<string | null>(null);
 
   const list = useQuery({
-    queryKey: ["admin-orders", { page, status, search: submittedSearch }],
+    queryKey: queryKeys.adminOrders({
+      status: status === ALL ? undefined : status,
+      search: submittedSearch || undefined,
+      page,
+    }),
     queryFn: ({ signal }) => {
       const params = new URLSearchParams();
       if (status !== ALL) params.set("status", status);
@@ -50,7 +55,7 @@ export function AdminOrdersView({ role }: { role: "admin" | "manager" }) {
 
   function onError(err: unknown) {
     setError(err instanceof ApiError ? err.message : "Ошибка сети, попробуйте позже");
-    queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.adminOrders({}) });
   }
 
   const statusMutation = useMutation({
@@ -74,7 +79,7 @@ export function AdminOrdersView({ role }: { role: "admin" | "manager" }) {
     onSuccess: () => {
       setCancelTarget(null);
       setCancelReason("");
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminOrders({}) });
     },
     onError,
   });

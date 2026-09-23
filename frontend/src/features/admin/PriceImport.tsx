@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError } from "@/api/client";
+import { queryKeys } from "@/api/categories";
 import { z } from "zod";
 
 /**
@@ -119,8 +120,8 @@ export function PriceImport() {
       setResult(data);
       setPreview(null);
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products({}) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminOrders({}) });
     },
     onError: (err) => {
       setError(err instanceof Error ? err.message : "Ошибка сети, попробуйте позже");

@@ -4,33 +4,33 @@
 
 const config = require("../config");
 
-const MAX_ATTEMPTS = 1;
+// A hung storefront must not pin the mutation's event loop for undici's
+// default 300s timeout; 3s bounds one attempt per mutation.
+const TIMEOUT_MS = 3000;
 
 async function revalidateStorefront(tags) {
   const url = config.storefront.revalidateUrl;
   const secret = config.storefront.revalidateSecret;
   if (!url || !secret) return { skipped: true };
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-revalidate-secret": secret,
-        },
-        body: JSON.stringify({ tags }),
-      });
-      if (!res.ok) {
-        console.error(`[revalidate] HTTP ${res.status} для тегов ${tags.join(",")}`);
-        return { ok: false };
-      }
-      return { ok: true };
-    } catch (err) {
-      console.error(`[revalidate] ${err.message}`);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-revalidate-secret": secret,
+      },
+      body: JSON.stringify({ tags }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      console.error(`[revalidate] HTTP ${res.status} для тегов ${tags.join(",")}`);
       return { ok: false };
     }
+    return { ok: true };
+  } catch (err) {
+    console.error(`[revalidate] ${err.message}`);
+    return { ok: false };
   }
-  return { ok: false };
 }
 
-module.exports = { revalidateStorefront };
+module.exports = { revalidateStorefront, TIMEOUT_MS };
