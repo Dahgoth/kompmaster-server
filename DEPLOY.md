@@ -193,3 +193,123 @@ curl -I https://compmasone.ru        # 301 → https://www.compmasone.ru
 - Offsite зашифрованный `pg_dump` в dedicated backup bucket — основной recovery control (ADR-005).
 - Скрипт бэкапа ре-ассертит S3 versioning каждый запуск; включите в панели если API фейлит.
 - Тестируйте восстановление ежеквартально — drill is the control, not the archive.
+
+## 8. Витрина (Next.js SSR/ISR) — Deploy Topology (ADR 006/007)
+
+### 8.1 Директории на VPS
+```
+/opt/compmaster/storefront/
+├── current           # symlink → releases/<utc-stamp> (atomic flip)
+├── releases/
+│   ├── 20260923081541/   # full standalone artifact (self-contained)
+│   └── ...
+├── shared/
+│   └── storefront.env    # PORT, HOSTNAME, NODE_ENV, API_BASE, SITE_URL, ...
+└── node_modules/        # (hoisted from workspace root at build time)
+```
+
+### 8.2 Артефакт (`output: "standalone"` + tracing от workspace root)
+Собирается на билд-машине (CI/локально):
+```bash
+cd /path/to/workspace
+pnpm --filter kompmaster-frontend build
+# → frontend/.next/standalone/
+#    ├── frontend/          # server.js + .next/ (app bundle)
+#    └── node_modules/      # next, styled-jsx, @next/env, @swc/helpers, react, react-dom
+# frontend/.next/static/    # immutable hashed assets
+# frontend/public/          # static public files
+```
+Скрипт `backend/scripts/deploy-storefront.sh` собирает deploy-артефакт:
+```
+<artifact>/
+├── server.js
+├── package.json
+├── .next/                  # compiled app (from standalone/frontend/.next)
+├── node_modules/           # runtime closure (copied from standalone/node_modules)
+├── public/
+└── RELEASE                 # git short SHA (health gate prints it)
+```
+
+### 8.3 Деплой (single script, idempotent)
+```bash
+# На билд-машине или локально:
+cd /path/to/workspace
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh [--skip-build] [--dry-run]
+```
+Что делает скрипт (порядок важен):
+1. **Build** (если не `--skip-build`): `pnpm --filter kompmaster-frontend build` с `API_BASE`/`SITE_URL` запечёнными.
+2. **Assemble**: rsync standalone + node_modules + static + public → temp artifact.
+3. **Boot-verify**: стартует `node server.js` на scratch-порту 3199 (env: `API_BASE`, `SITE_URL`), ждёт `/` 200 OK → ловит broken bundle *до* ship. Флаг `BOOT_CHECK_PORT` меняет порт.
+4. **Ship**: rsync `--delete` artifact → `$STOREFRONT_ROOT/releases/<utc-stamp>/`.
+5. **Marker**: пишет `RELEASE` (git short SHA) в релизную директорию (health gate печатает его).
+6. **Flip**: `ln -sfn releases/<stamp> current` (atomic).
+7. **PM2** (remote mode): `pm2 delete kompmaster-storefront 2>/dev/null; pm2 start current/server.js --name kompmaster-storefront --cwd $STOREFRONT_ROOT/current -- PORT=3000 HOSTNAME=127.0.0.1 NODE_ENV=production API_BASE=... SITE_URL=...`
+   - PM2 резолвит путь к скрипту *на старте* → symlink flip работает без reload.
+8. **Health gate**: `curl -f http://127.0.0.1:3000/` (или `$STOREFRONT_PORT`), при фейле — авто-rollback `ln -sfn previous current` + `pm2 restart`.
+9. **Prune**: `KEEP_RELEASES=3` (переменная окружения), удаляет старые релизы.
+
+Локальный режим (`STOREFRONT_SSH=""`): кладёт в `$STOREFRONT_ROOT`, PM2 не трогает, печатает команду для ручного запуска.
+
+### 8.4 Caddy: `www` блок (добавлен в `Caddyfile`)
+```caddy
+www.{$DOMAIN} {
+    encode zstd gzip
+    @static {
+        path /_next/static/*
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+    header Strict-Transport-Security "max-age=31536000"
+    header X-Content-Type-Options "nosniff"
+    header Referrer-Policy "strict-origin-when-cross-origin"
+    header X-Frame-Options "SAMEORIGIN"
+    header -Server
+    # CSP Report-Only (nonce требует middleware — пока Report-Only):
+    header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.{$DOMAIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; report-uri /api/report-csp"
+    reverse_proxy 127.0.0.1:{$STOREFRONT_PORT:3000}
+}
+```
+- `STOREFRONT_PORT` задаётся в `/etc/default/caddy` (default 3000).
+- Caddy ретраит Let's Encrypt до DNS cutover — можно деплоить заранее.
+- В `terraform/` Caddy читает `/etc/default/caddy` (Debian пакет).
+
+### 8.5 DNS Cutover (S3 → Self-hosted)
+1. Деплой витрины на VPS (скрипт выше), убедиться в health gate PASS.
+2. В Timeweb панели: `www` CNAME с `s3.timeweb.com` → IP VPS (floating IP) или CNAME на VPS hostname.
+3. CDN purge (панель Timeweb CDN) — старые edge-кэши S3 уйдут через TTL.
+4. `curl -I https://www.compmasone.ru` → `Server: Caddy`, `X-Content-Type-Options: nosniff`, CSP-Report-Only header present.
+5. Rollback plan: вернуть CNAME на S3 + CDN purge (мгновенно).
+
+### 8.6 RAM Measurement & VPS Headroom
+Скрипт: `backend/scripts/measure-storefront-ram.sh`
+- Собирает fresh standalone, стартует на scratch-порту (default 3100), прогоняет 4 раунда × 14 маршрутов (статические + SSR без бэкенда), сэмплирует RSS каждые 0.2с.
+- Локальный baseline: **80 MB peak** (PASS vs бюджет 512 MB).
+- На VPS (staging API): запустить тот же скрипт, получить реальный peak.
+- Формула headroom: `free -m` → колонка `available` − (RSS postgres + RSS kompmaster-api + storefront_peak) ≥ 512 MB запаса.
+- Если не укладывается — апгрейд VPS или снижение `RAM_BUDGET_MB` (переменная скрипта).
+
+### 8.7 Операционные команды
+```bash
+# Статус PM2
+pm2 status kompmaster-storefront
+
+# Логи
+pm2 logs kompmaster-storefront
+
+# Ручной rollback (symlink + pm2 restart)
+cd /opt/compmaster/storefront
+ln -sfn releases/20260923081541 current
+pm2 restart kompmaster-storefront
+
+# Запуск measure-скрипта на VPS (staging API)
+cd /opt/compmaster
+API_BASE=https://staging-api.compmasone.ru/api \
+SITE_URL=https://staging-www.compmasone.ru \
+./backend/scripts/measure-storefront-ram.sh
+
+# Dry-run деплоя (нет side effects)
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh --dry-run --skip-build
+```

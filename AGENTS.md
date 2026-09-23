@@ -166,6 +166,8 @@ Corepack (`corepack enable pnpm`). Target a single app with
 - `pnpm run lint:commit` — validate the last commit message.
 - `pnpm --filter kompmaster-server <script>` /
   `pnpm --filter kompmaster-frontend <script>` — run any script in one app only.
+- `./backend/scripts/deploy-storefront.sh` — deploy storefront (rsync + PM2 + health gate).
+- `./backend/scripts/measure-storefront-ram.sh` — measure storefront RSS under load.
 
 ## Project-specific notes
 
@@ -179,9 +181,11 @@ Corepack (`corepack enable pnpm`). Target a single app with
   domain table below satisfied in the same PR.
 - Database schema changes go into `backend/migrations/` as new `NNN_*.sql`
   files; existing applied migrations must not be edited.
-- Operational scripts live at `backend/scripts/` (`deploy.sh`, `backup.sh`).
+- Operational scripts live at `backend/scripts/` (`deploy.sh`, `backup.sh`, `deploy-storefront.sh`, `measure-storefront-ram.sh`).
 - Deploy: the API runs under PM2 with a CWD of `backend/` so `dotenv` loads
   `backend/.env` (template `backend/.env.example`). Start with
   `pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend`.
   The automated deploy helper is `backend/scripts/deploy.sh`.
+  The storefront deploy is `backend/scripts/deploy-storefront.sh`
+  (rsync + PM2 + health gate + rollback); see `DEPLOY.md` §8.
 - Never commit `.env`, `node_modules/`, or the contents of `uploads/`.

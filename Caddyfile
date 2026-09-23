@@ -15,3 +15,29 @@ api.{$DOMAIN:compmasone.ru} {
   encode zstd gzip
   reverse_proxy 127.0.0.1:{$PORT:4000}
 }
+
+# Storefront v2 (ADR 007 phase 6): SSR under PM2 behind this block, replacing
+# the S3-website www target at the phase-7 cutover (DEPLOY.md §8). Until the
+# www DNS record points here, Caddy retries certificate issuance for this
+# block in the background and the two hosts above are unaffected — deploy the
+# updated Caddyfile before the DNS flip, not after.
+www.{$DOMAIN:compmasone.ru} {
+  encode zstd gzip
+
+  # Content-hashed build assets never change: cache for a year.
+  header /_next/static/* Cache-Control "public, max-age=31536000, immutable"
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    X-Frame-Options "SAMEORIGIN"
+    # Report-only on purpose: Next's inline hydration scripts need a nonce for
+    # an enforcing policy, and a nonce-less CSP blanks the storefront. Review
+    # reports first, then promote with per-request nonces (DEPLOY.md §8.2).
+    Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.{$DOMAIN:compmasone.ru} https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+    -Server
+  }
+
+  reverse_proxy 127.0.0.1:{$STOREFRONT_PORT:3000}
+}

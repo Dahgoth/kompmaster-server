@@ -39,6 +39,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cart persistence reads the storage key from `STORAGE_KEYS.cart` instead of a
   second hardcoded `"km_cart"` literal, so the key that must survive the v1
   cutover has one source of truth.
+- Storefront deploy script `backend/scripts/deploy-storefront.sh` (phase 6):
+  rsync + PM2 + health gate + auto-rollback, boot-verify on scratch port before
+  shipping, release symlink flip (`current`), retention (`KEEP_RELEASES=3`),
+  local mode for development, `--dry-run` with zero side effects.
+- Storefront RAM measurement `backend/scripts/measure-storefront-ram.sh`:
+  fresh standalone build, load test on scratch port, RSS sampling every 0.2s,
+  min/avg/peak report vs `RAM_BUDGET_MB`, local baseline 80 MB peak (PASS vs
+  512 MB), VPS formula `available − (postgres + api + storefront) ≥ 512 MB`.
+- Caddy `www` block (phase 6 cutover): encodes zstd/gzip, immutable
+  `_next/static/*` cache, HSTS, nosniff, CSP-Report-Only (nonce-less, reports
+  only), `reverse_proxy 127.0.0.1:{$STOREFRONT_PORT:3000}`; `STOREFRONT_PORT`
+  in `/etc/default/caddy`.
+- Storefront runtime environment documented in `ENVIRONMENT.md`: `PORT`,
+  `HOSTNAME`, `NODE_ENV`, `API_BASE`, `SITE_URL`, `REVALIDATE_SECRET`,
+  `INDEXNOW_KEY`; `VITE_API_BASE` retired (v1 static build).
+- `pnpm-workspace.yaml`: added `nodeLinker: hoisted` to fix Next.js standalone
+  output (isolated layout produced broken `node_modules/next` stub).
+- `next.config.ts`: `outputFileTracingRoot` set to workspace root so file trace
+  reaches hoisted deps; standalone now emits complete runtime closure.
 
 ### Added
 - Storefront v2 catalog read path (Next.js, phase 3 of `docs/frontend-v2-plan.md`;

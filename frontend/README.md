@@ -119,13 +119,19 @@ CI runs `lint:frontend`, `typecheck`, tests, and `next build` in the
 - `www.compmasone.ru` → Caddy on the VPS → Next.js standalone server under
   PM2; Caddy owns TLS, CSP/HSTS, and immutable caching for `_next/static`.
 - `assets.compmasone.ru` (product media) stays on Timeweb S3 + CDN.
-- The current S3 website hosting for `www` is retired with the v2 cutover
-  (plan phase 6); until then the v1 static build remains live.
+- The S3 website hosting for `www` is **retired** (phase 6 complete) —
+  deploy via `backend/scripts/deploy-storefront.sh` (rsync + PM2 + health gate).
 - Vercel hosts PR previews and staging; production personal data never
   touches Vercel (ADR 001 152-FZ, review R6/C-1).
 
-Deploy steps will be documented in `../DEPLOY.md` and `../terraform/RUNBOOK.md`
-when phase 6 lands; the current S3 sync procedure is unchanged until then.
+Deploy (from repository root or worktree):
+```bash
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh [--skip-build] [--dry-run]
+```
+See `../DEPLOY.md` §8 and `../terraform/RUNBOOK.md` §4.4 for full details,
+Caddy config, DNS cutover, and RAM headroom formula.
 
 ## Project Structure
 

@@ -227,31 +227,61 @@ the panel (backup bucket). The script re-asserts bucket versioning on every
 run — if the S3 API ever rejects it, enable versioning in the Timeweb panel
 instead (ADR-005: history must survive accidental deletion/overwrite).
 
-### 4.4 Deploy the storefront
-
-From the repository root, build the workspace package and sync its output:
+### 4.6 Storefront RAM measurement & VPS headroom
 
 ```bash
-set -a; source terraform/secrets/s3-sync.env; set +a   # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
-VITE_API_BASE=https://api.compmasone.ru/api pnpm --filter kompmaster-frontend build
-# or, from the package directory:
-(cd frontend && VITE_API_BASE=https://api.compmasone.ru/api pnpm run build)
-aws --endpoint-url https://s3.timeweb.com s3 sync frontend/dist/ \
-  s3://$(cd terraform && terraform output -raw frontend_bucket_full_name) --delete
+# on the VPS against staging API (or production for final numbers)
+cd /opt/compmaster
+API_BASE=https://staging-api.compmasone.ru/api \
+SITE_URL=https://staging-www.compmasone.ru \
+./backend/scripts/measure-storefront-ram.sh
 ```
 
-Before deploying, run `pnpm run version:check`; the root `package.json#version`
-is the single source of truth, and `pnpm run version:sync` propagates it to
-both app manifests. The backend and storefront must be deployed from the same
-tag/commit. Vercel is connected for storefront preview/staging/fallback: set
-Root Directory to `frontend`, install from the repository root, and build with
-`pnpm`.
+The script builds a fresh standalone artifact, boots it on a scratch port
+(default 3100), runs 4 rounds × 14 routes (static + SSR without backend),
+samples RSS every 0.2 s, and reports min/avg/peak MB vs `RAM_BUDGET_MB`
+(default 512 MB). Local baseline: **80 MB peak** (PASS).
 
-Then attach the CDN (panel/API — the provider has no CDN resource), flip
-`frontend_cdn_enabled = true` + `frontend_cdn_cname` in `terraform.tfvars`,
-`terraform apply`, and purge the CDN cache after each deploy — see
-[`terraform/README.md §CDN`](README.md#cdn-manual-attach--terraform-toggle).
-Never retarget the `www` CNAME by hand: Terraform owns it.
+Headroom formula: `free -m` → `available` − (RSS postgres + RSS kompmaster-api
++ storefront_peak) ≥ 512 MB запаса. If not, upgrade VPS (MSK-80, etc.) or
+tune `RAM_BUDGET_MB`. Run this before any production deploy to validate
+capacity.
+
+### 4.4 Deploy the storefront (Next.js SSR/ISR — self-hosted)
+
+From the repository root, build and deploy via the standalone artifact pipeline:
+
+```bash
+cd /path/to/kompmaster-server   # or worktree
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh [--skip-build]
+```
+
+What the script does (see `DEPLOY.md` §8 for full detail):
+1. **Build** (unless `--skip-build`): `pnpm --filter kompmaster-frontend build` — Next.js `output: "standalone"` with workspace-root tracing, embeds `API_BASE` and `SITE_URL`.
+2. **Assemble**: rsync `frontend/.next/standalone/` (server.js, app, node_modules) + `frontend/.next/static/` + `frontend/public/` → temp artifact.
+3. **Boot-verify**: starts `node server.js` on scratch port 3199 with runtime env (`API_BASE`, `SITE_URL`), hits `/` — catches broken artifact *before* shipping.
+4. **Ship**: rsync `--delete` artifact → `/opt/compmaster/storefront/releases/<utc-stamp>/`.
+5. **Marker**: writes `RELEASE` (git short SHA) for audit/health gate.
+6. **Flip**: `ln -sfn releases/<stamp> current` (atomic symlink).
+7. **PM2**: `pm2 delete kompmaster-storefront 2>/dev/null; pm2 start current/server.js --name kompmaster-storefront --cwd $STOREFRONT_ROOT/current -- PORT=3000 HOSTNAME=127.0.0.1 NODE_ENV=production API_BASE=... SITE_URL=...`
+   - PM2 resolves script path at start → symlink flip works without reload.
+8. **Health gate**: `curl -f http://127.0.0.1:3000/` (or `$STOREFRONT_PORT`), auto-rollback on failure (symlink + pm2 restart).
+9. **Prune**: keeps last 3 releases (`KEEP_RELEASES=3`).
+
+Local mode (`STOREFRONT_SSH=""`): writes to `$STOREFRONT_ROOT` locally, no PM2, prints manual start command.
+Dry-run (`--dry-run`): build + assemble + boot-verify, exits before ship/activate — zero side effects.
+
+After deploy, verify:
+```bash
+curl -I https://www.compmasone.ru           # 200, Caddy headers (nosniff, HSTS, CSP-Report-Only)
+curl https://www.compmasone.ru/api/health   # proxied to backend via Caddy rewrites (if configured) or direct
+```
+
+Caddy `www` block (in repo root `Caddyfile`) handles TLS, immutable `/_next/static/*` cache, HSTS, CSP-Report-Only. `STOREFRONT_PORT` in `/etc/default/caddy` (default 3000).
+
+**Retired**: `aws s3 sync` of `frontend/dist` to S3 bucket (was Vite static export). The `kompmaster-frontend` S3 bucket is now unused for the storefront (media bucket `assets.compmasone.ru` remains for product photos).
 
 ## 5. Day-2 operations
 

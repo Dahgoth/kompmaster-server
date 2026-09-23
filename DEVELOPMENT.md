@@ -109,6 +109,38 @@ under `--prod`; the backend has no dependencies that need install scripts.
 `backend/scripts/deploy.sh` wraps the `pnpm install` + `pnpm run migrate` + PM2
 steps.)
 
+### Storefront deployment (Next.js standalone)
+
+The self-hosted storefront (`www.compmasone.ru`) is deployed via
+`backend/scripts/deploy-storefront.sh`:
+
+```bash
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh [--skip-build] [--dry-run]
+```
+
+What it does:
+1. **Build** (unless `--skip-build`): `pnpm --filter kompmaster-frontend build`
+   with `API_BASE` and `SITE_URL` embedded.
+2. **Assemble**: rsync standalone bundle + node_modules + static + public → temp artifact.
+3. **Boot-verify**: starts `node server.js` on scratch port 3199, hits `/` —
+   catches broken artifact before shipping.
+4. **Ship**: rsync `--delete` → `/opt/compmaster/storefront/releases/<utc-stamp>/`.
+5. **Flip**: `ln -sfn releases/<stamp> current` (atomic).
+6. **PM2**: `pm2 delete+start current/server.js --cwd current` — PM2 resolves
+   script path at start, so symlink flip works without reload.
+7. **Health gate**: `curl -f http://127.0.0.1:3000/`, auto-rollback on failure.
+8. **Prune**: keeps last 3 releases (`KEEP_RELEASES=3`).
+
+Local mode (`STOREFRONT_SSH=""`): writes to `$STOREFRONT_ROOT` locally, no PM2,
+prints manual start command.
+
+RAM headroom: `./backend/scripts/measure-storefront-ram.sh` builds fresh
+standalone, boots on scratch port, runs 4 rounds × 14 routes, samples RSS
+every 0.2s, reports min/avg/peak vs `RAM_BUDGET_MB` (default 512 MB). Local
+baseline: **80 MB peak** (PASS). Run on VPS against staging API for real numbers.
+
 > **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
 > Production app deployment uses PM2. See
 > [docs/archive/DOCKER_EVALUATION.md](docs/archive/DOCKER_EVALUATION.md)
