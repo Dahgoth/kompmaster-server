@@ -83,6 +83,8 @@ sudo -u postgres psql -c "CREATE DATABASE kompmaster OWNER kompmaster;"
 
 ```bash
 # Быстрый вариант через Docker (нужен docker + docker-compose):
+# образ MinIO зафиксирован и берётся с quay.io — тег minio/minio из Docker Hub
+# больше не существует (организация удалена в 2025-06).
 docker compose up -d postgres minio
 ```
 

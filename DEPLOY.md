@@ -150,7 +150,10 @@ curl -I https://compmasone.ru        # 301 → https://www.compmasone.ru
 После первого входа пароль можно поменять в админке.
 
 > **Note:** Docker is not used for app deployment. Docker Compose is only
-> used locally for PostgreSQL + MinIO development databases. See
+> used locally for PostgreSQL + MinIO development databases (MinIO image is
+> pinned to `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` — MinIO removed
+> its Docker Hub organization, so the Hub tag no longer resolves; validated in
+> CI by the `compose` job). See
 > [docs/archive/DOCKER_EVALUATION.md](docs/archive/DOCKER_EVALUATION.md)
 > for the full rationale.
 

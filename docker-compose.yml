@@ -12,10 +12,14 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   minio:
-    # MinIO removed its org from Docker Hub (minio/minio now 404s on pull);
-    # the official distribution lives on Quay.io. Do not revert to
-    # minio/minio — see DEVELOPMENT.md §Local infrastructure.
-    image: quay.io/minio/minio:latest
+    # MinIO removed its org from Docker Hub: `minio/minio` fails every pull with
+    # "pull access denied / repository does not exist". The official
+    # distribution is Quay.io. The tag is PINNED to the release verified
+    # working here (`docker compose up -d minio` + /minio/health/live 200).
+    # To upgrade: pull the new RELEASE.* tag from Quay, re-verify health, then
+    # bump it here and in DEVELOPMENT.md §Docker-based setup. Never revert to
+    # the Docker Hub tag or to an unpinned `latest`.
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:

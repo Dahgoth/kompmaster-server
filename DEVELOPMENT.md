@@ -352,9 +352,12 @@ this section is the detailed reference.
   pushed commits (backend `pnpm test:backend` / frontend `pnpm test:frontend`),
   plus `node scripts/check-versions.js` and `node scripts/check-docs.js`.
   CI (`.github/workflows/ci.yml`) runs path-filtered `backend` / `frontend` /
-  `terraform` jobs plus always-on `docs-sync` and `versions` jobs and
-  commitlint on every push and PR; the `backend` and `frontend` jobs also run
-  ESLint (`pnpm run lint:backend` / `lint:frontend`) before their suites.
+  `terraform` / `compose` jobs plus always-on `docs-sync` and `versions` jobs
+  and commitlint on every push and PR; the `backend` and `frontend` jobs also
+  run ESLint (`pnpm run lint:backend` / `lint:frontend`) before their suites.
+  The `compose` job runs `docker compose config -q` and `docker compose pull`
+  whenever `docker-compose.yml` changes, so an unresolvable or unpinned image
+  reference fails CI instead of a developer's first `docker compose up`.
   The `backend` job filters on `backend/**`
   plus the root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, and
   `scripts/**`; the `frontend` job runs `pnpm --filter kompmaster-frontend
@@ -423,11 +426,27 @@ or git history (`git log --follow docs/legacy/`).
 ## Docker-based setup (databases only)
 
 `docker-compose.yml` provides PostgreSQL 16 (`postgres`) and MinIO (`minio`)
-with local volumes. The MinIO image is pulled from
-`quay.io/minio/minio:latest`: MinIO removed its Docker Hub organization
-(2025-06), so `minio/minio` now fails every pull with
-`pull access denied / repository does not exist`. Do not revert to the
-Docker Hub tag; if the image is ever pinned, use a Quay `RELEASE.*` tag.
+with local volumes. Both are **dev-only** — production object storage is
+Timeweb S3 (ADR 002) and production Postgres is the managed/VPS instance.
+
+The MinIO image is pinned to `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`:
+
+- **Registry.** MinIO removed its Docker Hub organization, so `minio/minio`
+  fails every pull with `pull access denied / repository does not exist`. The
+  official distribution is Quay.io. Do not revert to the Docker Hub tag.
+- **Why it broke here.** The dead `minio/minio` reference entered the repo in
+  the first backend commit (`db67caa`, 2026-09-08) — *before* any ADR existed
+  — as a stale convention, and survived because nothing exercised the compose
+  stack: CI only path-filtered on `docker-compose.yml` without pulling images,
+  no test touches S3 uploads, and local dev commonly uses a host Postgres.
+  The `compose` CI job now pulls the stack whenever the compose file changes.
+- **Why pinned, not `latest`.** An unpinned tag makes the dev stack
+  non-reproducible and can break `docker compose up` with no repo change.
+
+**Upgrade procedure:** pull the candidate `RELEASE.*` tag from Quay, run
+`docker compose up -d minio`, confirm `curl -sf localhost:9000/minio/health/live`
+returns 200 and the S3 console answers on `:9001`, then bump the tag here and
+in `docker-compose.yml` in the same commit.
 
 - Postgres: `localhost:5432`, user/db `kompmaster`, password `kompmaster`
   (dev-only defaults — change before any real deployment).

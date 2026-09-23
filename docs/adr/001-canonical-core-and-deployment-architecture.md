@@ -35,6 +35,19 @@ Vercel Functions + Supabase Postgres     Timeweb Node container/process
 
 **Amendment 5000 WAU HA (2026-09-13 20:00 UTC):** Target raised 5000 WAU (from 1000) with HA from day one, cheapest HA. Gateway set expanded to Tinkoff/Alfa-Bank/CloudPayments/Robokassa (+YooKassa alt) with Atol 80%/CloudKassir 20% + PayKeeper cheques. §11 recomputed for 5k WAU cheapest HA.
 
+**Amendment dev-stack images (2026-09-23):** The local development stack in
+`docker-compose.yml` (Postgres 16-alpine + MinIO) is part of the canonical
+contract. MinIO removed its Docker Hub organization (2025-06), so
+`minio/minio` no longer resolves anywhere; the stack pulls MinIO from
+Quay.io, pinned to `RELEASE.2025-09-07T16-13-09Z` (no unpinned `latest`).
+Production object storage is unaffected (Timeweb S3 per ADR 002) — MinIO is
+a dev-only emulator. The compose stack is validated in CI (new `compose`
+job: `docker compose config` + `docker compose pull`) whenever the compose
+file changes, so a dead image reference fails CI instead of a developer's
+first `docker compose up`. Lesson: the dead reference shipped 2026-09-08 —
+before any ADR existed — because nothing ever pulled the compose images;
+infra references must be registry-validated, not reproduced from memory.
+
 Principles (final): one API/auth/schema contract (`src/index.js` + 7 routers + 2 middleware + `config.js`/`db.js` + `migrations/`); runtime is RF HA; `PostgreSQL` stays `PostgreSQL` (managed HA, no Supabase in prod); custom JWT unified; media via RF S3 presigned grant (see presigned handshake below); migrations single CI/release job with advisory lock; payments+fiscalization are narrow required boundaries; no generic multi-cloud abstraction.
 
 Modular core is only runnable path. Legacy family (`docs/legacy/server.js` (formerly `src/server.js`), `src/auth.js`, `src/mail.js`, `src/sheets.js`, `src/payment-adapters/`, `public/index.html`+`server-bridge.js`, `src/schema.sql`, `scripts/init-db.js`) is fossil — not `DEAD_WEIGHT`; treated **inspiration-only** per maintainer (audit non-blocking, see §1).

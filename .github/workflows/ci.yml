@@ -173,6 +173,28 @@ jobs:
           API_BASE: https://api.compmasone.ru/api
           SITE_URL: https://www.compmasone.ru
 
+  # Runs only when the local dev stack changes: validates the compose file
+  # schema and verifies every pinned image actually resolves on its registry.
+  # Exists because a dead image reference (`minio/minio` after MinIO removed
+  # its Docker Hub org, 2025-06) shipped and survived — nothing ever pulled
+  # the compose images before a developer ran `docker compose up`.
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            compose:
+              - 'docker-compose.yml'
+      - name: Validate compose config
+        if: steps.changes.outputs.compose == 'true'
+        run: docker compose config -q
+      - name: Verify pinned images resolve
+        if: steps.changes.outputs.compose == 'true'
+        run: docker compose pull --quiet
+
   terraform:
     runs-on: ubuntu-latest
     steps:
