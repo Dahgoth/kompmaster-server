@@ -28,9 +28,20 @@ export function Footer() {
           <p className="text-lg font-extrabold">{BRAND.name}</p>
           <p className="mt-2 text-sm text-muted">{BRAND.tagline}</p>
           <p className="mt-4 text-sm text-muted">{BRAND.address}</p>
-          <a href={BRAND.phoneHref} className="mt-2 block font-bold">
-            {BRAND.phone}
-          </a>
+          {BRAND.phone ? (
+            <a href={BRAND.phoneHref} className="mt-2 block font-bold">
+              {BRAND.phone}
+            </a>
+          ) : (
+            <a
+              href={BRAND.telegram}
+              className="mt-2 block font-bold"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Telegram @{BRAND.telegramHandle}
+            </a>
+          )}
         </div>
 
         {SECTIONS.map((s) => (

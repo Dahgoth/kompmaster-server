@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, type PersistStorage } from "zustand/middleware";
 import { z } from "zod";
+import { STORAGE_KEYS } from "@/api/client";
 import type { Product } from "@/api/schemas";
 
 /**
@@ -104,6 +105,6 @@ export const useCartStore = create<CartState>()(
         })),
       clear: () => set({ items: [] }),
     }),
-    { name: "km_cart", storage },
+    { name: STORAGE_KEYS.cart, storage },
   ),
 );

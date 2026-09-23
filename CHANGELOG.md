@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Storefront contact data now has a single owner (`src/lib/content.ts`, the
+  verbatim v1 port): the duplicate `BRAND` constants had drifted, shipping a
+  wrong Telegram handle (`compmasoneone` instead of the live
+  `compmasterone`) on the manual-payment page and a fabricated
+  `+7 (900) 000-00-00` phone in the global footer. The phone block is now
+  rendered only when a real number exists, matching v1 behavior.
+- Cart persistence reads the storage key from `STORAGE_KEYS.cart` instead of a
+  second hardcoded `"km_cart"` literal, so the key that must survive the v1
+  cutover has one source of truth.
+
 ### Added
 - Storefront v2 catalog read path (Next.js, phase 3 of `docs/frontend-v2-plan.md`;
   not yet deployed — the live static build still serves production): server-

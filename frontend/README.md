@@ -131,7 +131,9 @@ frontend/
     api/                  — fetch client, Zod schemas, query hooks (phase 2)
     lib/                  — format, markdown (escaped renderer for /p/[slug];
                             a security boundary — see tests/markdown.test.ts),
-                            order-status, telemetry, seo, site
+                            order-status, telemetry, seo,
+                            content.ts (contact/content source of truth) +
+                            site.ts (BRAND/NAV derived from it)
     config.ts             — build-time env resolution
 
   tests/                  — Vitest (component + unit)

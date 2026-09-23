@@ -35,6 +35,12 @@ this on frontend changes).
    loading/error states where relevant.
 6. **Motion is functional.** 200–300ms ease for hovers/drawer/modal,
    `transform`/`opacity` only.
+7. **No fabricated contact data.** Contact details render from a single
+   source (`frontend/src/lib/content.ts`, ported verbatim from v1); a field
+   that has no real value (currently `phone`) is omitted from the layout
+   rather than shown as a placeholder. The footer falls back to the Telegram
+   link, and `/payment/manual` must always present a working manager contact
+   because payment is manual (ADR 002).
 
 Token values live in `frontend/src/app/globals.css` (`@theme`); the current
 token set mirrors the original brand (white surfaces, hairline borders, the

@@ -54,14 +54,16 @@ export default function ContactsPage() {
                 </a>
               </dd>
             </div>
-            <div>
-              <dt className="text-muted">Телефон</dt>
-              <dd>
-                <a href={BRAND.phoneHref} className="font-bold underline">
-                  {BRAND.phone}
-                </a>
-              </dd>
-            </div>
+            {BRAND.phone ? (
+              <div>
+                <dt className="text-muted">Телефон</dt>
+                <dd>
+                  <a href={BRAND.phoneHref} className="font-bold underline">
+                    {BRAND.phone}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </div>
       </section>

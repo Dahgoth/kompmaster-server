@@ -25,15 +25,17 @@ export default function PaymentManualPage() {
               rel="noopener noreferrer"
               target="_blank"
             >
-              Telegram {BRAND.phone}
+              Telegram @{BRAND.telegramHandle}
             </a>
           </p>
-          <p>
-            <span className="font-bold">Телефон:</span>{" "}
-            <a href={BRAND.phoneHref} className="underline">
-              {BRAND.phone}
-            </a>
-          </p>
+          {BRAND.phone ? (
+            <p>
+              <span className="font-bold">Телефон:</span>{" "}
+              <a href={BRAND.phoneHref} className="underline">
+                {BRAND.phone}
+              </a>
+            </p>
+          ) : null}
           <p>
             <span className="font-bold">Адрес:</span> {BRAND.address}
           </p>

@@ -312,6 +312,11 @@ this section is the detailed reference.
   pages fetch at build/request time, so MSW (a Node-side interceptor in the
   Playwright process) only covers browser-initiated requests — specs that
   need server-side mock data belong to Tier B (staging API).
+- Contact/brand constants have one owner: `frontend/src/lib/content.ts`
+  (ported verbatim from the v1 storefront). `frontend/src/lib/site.ts`
+  derives `BRAND` from it — do not re-add hardcoded phone/Telegram/address
+  literals there; a second copy already drifted once and shipped a wrong
+  payment-contact link.
 - Content pages: admin-authored markdown is rendered by
   `frontend/src/lib/markdown.ts`. Its output is injected with
   `dangerouslySetInnerHTML` on the public `/p/[slug]` route, so the module is
