@@ -311,6 +311,14 @@ this section is the detailed reference.
   pages fetch at build/request time, so MSW (a Node-side interceptor in the
   Playwright process) only covers browser-initiated requests — specs that
   need server-side mock data belong to Tier B (staging API).
+- Content pages: admin-authored markdown is rendered by
+  `frontend/src/lib/markdown.ts`. Its output is injected with
+  `dangerouslySetInnerHTML` on the public `/p/[slug]` route, so the module is
+  a **security boundary**: text is HTML-escaped (including quotes) before any
+  markup is generated, and link URLs must pass an `http(s)` allowlist or they
+  degrade to plain text. `frontend/tests/markdown.test.ts` pins the escaping
+  and the attribute-injection regression — do not weaken either without
+  updating those tests.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

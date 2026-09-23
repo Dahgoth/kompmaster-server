@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { apiRequest } from "@/api/client";
 import { contentPageSchema, type ContentPage } from "@/api/schemas";
 import { cacheTags } from "@/api/categories";
+import { renderMarkdown } from "@/lib/markdown";
 
 interface ContentPageProps {
   params: Promise<{ slug: string }>;
@@ -34,63 +35,6 @@ export async function generateMetadata({
     alternates: { canonical: `/p/${encodeURIComponent(slug)}` },
     robots: page.noindex ? { index: false, follow: true } : undefined,
   };
-}
-
-/**
- * Minimal markdown renderer — the PO writes plain markdown in the admin
- * editor; this renders headings, bold, paragraphs, and list items without a
- * client-side dependency (SSR-visible for crawlers). Not a full CommonMark
- * implementation by design — documented limitation.
- */
-function renderMarkdown(source: string): string {
-  const lines = source.replace(/\r\n?/g, "\n").split("\n");
-  const html: string[] = [];
-  let inList = false;
-
-  const inline = (text: string): string =>
-    text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("### ")) {
-      if (inList) {
-        html.push("</ul>");
-        inList = false;
-      }
-      html.push(`<h3>${inline(trimmed.slice(4))}</h3>`);
-    } else if (trimmed.startsWith("## ")) {
-      if (inList) {
-        html.push("</ul>");
-        inList = false;
-      }
-      html.push(`<h2>${inline(trimmed.slice(3))}</h2>`);
-    } else if (/^[-*]\s+/.test(trimmed)) {
-      if (!inList) {
-        html.push("<ul>");
-        inList = true;
-      }
-      html.push(`<li>${inline(trimmed.replace(/^[-*]\s+/, ""))}</li>`);
-    } else if (trimmed === "") {
-      if (inList) {
-        html.push("</ul>");
-        inList = false;
-      }
-    } else {
-      if (inList) {
-        html.push("</ul>");
-        inList = false;
-      }
-      html.push(`<p>${inline(trimmed)}</p>`);
-    }
-  }
-  if (inList) html.push("</ul>");
-  return html.join("");
 }
 
 export default async function ContentPageRoute({ params }: ContentPageProps) {

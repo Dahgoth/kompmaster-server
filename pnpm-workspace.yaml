@@ -12,3 +12,4 @@ packages:
 # (msw needs no build script: its postinstall only prints a message.)
 allowBuilds:
   esbuild: true
+  msw: true
