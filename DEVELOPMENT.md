@@ -285,31 +285,46 @@ this section is the detailed reference.
   (`src/lib/content.ts`) is ported verbatim from the v1 storefront — FAQ,
   warranty, contacts, about — with the FAQ page rendering FAQPage JSON-LD.
   Component and hook tests grow with the pages; the E2E matrix (Playwright,
-  `frontend/e2e/`, Tier A specs + MSW fixtures in `frontend/e2e/mocks.ts`)
-  is phase 5 of `docs/frontend-v2-plan.md`. Run Tier A locally against a
-  production build of the storefront plus the dev backend:
+  `frontend/e2e/`, Tier A specs in `frontend/e2e/specs/`) is phase 5 of
+  `docs/frontend-v2-plan.md` and runs in CI as the path-filtered `e2e` job.
+  The specs assert fixed categories/products and an `e2e@example.com` login,
+  and they drive a real backend — MSW in the Playwright process cannot
+  intercept SSR or the store's `/api/*` rewrite — so Tier A needs a database
+  seeded with `backend/scripts/seed-e2e.js`. Use a dedicated database, not
+  your dev one: the fixtures deliberately reuse product names your dev data
+  may already contain, and a duplicate name makes the catalog spec's strict
+  locator ambiguous.
 
   ```bash
-  # terminal 1 — backend (dev defaults: local Postgres, JWT_SECRET required)
-  cd backend && DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster \
-    JWT_SECRET=dev-only pnpm start
-  # terminal 2 — storefront production build + start
-  cd frontend && API_BASE=http://localhost:4000/api SITE_URL=http://localhost:3000 \
+  # once: throwaway DB + fixtures + browsers
+  createdb kompmaster_e2e
+  DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e pnpm migrate
+  DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e pnpm seed:e2e
+  pnpm --filter kompmaster-frontend run e2e:install   # chromium + webkit
+
+  # terminal 1 — backend on the fixture DB
+  cd backend && DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e \
+    JWT_SECRET=dev-only FRONTEND_ORIGIN=http://localhost:3002 pnpm start
+  # terminal 2 — storefront production build + start (build is baked with API_BASE)
+  cd frontend && API_BASE=http://localhost:4000/api SITE_URL=http://localhost:3002 \
     pnpm build && API_BASE=http://localhost:4000/api pnpm start -- --port 3002
-  # terminal 3 — Tier A matrix (both browser projects)
+  # terminal 3 — Tier A matrix (chromium + WebKit mobile)
   cd frontend && E2E_STORE_URL=http://localhost:3002 E2E_API_BASE=http://localhost:4000/api \
-    npx playwright test
+    pnpm e2e
   ```
 
-  Environment contract: `E2E_STORE_URL` is the storefront under test
-  (default `http://localhost:3000`); `E2E_API_BASE` must match the API the
-  storefront build was baked with, otherwise MSW handlers miss and the
-  store's `/api/*` rewrite proxies to the wrong backend (CORS 500s). The
-  backend's `FRONTEND_ORIGIN` must allowlist the `E2E_STORE_URL` origin for
-  any spec that posts through the rewrite (auth/reset). Server-rendered
-  pages fetch at build/request time, so MSW (a Node-side interceptor in the
-  Playwright process) only covers browser-initiated requests — specs that
-  need server-side mock data belong to Tier B (staging API).
+  Rebuild after changing fixtures: the sitemap and other ISR routes are
+  prerendered, and Next's persisted fetch cache (`.next/cache`) can serve a
+  catalog snapshot from an earlier build — `rm -rf .next` before `pnpm build`
+  when a spec disagrees with the database. Environment contract:
+  `E2E_STORE_URL` is the storefront under test (default
+  `http://localhost:3000`); `E2E_API_BASE` must match the API the storefront
+  build was baked with, otherwise the store's `/api/*` rewrite proxies to the
+  wrong backend (CORS 500s). The backend's `FRONTEND_ORIGIN` must allowlist the
+  `E2E_STORE_URL` origin for any spec that posts through the rewrite
+  (auth/reset). Server-rendered pages fetch at build/request time, so MSW
+  (`frontend/e2e/mocks.ts`) only covers browser-initiated requests — specs
+  that need server-side mock data belong to Tier B (staging API).
 - Contact/brand constants have one owner: `frontend/src/lib/content.ts`
   (ported verbatim from the v1 storefront). `frontend/src/lib/site.ts`
   derives `BRAND` from it — do not re-add hardcoded phone/Telegram/address

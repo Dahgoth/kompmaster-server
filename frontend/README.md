@@ -76,21 +76,28 @@ pnpm --filter kompmaster-frontend build      # next build (standalone)
 pnpm --filter kompmaster-frontend start      # next start (after build)
 ```
 
-E2E (Tier A, plan §8 — 20 specs + 3 Tier-B skips across 8 files):
+E2E (Tier A, plan §8 — 20 specs + 2 Tier-B skips across 8 files):
 
 ```bash
-# storefront production build + backend required (see DEVELOPMENT.md for the
-# full three-terminal setup and the E2E_STORE_URL/E2E_API_BASE contract)
-cd frontend && E2E_STORE_URL=http://localhost:3002 E2E_API_BASE=http://localhost:4000/api \
-  npx playwright test                        # chromium + mobile projects
-npx playwright test --project=chromium e2e/specs/seo.spec.ts  # SEO gate alone
+pnpm e2e            # chromium + WebKit mobile projects
+pnpm e2e:install    # download both browsers (first run)
+pnpm e2e --project=chromium e2e/specs/seo.spec.ts   # SEO gate alone
 ```
 
-`e2e/mocks.ts` holds the MSW fixture handlers (categories, products, auth,
-reset, reviews); `e2e/fixtures.ts` adds the axe `assertNoViolations` check
-(zero critical/serious). Specs that need server-side mock data or seeded
-DB rows are marked `test.skip` with a Tier-B reason instead of asserting
-against unreachable mocks.
+The suite drives a **real backend**, so it needs a database seeded with
+`backend/scripts/seed-e2e.js` (run via `pnpm seed:e2e` from the repo root) and
+a production build of the storefront baked with the same `API_BASE` — see
+DEVELOPMENT.md for the three-terminal setup and the
+`E2E_STORE_URL`/`E2E_API_BASE` contract. CI runs it in the path-filtered `e2e`
+job against a throwaway Postgres.
+
+`e2e/mocks.ts` holds MSW fixture handlers (categories, products, auth, reset,
+reviews) — they only cover **browser-initiated** requests, because SSR and the
+store's `/api/*` rewrite happen in the Next process, not the Playwright one;
+`e2e/fixtures.ts` adds the axe `assertNoViolations` check (zero
+critical/serious). Specs that need server-side mock data or seeded DB rows are
+marked `test.skip` with a Tier-B reason instead of asserting against
+unreachable mocks.
 
 ## Linting
 
@@ -105,7 +112,7 @@ pnpm run format          # Prettier rewrite (format:check verifies only)
 ```
 
 CI runs `lint:frontend`, `typecheck`, tests, and `next build` in the
-`frontend` job.
+`frontend` job, and the Playwright matrix in the `e2e` job.
 
 ## Deployment (target topology, ADR 007 §Decision 1)
 
