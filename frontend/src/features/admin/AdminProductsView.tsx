@@ -8,6 +8,7 @@ import { productSchema, type Product } from "@/api/schemas";
 import { AdminShell } from "@/features/admin/AdminShell";
 import { PriceImport } from "@/features/admin/PriceImport";
 import { formatPrice } from "@/lib/format";
+import { fetchProducts } from "@/api/products";
 import { queryKeys } from "@/api/categories";
 
 const PAGE_SIZE = 30;
@@ -33,21 +34,12 @@ export function AdminProductsView() {
   const list = useQuery({
     queryKey: queryKeys.products({ category: categoryFilter, page }),
     queryFn: ({ signal }) =>
-      // scope=admin lives in apiRequest; fetchProducts is public-only.
-      apiRequest(z.array(productSchema), "GET", buildProductsPath(), {
-        scope: "admin",
-        signal,
-      }).then((items) => ({ items, total: items.length })),
+      fetchProducts(
+        { category: categoryFilter || undefined, page, pageSize: PAGE_SIZE },
+        { signal, scope: "admin" },
+      ),
     staleTime: 30_000,
   });
-
-  function buildProductsPath(): string {
-    const params = new URLSearchParams();
-    if (categoryFilter) params.set("category", categoryFilter);
-    params.set("page", String(page));
-    params.set("pageSize", String(PAGE_SIZE));
-    return `/products?${params.toString()}`;
-  }
 
   function onFilterChange(value: string) {
     setCategoryFilter(value);

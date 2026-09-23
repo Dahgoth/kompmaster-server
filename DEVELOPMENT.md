@@ -332,6 +332,12 @@ this section is the detailed reference.
   `frontend/src/instrumentation.ts#register` re-validates at server start,
   so a production deploy with a missing `API_BASE`/`SITE_URL` crashes at
   boot instead of serving a green but empty storefront.
+- `frontend/src/api/products.ts#fetchProducts` takes an optional `scope`
+  ('public' | 'admin'): both call the same `GET /api/products` route, but
+  admin scope sends `X-Admin-Panel-Token` and skips the Next fetch-cache
+  directives, and both read the row count from the backend's
+  `X-Total-Count` header. Do not reintroduce `total: items.length` in
+  admin list views.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

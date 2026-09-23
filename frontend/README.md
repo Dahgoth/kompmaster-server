@@ -25,6 +25,8 @@ for the decision log.
   `forgot-password` contract), session in the v1
   `km_auth_token`/`km_user` storage keys (per ADR 007 decision: token
   hardening is a later `feat(auth)` follow-up)
+- Admin products list reads the backend's `X-Total-Count` header (phase 4):
+  the pager shows the real catalog total, not the page size.
 - **Order flow landed (plan phase 3)**: cart, checkout (offer gate + 409
   stock handling), orders list/detail with R11 status pills, `/payment/manual`
 - **Static pages landed (plan phase 3)**: `/about`, `/faq` (with FAQPage

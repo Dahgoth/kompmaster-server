@@ -11,6 +11,13 @@ export interface ProductListFilters {
   pageSize?: number;
 }
 
+function buildProductsUrl(query: string): string {
+  if (typeof window === "undefined") {
+    return `${config.apiBase}/products?${query}`;
+  }
+  return `${config.clientApiBase}/products?${query}`;
+}
+
 /**
  * Catalog list with pagination. The backend keeps its v1 array body (the
  * live storefront still consumes it) and exposes the row count in the
@@ -18,7 +25,11 @@ export interface ProductListFilters {
  */
 export async function fetchProducts(
   filters: ProductListFilters = {},
-  options: { signal?: AbortSignal; next?: { revalidate?: number; tags?: string[] } } = {},
+  options: {
+    signal?: AbortSignal;
+    next?: { revalidate?: number; tags?: string[] };
+    scope?: "public" | "admin";
+  } = {},
 ): Promise<{ items: Product[]; total: number }> {
   const params = new URLSearchParams();
   if (filters.category) params.set("category", filters.category);
@@ -26,15 +37,27 @@ export async function fetchProducts(
   params.set("page", String(filters.page ?? 1));
   params.set("pageSize", String(filters.pageSize ?? 30));
 
-  // Server-only (RSC/sitemap): Next fetch cache directives require the
-  // absolute API base — never call this from browser code.
-  const response = await fetch(`${config.apiBase}/products?${params.toString()}`, {
-    headers: buildHeaders("public"),
+  const scope = options.scope ?? "public";
+  // Server-side fetches (RSC/sitemap) use the absolute API base with Next
+  // fetch-cache directives; browser callers use the same-origin proxy via
+  // apiRequest-style URL building.
+  const url = buildProductsUrl(params.toString());
+  const response = await fetch(url, {
+    headers: buildHeaders(scope),
     signal: options.signal,
-    next: options.next,
+    ...(scope === "public" ? { next: options.next } : {}),
   });
   if (!response.ok) {
-    throw new ApiError(response.status, `HTTP ${response.status}`);
+    let message = `HTTP ${response.status}`;
+    try {
+      const data: unknown = await response.json();
+      if (data !== null && typeof data === "object" && "error" in data) {
+        message = String((data as { error: unknown }).error);
+      }
+    } catch {
+      // keep status-line message
+    }
+    throw new ApiError(response.status, message);
   }
   const items = z.array(productSchema).parse(await response.json());
   const headerTotal = Number(response.headers.get("X-Total-Count"));
