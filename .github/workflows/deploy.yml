@@ -1,0 +1,170 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        options: [staging, production]
+        required: true
+
+permissions:
+  contents: read
+  deployments: write
+  id-token: write
+
+jobs:
+  # Staging deploy on every push to main (Vercel Preview)
+  deploy-staging:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build storefront
+        run: pnpm --filter kompmaster-frontend run build
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://staging-www.compmasone.ru
+
+      - name: Deploy to Vercel Preview
+        uses: amondnet/vercel-action@v25
+        if: env.VERCEL_TOKEN != ''
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod=false'
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://staging-www.compmasone.ru
+
+      - name: Create GitHub Deployment (staging)
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: staging
+          ref: ${{ github.sha }}
+          auto-merge: false
+
+      - name: Update Deployment Status (success)
+        if: success()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: staging
+          ref: ${{ github.sha }}
+          status: success
+          deployment-url: https://staging-www.compmasone.ru
+
+      - name: Update Deployment Status (failure)
+        if: failure()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: staging
+          ref: ${{ github.sha }}
+          status: failure
+
+  # Production deploy on version tag push
+  deploy-production:
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag format
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+            echo "::error::Tag $TAG does not match semantic version format vX.Y.Z"
+            exit 1
+          fi
+          echo "Deploying version: $TAG"
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STOREFRONT_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.STOREFRONT_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy storefront to VPS
+        run: |
+          STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
+          STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
+          ./backend/scripts/deploy-storefront.sh --skip-build
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://www.compmasone.ru
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Deployment (production)
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          ref: ${{ github.sha }}
+          auto-merge: false
+
+      - name: Update Deployment Status (success)
+        if: success()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          ref: ${{ github.sha }}
+          status: success
+          deployment-url: https://www.compmasone.ru
+
+      - name: Update Deployment Status (failure)
+        if: failure()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          ref: ${{ github.sha }}
+          status: failure

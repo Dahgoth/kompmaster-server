@@ -313,3 +313,236 @@ STOREFRONT_SSH=root@api.compmasone.ru \
 STOREFRONT_ROOT=/opt/compmaster/storefront \
 ./backend/scripts/deploy-storefront.sh --dry-run --skip-build
 ```
+
+## 9. Blue/Green Zero-Downtime Deployment (Phase 8)
+
+### 9.1 Architecture
+Two PM2 processes run simultaneously on different ports:
+- **Blue**: `kompmaster-storefront-blue` on port 3000 (current production)
+- **Green**: `kompmaster-storefront-green` on port 3001 (candidate)
+
+Caddy upstream configuration with active health checks:
+```caddy
+www.{$DOMAIN} {
+    # ... headers ...
+    
+    @blue_up {
+        path *
+    }
+    reverse_proxy @blue_up 127.0.0.1:3000 {
+        health_uri /api/health
+        health_interval 10s
+        health_timeout 3s
+        health_status 200
+    }
+}
+```
+
+### 9.2 Deploy Flow
+```bash
+# Deploy to inactive color (e.g., green when blue is active)
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+DEPLOY_COLOR=green \
+./backend/scripts/deploy-storefront.sh --skip-build
+```
+Script changes:
+- Deploys to `releases/<stamp>-green/` instead of `releases/<stamp>/`
+- Starts PM2 process `kompmaster-storefront-green` on port 3001
+- Runs health gate against port 3001
+- Does NOT flip traffic — only prepares candidate
+
+### 9.3 Traffic Switch (Atomic, Zero-Downtime)
+```bash
+# On VPS, after candidate passes health gate:
+cd /opt/compmaster/storefront
+# 1. Verify green is healthy
+curl -sf http://127.0.0.1:3001/api/health
+# 2. Switch Caddy upstream (edit Caddyfile or use Caddy API)
+#    Option A: Edit Caddyfile, reload Caddy (sub-second, no connection drop)
+#    Option B: Caddy Admin API: `curl -X POST localhost:2019/config/apps/http/servers/www/routes/0/handle/0/routes/0/handler/upstreams -d '{"dial": "127.0.0.1:3001"}'`
+# 3. Verify new traffic serves green
+curl -sf -H 'Host: www.compmasone.ru' http://127.0.0.1/api/health
+# 4. Stop old blue process (after drain period)
+pm2 stop kompmaster-storefront-blue
+```
+
+### 9.4 Rollback (Instant)
+```bash
+# Revert Caddy upstream to blue (port 3000)
+# Option A: Caddyfile reload
+# Option B: Caddy Admin API
+# Blue process is still running (was only stopped, not deleted)
+pm2 restart kompmaster-storefront-blue
+```
+
+### 9.5 Deploy Script Changes Needed
+Add `--color` flag to `deploy-storefront.sh`:
+- `--color=blue|green` — deploy to specific color directory and PM2 name
+- `--promote` — after health gate, flip Caddy upstream (requires Caddy admin API or config reload)
+- Default: `--color=auto` (detects inactive color from current Caddy upstream)
+
+## 10. Automated GitHub Deployment + Vercel Staging (Phase 9)
+
+### 10.1 GitHub Environments
+Configure in GitHub repo settings:
+- **Environment: `staging`**
+  - Protection rules: None (auto-deploy on push to main)
+  - Secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+  - Deployment branch policy: `main` only
+  
+- **Environment: `production`**
+  - Protection rules: Required reviewers (1), wait timer (5 min)
+  - Secrets: `STOREFRONT_SSH_KEY`, `STOREFRONT_SSH_HOST`, `STOREFRONT_ROOT`
+  - Deployment branch policy: Tags matching `v*.*.*` only
+
+### 10.2 Deploy Workflow (`.github/workflows/deploy.yml`)
+```yaml
+name: Deploy
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [staging, production]
+        required: true
+
+jobs:
+  deploy-staging:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel Preview
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod=false'
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://staging-www.compmasone.ru
+
+  deploy-production:
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    runs-on: self-hosted  # VPS runner with SSH access
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy storefront to VPS
+        run: |
+          STOREFRONT_SSH=root@${{ secrets.STOREFRONT_SSH_HOST }} \
+          STOREFRONT_ROOT=${{ secrets.STOREFRONT_ROOT }} \
+          ./backend/scripts/deploy-storefront.sh --skip-build
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://www.compmasone.ru
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+```
+
+### 10.3 Vercel Integration
+- Connect Vercel project to GitHub repo
+- Root Directory: `frontend`
+- Build Command: `pnpm --filter kompmaster-frontend build`
+- Install Command: `pnpm install --frozen-lockfile`
+- Framework Preset: Next.js
+- Environment Variables (per environment):
+  - `staging`: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://staging-www.compmasone.ru`
+  - `production`: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://www.compmasone.ru`
+- Preview deployments on every PR (automatic via Vercel GitHub App)
+
+## 11. SDLC Release/Canary Cycle (Phase 10)
+
+### 11.1 Versioning Strategy
+- **Semantic Versioning** (SemVer 2.0.0) enforced by `release-please` or `semantic-release`
+- Conventional Commits → automatic version bump:
+  - `fix:` → PATCH (1.0.0 → 1.0.1)
+  - `feat:` → MINOR (1.0.0 → 1.1.0)
+  - `BREAKING CHANGE:` or `feat!:` → MAJOR (1.0.0 → 2.0.0)
+- Current version: **2.0.0** (major rewrite from v1 SPA to Next.js SSR/ISR)
+
+### 11.2 Release Workflow (`.github/workflows/release.yml`)
+```yaml
+name: Release
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node
+          package-name: kompmaster-server
+          # Or use semantic-release with conventional commits
+```
+
+Alternative with `semantic-release`:
+```yaml
+  semantic-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+### 11.3 Branch Strategy & Canary Deploys
+| Branch Pattern | Deploy Target | Version | Auto-Merge |
+|---|---|---|---|
+| `main` | Vercel Preview (staging) | Next pre-release (e.g., 2.1.0-rc.1) | No |
+| `feat/**`, `fix/**` | Vercel Preview (unique URL per PR) | Pre-release (e.g., 2.1.0-feat.new-feature.1) | No |
+| `release/**` | Staging VPS (optional) | Release candidate | No |
+| `v*.*.*` (tags) | Production VPS + GitHub Release | Exact version from tag | N/A |
+
+### 11.4 Dependabot + Auto-Merge
+```yaml
+# .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      dev-dependencies:
+        patterns: ["*"]
+        dependency-type: "development"
+    auto-merge: true  # For patch updates only (configured via labels)
+```
+
+### 11.5 Branch Protection Rules (GitHub Settings)
+- **main**: Require PR reviews (1), status checks (CI, E2E), linear history, no force push
+- **Tags `v*.*.*`**: Deploy to production only from signed tags
+
+### 11.6 Changelog Automation
+- `release-please` generates `CHANGELOG.md` from conventional commits
+- Or `semantic-release` with `@semantic-release/changelog` plugin
+- Manual edits only for "Notable Changes" curation

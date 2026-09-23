@@ -21,6 +21,10 @@ api.{$DOMAIN:compmasone.ru} {
 # www DNS record points here, Caddy retries certificate issuance for this
 # block in the background and the two hosts above are unaffected — deploy the
 # updated Caddyfile before the DNS flip, not after.
+#
+# Blue/Green deployment (Phase 8): two upstream pools (blue:3000, green:3001)
+# with health checks. Active color controlled via Caddy Admin API or config reload.
+# See DEPLOY.md §9 for deploy flow.
 www.{$DOMAIN:compmasone.ru} {
   encode zstd gzip
 
@@ -39,5 +43,31 @@ www.{$DOMAIN:compmasone.ru} {
     -Server
   }
 
+  # Blue/Green upstream with health checks
+  # Active color determined by STOREFRONT_ACTIVE_COLOR env (blue|green)
+  # Default: blue (port 3000)
+  @blue_upstream {
+    path *
+    expression {env.STOREFRONT_ACTIVE_COLOR} == "blue"
+  }
+  @green_upstream {
+    path *
+    expression {env.STOREFRONT_ACTIVE_COLOR} == "green"
+  }
+
+  reverse_proxy @blue_upstream 127.0.0.1:3000 {
+    health_uri /api/health
+    health_interval 10s
+    health_timeout 3s
+    health_status 200
+  }
+  reverse_proxy @green_upstream 127.0.0.1:3001 {
+    health_uri /api/health
+    health_interval 10s
+    health_timeout 3s
+    health_status 200
+  }
+
+  # Fallback if no color env set (defaults to blue)
   reverse_proxy 127.0.0.1:{$STOREFRONT_PORT:3000}
 }

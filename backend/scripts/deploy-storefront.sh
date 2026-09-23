@@ -11,13 +11,18 @@
 # PostgreSQL and the API. Measure the result with
 # backend/scripts/measure-storefront-ram.sh (DEPLOY.md §8.4).
 #
+# Blue/Green deployment (Phase 8, DEPLOY.md §9):
+#   --color=blue|green|auto  deploy to specific color (blue:3000, green:3001)
+#   --promote                after health gate, flip Caddy traffic to this color
+#
 # Server layout (DEPLOY.md §8.1):
-#   $STOREFRONT_ROOT/releases/<utc-stamp>/   immutable artifact (see assemble)
-#   $STOREFRONT_ROOT/current -> releases/<…> symlink flipped after the rsync
-#   $STOREFRONT_ROOT/shared/storefront.env   runtime env for PM2
+#   $STOREFRONT_ROOT/releases/<utc-stamp>-<color>/   immutable artifact
+#   $STOREFRONT_ROOT/current -> releases/<…>          symlink flipped after rsync
+#   $STOREFRONT_ROOT/shared/storefront.env             runtime env for PM2
 #
 # Usage:
 #   backend/scripts/deploy-storefront.sh [--dry-run] [--skip-build] [--check-public]
+#                                        [--color=blue|green|auto] [--promote]
 #
 # Env:
 #   STOREFRONT_SSH    ssh target            (default root@api.compmasone.ru;
@@ -25,7 +30,7 @@
 #   STOREFRONT_ROOT   server directory      (default /opt/compmaster/storefront)
 #   API_BASE          build + runtime env   (default https://api.compmasone.ru/api)
 #   SITE_URL          build + runtime env   (default https://www.compmasone.ru)
-#   STOREFRONT_PORT   PM2 + Caddy port      (default 3000)
+#   STOREFRONT_PORT   PM2 + Caddy port      (default 3000, overridden by --color)
 #   BOOT_CHECK_PORT   scratch port for the pre-ship boot check (default 3199)
 #   KEEP_RELEASES     past releases kept    (default 3)
 set -eu
@@ -36,14 +41,24 @@ cd "$repo_root"
 DRY_RUN=0
 SKIP_BUILD=0
 CHECK_PUBLIC=0
+DEPLOY_COLOR="auto"
+PROMOTE=0
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
     --skip-build) SKIP_BUILD=1 ;;
     --check-public) CHECK_PUBLIC=1 ;;
-    *) echo "неизвестный аргумент: $arg (доступны --dry-run, --skip-build, --check-public)"; exit 1 ;;
+    --color=*) DEPLOY_COLOR="${arg#--color=}" ;;
+    --promote) PROMOTE=1 ;;
+    *) echo "неизвестный аргумент: $arg (доступны --dry-run, --skip-build, --check-public, --color=blue|green|auto, --promote)"; exit 1 ;;
   esac
 done
+
+# Validate color argument
+case "$DEPLOY_COLOR" in
+  blue|green|auto) ;;
+  *) echo "неверный --color: $DEPLOY_COLOR (ожидается blue, green или auto)"; exit 1 ;;
+esac
 
 STOREFRONT_SSH="${STOREFRONT_SSH-root@api.compmasone.ru}"
 STOREFRONT_ROOT="${STOREFRONT_ROOT-/opt/compmaster/storefront}"
@@ -52,6 +67,30 @@ SITE_URL="${SITE_URL-https://www.compmasone.ru}"
 STOREFRONT_PORT="${STOREFRONT_PORT-3000}"
 BOOT_CHECK_PORT="${BOOT_CHECK_PORT-3199}"
 KEEP_RELEASES="${KEEP_RELEASES-3}"
+
+# Determine color-specific settings
+if [ "$DEPLOY_COLOR" = "auto" ]; then
+  # Detect inactive color from Caddy upstream (requires Caddy admin API access)
+  # For now, default to blue if no current deployment exists
+  DEPLOY_COLOR="blue"
+fi
+
+# Color-specific port and PM2 name
+case "$DEPLOY_COLOR" in
+  blue)
+    COLOR_PORT=3000
+    PM2_NAME="kompmaster-storefront-blue"
+    ;;
+  green)
+    COLOR_PORT=3001
+    PM2_NAME="kompmaster-storefront-green"
+    ;;
+esac
+
+# Override STOREFRONT_PORT for this deployment if color is specified
+if [ "$DEPLOY_COLOR" != "auto" ]; then
+  STOREFRONT_PORT="$COLOR_PORT"
+fi
 
 # Single source of truth for the release version (AGENTS.md rule 3).
 node scripts/check-versions.js
@@ -111,9 +150,10 @@ wait "$boot_pid" 2>/dev/null || true
 echo "boot-verify: OK"
 
 release_stamp=$(date -u +%Y%m%d%H%M%S)
-release="$STOREFRONT_ROOT/releases/$release_stamp"
+# Color-specific release directory for Blue/Green
+release="$STOREFRONT_ROOT/releases/${release_stamp}-${DEPLOY_COLOR}"
 commit=$(git rev-parse --short HEAD)
-echo "==> shipping release $release_stamp ($commit)"
+echo "==> shipping release $release_stamp ($commit) [color: $DEPLOY_COLOR, port: $STOREFRONT_PORT]"
 
 if [ -n "$STOREFRONT_SSH" ]; then
   rsync_target="$STOREFRONT_SSH:$release"
@@ -192,8 +232,8 @@ if [ -L current ]; then
   prev=$(readlink current)
 fi
 ln -sfn "$RELEASE" current
-pm2 delete kompmaster-storefront >/dev/null 2>&1 || true
-pm2 start "$STOREFRONT_ROOT/current/server.js" --name kompmaster-storefront \
+pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
+pm2 start "$STOREFRONT_ROOT/current/server.js" --name "$PM2_NAME" \
   --cwd "$STOREFRONT_ROOT/current" --time >/dev/null
 pm2 save >/dev/null
 ok=""
@@ -205,12 +245,12 @@ while [ "$i" -lt 30 ]; do
 done
 if [ "$ok" != 1 ]; then
   echo "health gate: сервер не отвечает на http://127.0.0.1:$PORT/" >&2
-  pm2 logs kompmaster-storefront --lines 30 --nostream || true
+  pm2 logs "$PM2_NAME" --lines 30 --nostream || true
   if [ -n "$prev" ] && [ -d "$prev" ]; then
     echo "откат на предыдущий релиз: $prev"
     ln -sfn "$prev" current
-    pm2 delete kompmaster-storefront >/dev/null 2>&1 || true
-    pm2 start "$STOREFRONT_ROOT/current/server.js" --name kompmaster-storefront \
+    pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
+    pm2 start "$STOREFRONT_ROOT/current/server.js" --name "$PM2_NAME" \
       --cwd "$STOREFRONT_ROOT/current" --time >/dev/null
     if curl -sf "http://127.0.0.1:$PORT/" >/dev/null 2>&1; then
       echo "откат выполнен — живёт предыдущий релиз"
@@ -233,10 +273,17 @@ REMOTE
 
 if [ -n "$STOREFRONT_SSH" ]; then
   printf '%s\n' "$activate" | ssh "$STOREFRONT_SSH" \
-    "STOREFRONT_ROOT='$STOREFRONT_ROOT' RELEASE='$release' STOREFRONT_PORT='$STOREFRONT_PORT' API_BASE='$API_BASE' SITE_URL='$SITE_URL' sh -s"
+    "STOREFRONT_ROOT='$STOREFRONT_ROOT' RELEASE='$release' STOREFRONT_PORT='$STOREFRONT_PORT' PM2_NAME='$PM2_NAME' API_BASE='$API_BASE' SITE_URL='$SITE_URL' sh -s"
 else
   printf '%s\n' "$activate" | \
-    STOREFRONT_ROOT="$STOREFRONT_ROOT" RELEASE="$release" STOREFRONT_PORT="$STOREFRONT_PORT" API_BASE="$API_BASE" SITE_URL="$SITE_URL" sh -s
+    STOREFRONT_ROOT="$STOREFRONT_ROOT" RELEASE="$release" STOREFRONT_PORT="$STOREFRONT_PORT" PM2_NAME="$PM2_NAME" API_BASE="$API_BASE" SITE_URL="$SITE_URL" sh -s
+fi
+
+# If --promote flag is set, flip Caddy traffic to this color
+if [ "$PROMOTE" = 1 ] && [ -n "$STOREFRONT_SSH" ]; then
+  echo "==> promoting $DEPLOY_COLOR to active (flipping Caddy traffic)"
+  ssh "$STOREFRONT_SSH" "export STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR; caddy reload --config /etc/caddy/Caddyfile --force"
+  echo "==> traffic switched to $DEPLOY_COLOR"
 fi
 
 if [ "$CHECK_PUBLIC" = 1 ]; then
