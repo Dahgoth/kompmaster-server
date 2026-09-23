@@ -51,7 +51,7 @@ export function AdminProductsView() {
       apiRequest(productSchema, "POST", "/products", { scope: "admin", body: mapToApi(input) }),
     onSuccess: () => {
       setFormError(null);
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products({}) });
     },
     onError: (err) => {
       setFormError(err instanceof ApiError ? err.message : "Ошибка сети, попробуйте позже");
@@ -63,7 +63,7 @@ export function AdminProductsView() {
       apiRequest(z.object({ ok: z.boolean() }), "DELETE", `/products/${encodeURIComponent(id)}`, {
         scope: "admin",
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products({}) }),
   });
 
   function onCreate(event: React.FormEvent<HTMLFormElement>) {

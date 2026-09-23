@@ -43,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Cap at 5,000 products (catalog-scale decision, ADR 007).
   const MAX = 5_000;
   try {
-    for (let page = 1; entries.length < staticRoutes.length + MAX; page++) {
+    for (let page = 1; entries.length - staticRoutes.length < MAX; page++) {
       const { items } = await fetchProducts(
         { page, pageSize: 100 },
         { next: { revalidate: 3600, tags: [cacheTags.products] } },

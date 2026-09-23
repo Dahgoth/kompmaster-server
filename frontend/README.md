@@ -27,6 +27,11 @@ for the decision log.
   hardening is a later `feat(auth)` follow-up)
 - Admin products list reads the backend's `X-Total-Count` header (phase 4):
   the pager shows the real catalog total, not the page size.
+- Cache keys are centralized in `src/api/categories.ts#queryKeys` (ADR 006
+  review fixes): all views and invalidations must route through the factory
+  — ad-hoc key literals drift and leave stale cached data after mutations.
+  The sitemap counts only product entries against the 5,000 cap (ADR 007
+  catalog scale); static route entries are excluded.
 - **Order flow landed (plan phase 3)**: cart, checkout (offer gate + 409
   stock handling), orders list/detail with R11 status pills, `/payment/manual`
 - **Static pages landed (plan phase 3)**: `/about`, `/faq` (with FAQPage

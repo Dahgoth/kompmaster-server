@@ -344,6 +344,9 @@ this section is the detailed reference.
 - `backend/src/utils/revalidate.js` fires the ISR hook with a 3s
   `AbortSignal.timeout`; a hung storefront must not pin the admin request's
   event loop, and the ISR TTL is the invalidation backstop.
+- The sitemap caps product URLs at 5,000 (ADR 007 catalog scale) and counts
+  only product entries against the cap — static route entries are excluded
+  (`entries.length - staticRoutes.length < MAX`).
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Postgres is pinned to `16.15-alpine` the same way, and DEVELOPMENT.md
   documents a verify-then-bump upgrade procedure for both dev-stack images.
   Also drops the obsolete `version:` key that warned on every Compose command.
+- Sitemap product cap now counts only product entries (static route entries
+  excluded), and admin create/delete mutations invalidate queries through the
+  central `queryKeys` factory — ad-hoc `["products"]` key literals could leave
+  stale cached data after product changes.
 - Storefront contact data now has a single owner (`src/lib/content.ts`, the
   verbatim v1 port): the duplicate `BRAND` constants had drifted, shipping a
   wrong Telegram handle (`compmasoneone` instead of the live

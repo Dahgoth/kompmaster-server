@@ -35,7 +35,11 @@ this on frontend changes).
    loading/error states where relevant.
 6. **Motion is functional.** 200–300ms ease for hovers/drawer/modal,
    `transform`/`opacity` only.
-7. **No fabricated contact data.** Contact details render from a single
+7. **Cache invalidations route through the central key factory**
+   (`frontend/src/api/categories.ts#queryKeys`) — ad-hoc key literals in
+   feature code drift from the factory shapes and leave stale cached data
+   after mutations.
+8. **No fabricated contact data.** Contact details render from a single
    source (`frontend/src/lib/content.ts`, ported verbatim from v1); a field
    that has no real value (currently `phone`) is omitted from the layout
    rather than shown as a placeholder. The footer falls back to the Telegram
