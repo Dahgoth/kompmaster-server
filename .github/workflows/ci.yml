@@ -188,6 +188,9 @@ jobs:
   # workflow executed them, so the matrix could rot silently.
   e2e:
     runs-on: ubuntu-latest
+    # The job boots Postgres, two browsers, and two Node servers; guard against
+    # a hang burning runner minutes (the happy path takes ~2 minutes).
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:16.15-alpine
@@ -252,15 +255,21 @@ jobs:
       - name: Build and run Tier A E2E
         if: steps.changes.outputs.e2e == 'true'
         run: |
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
           DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e \
             JWT_SECRET=e2e-ci-only PORT=4000 FRONTEND_ORIGIN=http://localhost:3002 \
             NODE_ENV=development node backend/src/index.js > /tmp/e2e-backend.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:4000/api/health && break; sleep 1; done
+          # Fail loudly instead of building/running against a dead service.
+          curl -sf http://localhost:4000/api/health > /dev/null \
+            || { echo "::error::backend did not become healthy"; cat /tmp/e2e-backend.log; exit 1; }
           API_BASE=http://localhost:4000/api SITE_URL=http://localhost:3002 \
             pnpm --filter kompmaster-frontend run build
           API_BASE=http://localhost:4000/api SITE_URL=http://localhost:3002 \
             pnpm --filter kompmaster-frontend exec next start --port 3002 > /tmp/e2e-store.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:3002/ && break; sleep 1; done
+          curl -sf http://localhost:3002/ > /dev/null \
+            || { echo "::error::storefront did not become ready"; cat /tmp/e2e-store.log; exit 1; }
           E2E_STORE_URL=http://localhost:3002 E2E_API_BASE=http://localhost:4000/api pnpm run test:e2e
       - name: Server logs (on failure)
         if: failure() && steps.changes.outputs.e2e == 'true'

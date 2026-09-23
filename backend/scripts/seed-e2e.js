@@ -16,7 +16,10 @@
  *
  * Usage: DATABASE_URL=postgres://… node backend/scripts/seed-e2e.js
  *
- * Keep the fixture values in sync with `frontend/e2e/mocks.ts`.
+ * Keep the fixture values in sync with `frontend/e2e/mocks.ts` — the seed is
+ * what the backend serves (and what the specs actually assert against);
+ * mocks.ts mirrors it for MSW, which is not on the request path for these
+ * flows but would silently diverge if either side changed alone.
  */
 const { Client } = require("pg");
 const { hashPassword } = require("../src/utils/hash");
