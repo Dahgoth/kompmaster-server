@@ -43,6 +43,16 @@
 >    above. RAM headroom on the 4 GB VPS with the SSR origin is the main new
 >    cost/verification item (§11.1 of the plan).
 >
+> **Revision 2026-09-23 — product URLs are opaque IDs (ADR 007 amendment).**
+> The v1 storefront was never a working public path, there is no legacy
+> traffic, and the 500k ₽ program has not started — so product
+> transliteration slugs were removed as overengineering: product URLs are
+> `/product/<uuid>` (single UUID-guarded lookup; non-UUID values 404 before
+> touching the DB). Migration 003 drops `products.slug` + its index (002 only
+> ever ran in local dev DBs). `content_pages.slug` stays (human-authored).
+> §5 item "products.slug migration + 301 map" above is retired; everything
+> else in the 2026-09-21 revision stands.
+
 > ADR 006's rendering decision is partially superseded; its library choices
 > carry over. This review remains the record of the pre-SEO analysis.
 

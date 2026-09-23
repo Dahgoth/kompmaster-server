@@ -32,6 +32,9 @@ for the decision log.
   — ad-hoc key literals drift and leave stale cached data after mutations.
   The sitemap counts only product entries against the 5,000 cap (ADR 007
   catalog scale); static route entries are excluded.
+- Product URLs are opaque UUIDs (`/product/<id>`, ADR 007 amendment
+  2026-09-23): no transliteration slugs — single UUID-guarded backend
+  lookup, id-based canonicals/sitemap/JSON-LD, no redirects.
 - **Order flow landed (plan phase 3)**: cart, checkout (offer gate + 409
   stock handling), orders list/detail with R11 status pills, `/payment/manual`
 - **Static pages landed (plan phase 3)**: `/about`, `/faq` (with FAQPage

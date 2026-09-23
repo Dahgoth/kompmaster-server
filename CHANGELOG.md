@@ -100,14 +100,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (plan phases 2–4); the deployed static build still serves production.
 
 ### Added
-- Product slugs (latin transliteration, ADR 007): migration 002 backfills
-  slugs from product names (collisions get ordinal suffixes, symbol-only
-  names fall back to the UUID — legacy `/product/:uuid` links keep working
-  with no redirects), `GET /api/products/:id` now accepts slug or UUID, and
-  created/imported products receive slugs automatically. Admin can set a
-  slug explicitly on create/update; slugs are immutable on rename otherwise.
-- `X-Total-Count` response header on `GET /api/products` for pagination (the
-  array body shape is preserved for the live v1 storefront).
+- Product URLs are opaque UUIDs (`/product/<id>`, ADR 007 amendment
+  2026-09-23): product transliteration slugs are removed as overengineering —
+  the v1 storefront was never a working public path, so there is no legacy
+  traffic to preserve and no keyword-URL value to repay the transliteration
+  machinery. Migration 003 drops the `products.slug` column + index added by
+  migration 002 §1 (002 ran only in local dev DBs); product reads are single
+  UUID-guarded queries where non-UUID values 404 before touching the DB.
+  `content_pages.slug` is unaffected (human-authored).
+- `X-Total-Count` response header on `GET /api/products` for pagination.
 - `POST /api/telemetry` — rate-limited frontend telemetry sink (errors, Web
   Vitals), log-only with strict body caps.
 - Content pages API (`/api/pages`, admin + public `GET /api/pages/:slug`)

@@ -17,7 +17,6 @@ type ProductForm = Partial<
   Pick<Product, "name" | "price" | "old_price" | "available" | "image" | "description">
 > & {
   category_id: string;
-  slug?: string;
 };
 
 /**
@@ -83,8 +82,6 @@ export function AdminProductsView() {
     if (image) input.image = image;
     const description = String(form.get("description") ?? "").trim();
     if (description) input.description = description;
-    const slug = String(form.get("slug") ?? "").trim();
-    if (slug) input.slug = slug;
     createMutation.mutate(input);
     if (!createMutation.isError) {
       event.currentTarget.reset();
@@ -126,7 +123,6 @@ export function AdminProductsView() {
               min="0"
             />
             <AdminField name="image" label="URL фото (опционально)" />
-            <AdminField name="slug" label="Слаг (опционально, генерируется)" />
             <label className="block sm:col-span-2">
               <span className="mb-1 block text-sm font-bold">Описание</span>
               <textarea
@@ -236,7 +232,6 @@ function mapToApi(input: ProductForm) {
     available: input.available,
     image: input.image ?? undefined,
     description: input.description ?? undefined,
-    slug: input.slug ?? undefined,
   };
 }
 

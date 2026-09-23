@@ -249,11 +249,9 @@ this section is the detailed reference.
 - Backend: `backend/tests/*.test.js` (CommonJS). Covers `hash.verifyPassword`
   null-safety, JWT round-trips and admin-panel flag rejection, price-import
   header variants and duplicate detection, the fail-closed `FRONTEND_ORIGIN`
-  allowlist, `requireRole` 403 behavior, the rate limiters
-  (Authorization-header keying, brute-force blocking), and the latin-translit
-  slug generator (`utils/slugify.js`, ADR 007 — kept in sync with the SQL
-  backfill in migration 002; the tests pin э/ъ/ь/ё because those characters
-  previously drifted between the two implementations). Expensive endpoints
+  allowlist, `requireRole` 403 behavior, and the rate limiters
+  (Authorization-header keying, brute-force blocking). Product slugs and the
+  `slugify` util are removed (ADR 007 amendment 2026-09-23 — opaque ids). Expensive endpoints
   are rate-limited via `backend/src/middleware/rateLimit.js`
   (`adminPanelVerifyLimiter`, `adminLimiter`, `orderCreateLimiter`) — new
   admin routes must place the limiter **first** in the route chain, before

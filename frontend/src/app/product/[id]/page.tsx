@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { fetchProductReviews } from "@/api/reviews";
 import { fetchProduct } from "@/api/products";
 import { formatPrice } from "@/lib/format";
@@ -11,10 +11,8 @@ import { ProductReviews } from "@/features/reviews/ProductReviews";
 import type { Product } from "@/api/schemas";
 import { rethrowIfMisconfigured } from "@/lib/errors";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 interface ProductPageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }
 
 export const revalidate = 60;
@@ -22,12 +20,12 @@ export const revalidate = 60;
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { id } = await params;
   let product;
   try {
-    product = await fetchProduct(slug);
+    product = await fetchProduct(id);
   } catch (err) {
     rethrowIfMisconfigured(err);
     return { title: "Товар не найден" };
@@ -37,22 +35,17 @@ export async function generateMetadata({
     description:
       product.description?.slice(0, 160) ??
       `${product.name} — ${formatPrice(product.price)}, КомпМастер (Сочи).`,
-    alternates: { canonical: `/product/${encodeURIComponent(product.slug ?? product.id)}` },
+    alternates: { canonical: `/product/${encodeURIComponent(product.id)}` },
   };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const product = await fetchProduct(slug).catch((err: unknown) => {
+  const { id } = await params;
+  const product = await fetchProduct(id).catch((err: unknown) => {
     rethrowIfMisconfigured(err);
     return null;
   });
   if (!product) notFound();
-
-  // Legacy /product/:uuid links 301 to the canonical slug URL (ADR 007 §2).
-  if (UUID_RE.test(slug) && product.slug && product.slug !== slug) {
-    permanentRedirect(`/product/${encodeURIComponent(product.slug)}`);
-  }
 
   const inStock = product.available > 0;
   const jsonLd = {
@@ -64,7 +57,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     sku: product.id,
     offers: {
       "@type": "Offer",
-      url: `${config.siteUrl}/product/${encodeURIComponent(product.slug ?? product.id)}`,
+      url: `${config.siteUrl}/product/${encodeURIComponent(product.id)}`,
       priceCurrency: "RUB",
       price: product.price,
       availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",

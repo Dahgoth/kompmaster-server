@@ -25,11 +25,9 @@ describe("productSchema", () => {
     expect(product.specs).toEqual({ cpu: "i5-1135G7", ram: "16GB" });
   });
 
-  it("keeps slug optional (backend migration may not be applied yet)", () => {
-    expect(productSchema.parse(rawProduct).slug).toBeUndefined();
-    expect(productSchema.parse({ ...rawProduct, slug: "noutbuh-lenovo" }).slug).toBe(
-      "noutbuh-lenovo",
-    );
+  it("has no slug field: product URLs are opaque UUIDs (ADR 007 amendment)", () => {
+    const product = productSchema.parse({ ...rawProduct, slug: "ignored-legacy" });
+    expect("slug" in product).toBe(false);
   });
 
   it("rejects a product missing required fields", () => {

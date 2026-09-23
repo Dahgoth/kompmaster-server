@@ -35,6 +35,10 @@ this on frontend changes).
    loading/error states where relevant.
 6. **Motion is functional.** 200–300ms ease for hovers/drawer/modal,
    `transform`/`opacity` only.
+5b. **Product URLs are opaque identifiers** (`/product/<uuid>`, per
+   ADR 007 amendment 2026-09-23 — no keyword slugs). Categories use their
+   admin-owned id the same way.
+
 7. **Cache invalidations route through the central key factory**
    (`frontend/src/api/categories.ts#queryKeys`) — ad-hoc key literals in
    feature code drift from the factory shapes and leave stale cached data

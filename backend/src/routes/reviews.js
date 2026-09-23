@@ -7,13 +7,14 @@ const { notifyAdmin } = require("../utils/telegram");
 const router = express.Router();
 
 // Публично — только одобренные отзывы конкретного товара.
-// Слаг вставляется безопасно: reviews.product_id хранит UUID, поэтому слаг
-// сначала резолвится в id; неизвестный слаг/UUID даёт чистый 404, а не 500
-// (22P02 invalid input syntax for type uuid — crash в prod 2026-09-22).
-async function resolveProductId(client, idOrSlug) {
-  const { rows } = await client.query("SELECT id FROM products WHERE id::text = $1 OR slug = $1", [
-    idOrSlug,
-  ]);
+// product id (UUID) валидируется до запроса: pg выбросит 22P02
+// (invalid input syntax for type uuid) на произвольных строках — crash в prod
+// 2026-09-22. Транслит-слаги удалены (ADR 007, поправка 2026-09-23),
+// поэтому резолв сводится к UUID-гарду.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function resolveProductId(client, id) {
+  if (!UUID_RE.test(String(id))) return null;
+  const { rows } = await client.query("SELECT id FROM products WHERE id = $1", [id]);
   return rows[0]?.id ?? null;
 }
 

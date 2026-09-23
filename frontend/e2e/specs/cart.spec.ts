@@ -6,7 +6,7 @@ test.beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
 test.afterAll(() => mockServer.close());
 
 test("full cart flow persists across reload", async ({ page, assertNoViolations }) => {
-  await page.goto("/product/noutbuk-lenovo-thinkpad-t14");
+  await page.goto("/product/11111111-1111-4111-8111-111111111111");
   await page.getByRole("button", { name: "Добавить в корзину" }).click();
 
   await page.goto("/cart");

@@ -65,16 +65,17 @@ export async function fetchProducts(
   return { items, total };
 }
 
-/** Accepts slug or UUID (ADR 007: legacy /product/:uuid links keep working). */
+/** Product detail by id (opaque UUID). Non-UUID values 404 on the backend
+ * before touching the DB (invalid UUID syntax guard in routes/products.js). */
 export async function fetchProduct(
-  idOrSlug: string,
+  id: string,
   options: { signal?: AbortSignal; next?: { revalidate?: number; tags?: string[] } } = {},
 ): Promise<Product> {
-  return apiRequest(productSchema, "GET", `/products/${encodeURIComponent(idOrSlug)}`, {
+  return apiRequest(productSchema, "GET", `/products/${encodeURIComponent(id)}`, {
     ...options,
     next: options.next ?? {
       revalidate: 60,
-      tags: [cacheTags.products, cacheTags.product(idOrSlug)],
+      tags: [cacheTags.products, cacheTags.product(id)],
     },
   });
 }

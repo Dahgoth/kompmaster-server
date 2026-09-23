@@ -61,9 +61,6 @@ export const productSchema = z.object({
   specs: z.record(z.string(), z.unknown()).nullable(),
   created_at: isoString,
   updated_at: isoString,
-  // Added by migration 002 (backend phase 2); optional so the UI keeps
-  // working against an un-migrated staging backend.
-  slug: z.string().optional(),
 });
 
 export const productsQuerySchema = z.object({

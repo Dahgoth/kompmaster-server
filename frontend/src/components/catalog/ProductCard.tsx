@@ -4,7 +4,7 @@ import { formatPrice } from "@/lib/format";
 import type { Product } from "@/api/schemas";
 
 export function ProductCard({ product }: { product: Product }) {
-  const href = `/product/${encodeURIComponent(product.slug ?? product.id)}`;
+  const href = `/product/${encodeURIComponent(product.id)}`;
   const inStock = product.available > 0;
   return (
     <Link

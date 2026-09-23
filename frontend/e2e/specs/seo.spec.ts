@@ -6,7 +6,7 @@ test.beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
 test.afterAll(() => mockServer.close());
 
 test("product page serves complete crawler HTML", async ({ page }) => {
-  const response = await page.goto("/product/noutbuk-lenovo-thinkpad-t14");
+  const response = await page.goto("/product/11111111-1111-4111-8111-111111111111");
   expect(response?.status()).toBe(200);
   const html = await response?.text();
   expect(html).toContain("<title>");
@@ -17,7 +17,7 @@ test("product page serves complete crawler HTML", async ({ page }) => {
 
 test("sitemap covers the mocked catalog, robots blocks private paths", async ({ page }) => {
   const sitemap = await (await page.request.get("/sitemap.xml")).text();
-  expect(sitemap).toContain("/product/noutbuk-lenovo-thinkpad-t14");
+  expect(sitemap).toContain("/product/11111111-1111-4111-8111-111111111111");
   expect(sitemap).toContain("/category/noutbuki");
   const robots = await (await page.request.get("/robots.txt")).text();
   for (const path of ["/admin", "/auth", "/checkout", "/cart", "/orders", "/profile", "/api/"]) {

@@ -83,7 +83,7 @@ frontend/
     │   ├── page.tsx                # / (home)
     │   ├── catalog/page.tsx
     │   ├── category/[slug]/page.tsx
-    │   ├── product/[slug]/page.tsx
+    │   ├── product/[id]/page.tsx
     │   ├── cart/ checkout/ auth/ reset-password/
     │   ├── orders/ orders/[id]/ profile/
     │   ├── about/ faq/ contacts/ warranty/ payment/manual/
@@ -166,7 +166,7 @@ All v1 routes preserved (`frontend/src/router.js:6-29`) plus the missing one:
 | `/` | public | hero, category grid, office/contact blocks |
 | `/catalog` | public | all categories |
 | `/category/:slug` | public | group → child cards; catalog → product list (search, pagination) |
-| `/product/:slug` | public | specs, stock, reviews; add-to-cart; 301 from `/product/:uuid` |
+| `/product/:id` | public | specs, stock, reviews; add-to-cart; ids are opaque UUIDs (no transliteration slugs — ADR 007 amendment) |
 | `/cart` | public (guest) | persisted in localStorage (parity with `frontend/src/store.js`) |
 | `/checkout` | user | offer-acceptance gate; 409 → refresh stock, mark unavailable items |
 | `/auth` | public | login / register / forgot tabs; `?redirect=` honored |
@@ -185,12 +185,13 @@ RF VPS.
 
 ### SEO architecture (ADR 007 — the engineering gate for the 500k ₽ program)
 
-- **URLs are Latin-translit slugs** (maintainer decision, ADR 007):
-  `/product/<slug>`, `/category/<slug>`; `slugify(name)` generates the slug
-  (the v1 util already normalizes ё→е and keeps latin/digit runs —
-  `frontend/tests/defaults.test.js` covers it) with an id suffix on
-  collisions; renames keep the old URL as a 301. Category `id` (TEXT) is the
-  slug contract.
+- **URLs are opaque identifiers** (ADR 007 amendment, 2026-09-23):
+  `/product/<uuid>`, `/category/<id>`; no transliteration slugs. (v1 had no
+  working public path and the SEO program has not started, so there is no
+  legacy traffic to 301 and no keyword-URL value to repay the transliteration
+  cost.) The previous Latin-translit scheme was superseded before the phase-2
+  migration ever reached prod. Category `id` (TEXT) stays the opaque id
+  contract.
 - **Metadata per route** via the App Router Metadata API: title/description
   templates, Open Graph, canonical (`https://www.compmasone.ru`), `noindex`
   on `/admin`, `/auth`, `/checkout`, `/cart`, `/orders`, `/profile`,
@@ -302,7 +303,7 @@ against `main`.
 | --- | --- | --- | --- |
 | `navigation.spec.ts` | all 21 routes | categories | deep-link render via 404→index fallback (R1), active nav state, back/forward, unknown route → home fallback banner |
 | `home.spec.ts` | `/` | categories | category grid renders; group → children navigation |
-| `catalog.spec.ts` | `/catalog`, `/category/:slug` | GET products (category/search/page), categories | search filter; empty results state; pagination; loading skeletons; API 500 → ErrorState with retry |
+| `catalog.spec.ts` | `/catalog`, `/category/:id` | GET products (category/search/page), categories | search filter; empty results state; pagination; loading skeletons; API 500 → ErrorState with retry |
 | `product.spec.ts` | `/product/:id` | products/:id, reviews/product/:id | specs render; out-of-stock disables add-to-cart; 404 product → not-found state; reviews list; unknown product |
 | `auth.spec.ts` | `/auth` | register, login, me, forgot-password | register validation (short password, privacy unchecked); login wrong-password 401; login success → redirect param; forgot-password success copy (never reveals existence) |
 | `reset-password.spec.ts` | `/reset-password` | reset-password | valid token → set new password → auto-login redirect; expired/used token → error (covers the v1 bug) |
@@ -321,7 +322,7 @@ against `main`.
 | `admin-import.spec.ts` | `/admin/products` (import) | import-price (dryRun + apply), export-price | upload xlsx fixture → preview (duplicates/skipped/blank-stock per R9) → confirm → result summary; mode=sync zeroes absent items (fullstack tier) |
 | `errors.spec.ts` | global | all | offline → global error UI; 401 mid-session → redirect to auth with return path; 429 → friendly message; CSP console-error assertion |
 | `a11y.spec.ts` | every route | — | axe scan (zero critical/serious), skip-link focus, drawer/dialog keyboard + Escape + focus trap, tab order on checkout |
-| `seo.spec.ts` | money pages + sitemap/robots | products, categories, content pages | SSR HTML contains title/description/canonical/JSON-LD (parse + validate); sitemap completeness vs catalog fixture; robots blocks private paths; noindex on admin/auth/checkout; slug 301 from legacy UUID URLs; revalidate webhook: product price update reflected on SSR page after hook (cache-invalidation correctness, ADR 007); IndexNow ping fired (assert against mock collector) |
+| `seo.spec.ts` | money pages + sitemap/robots | products, categories, content pages | SSR HTML contains title/description/canonical/JSON-LD (parse + validate); sitemap completeness vs catalog fixture; robots blocks private paths; noindex on admin/auth/checkout; non-UUID product paths 404 without touching the read path; revalidate webhook: product price update reflected on SSR page after hook (cache-invalidation correctness, ADR 007); IndexNow ping fired (assert against mock collector) |
 | `visual.spec.ts` | home, catalog, product, checkout | — | screenshot baselines (desktop 1280, mobile 390) |
 
 Definition of "fully covered": every route is opened in at least one spec; every
@@ -399,8 +400,10 @@ CI additions to `.github/workflows/ci.yml`: `e2e-mock` job (path-filtered),
    `<Image>` needs an image loader against the origin (or `unoptimized`
    until variants exist). A backend resize step (presigned flow, ADR 001 §3)
    is now also an SEO item (image search + LCP on money pages).
-6. ~~Slug taxonomy ownership~~ — **resolved**: Latin translit, `slugify`
-   generation, collision suffix, rename→301 (ADR 007 Decision log).
+6. ~~Slug taxonomy ownership~~ — **retired with the slug scheme itself**
+   (ADR 007 amendment, 2026-09-23): product URLs are opaque UUIDs; the latin
+   translit decision, `slugify`, collision suffixes, and rename→301 are all
+   removed rather than resolved.
 7. ~~Content publishing workflow~~ — **resolved**: PO publishes via the
    admin markdown editor with live preview (ADR 007). Agency bulk content
    arrives as files and is entered by the PO; no git publishing path.
@@ -414,17 +417,18 @@ CI additions to `.github/workflows/ci.yml`: `e2e-mock` job (path-filtered),
 | Phase | Deliverable | Docs obligation (same PR) |
 | --- | --- | --- |
 | 1. Scaffold | Next.js (App Router, standalone) + TS + Tailwind + tokens + layout shell; CI `e2e-mock` job; v1 pages removed; **RAM headroom measured** (§11.1) | `DEVELOPMENT.md` (commands, tooling), `frontend/README.md` |
-| 2. API layer + server data | Zod schemas, server fetch cache + `/api/revalidate` route, auth provider, error normalization. Backend PR: `products.slug` migration + slug routes + 301 map + `content_pages` table + approved `/api/telemetry` endpoint; **staging bootstrap** (PM2 `kompmaster-staging-api`, `kompmaster_staging` DB, Caddy block) | `DEVELOPMENT.md`, `ENVIRONMENT.md` (REVALIDATE_SECRET, INDEXNOW_KEY, env rename — R2's `VITE_API_BASE` becomes API_BASE) |
+| 2. API layer + server data | Zod schemas, server fetch cache + `/api/revalidate` route, auth provider, error normalization. Backend PR: slug-free UUID product reads (migration 003 drops `products.slug`; see ADR 007 amendment) + `content_pages` table + approved `/api/telemetry` endpoint; **staging bootstrap** (PM2 `kompmaster-staging-api`, `kompmaster_staging` DB, Caddy block) | `DEVELOPMENT.md`, `ENVIRONMENT.md` (REVALIDATE_SECRET, INDEXNOW_KEY, env rename — R2's `VITE_API_BASE` becomes API_BASE) |
 | 3. Storefront SSR | Home, catalog, category, product, cart, checkout, orders, profile, static pages, `/reset-password`; SEO suite: metadata, JSON-LD, `sitemap.ts`, `robots.ts`, IndexNow | `DESIGN.md` (regenerated), `CHANGELOG.md` |
 | 4. Admin + content pages | Admin segment (login, products, orders, categories, users, reviews, import preview per R9) + `/p/[slug]` editor (revalidate hook wired to mutations) | `DESIGN.md`, `CHANGELOG.md` |
 | 5. Tests & a11y | Full E2E matrix green incl. `seo.spec.ts` (Tier A), Tier B pipeline, axe clean, coverage thresholds | `DEVELOPMENT.md` (test commands) |
 | 6. Deploy topology | Budgets in CI; Caddy site for `www` → PM2 `kompmaster-storefront` (headers: CSP/HSTS/immutable `_next/static`); DNS `www` → VPS; S3 fallback page; telemetry endpoint; Metrika | `ENVIRONMENT.md`, `DEPLOY.md`, `terraform/README.md` + `RUNBOOK.md` §4.4 (storefront deploy is rsync+PM2, S3 sync retired for www), `CHANGELOG.md` |
-| 7. Cutover + SEO handoff | Tag once (R5); deploy standalone + health gate; verify `https://www.compmasone.ru`; Yandex.Webmaster + GSC verification, sitemap submitted, IndexNow live. **Gate: the 500k ₽ SEO campaign starts here** (maintainer decision — content published only on the slug/SSR-ready storefront) | `CHANGELOG.md`, `DEPLOY.md` |
+| 7. Cutover + SEO handoff | Tag once (R5); deploy standalone + health gate; verify `https://www.compmasone.ru`; Yandex.Webmaster + GSC verification, sitemap submitted, IndexNow live. **Gate: the 500k ₽ SEO campaign starts here** (maintainer decision — content published only on the SSR-ready storefront) | `CHANGELOG.md`, `DEPLOY.md` |
 
 Rollback: previous standalone release directory + `pm2 reload` (health-gated);
 the S3 static fallback page covers full-origin outages. No storefront data
 migration exists (API contract unchanged), so rollback is artifact-level;
-slug redirects must ship with Phase 2 so cutover never breaks live links.
+(no slug redirects: v1 had no working public path, so there are no legacy
+product URLs to preserve — ADR 007 amendment).
 
 ---
 

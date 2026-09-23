@@ -30,7 +30,6 @@ const products = [
     id: "11111111-1111-4111-8111-111111111111",
     category_id: "noutbuki",
     name: "Ноутбук Lenovo ThinkPad T14",
-    slug: "noutbuk-lenovo-thinkpad-t14",
     price: "45990.00",
     old_price: null,
     available: 3,
@@ -44,7 +43,6 @@ const products = [
     id: "22222222-2222-4222-8222-222222222222",
     category_id: "videokarty",
     name: "Видеокарта RTX 3060",
-    slug: "videokarta-rtx-3060",
     price: "24990.00",
     old_price: "27990.00",
     available: 0,
@@ -79,7 +77,8 @@ export const handlers = [
   }),
 
   http.get(`${API_BASE}/products/:id`, ({ params }) => {
-    const found = products.find((p) => p.id === params.id || p.slug === params.id);
+    // Backend UUID-guards before touching the DB: non-UUID values 404.
+    const found = products.find((p) => p.id === params.id);
     if (!found) return HttpResponse.json({ error: "Товар не найден" }, { status: 404 });
     return HttpResponse.json(found);
   }),
@@ -112,7 +111,7 @@ export const handlers = [
   }),
 
   http.get(`${API_BASE}/reviews/product/:productId`, ({ params }) => {
-    const found = products.find((p) => p.id === params.productId || p.slug === params.productId);
+    const found = products.find((p) => p.id === params.productId);
     if (!found) return HttpResponse.json({ error: "Товар не найден" }, { status: 404 });
     return HttpResponse.json([]);
   }),

@@ -8,7 +8,7 @@ export const queryKeys = {
   categoriesAdmin: ["categories", "admin"] as const,
   products: (filters: { category?: string; search?: string; page?: number }) =>
     ["products", filters] as const,
-  product: (idOrSlug: string) => ["product", idOrSlug] as const,
+  product: (id: string) => ["product", id] as const,
   ordersMine: ["orders", "my"] as const,
   order: (id: string) => ["order", id] as const,
   adminOrders: (filters: { status?: string; search?: string; page?: number }) =>
@@ -21,7 +21,7 @@ export const queryKeys = {
 export const cacheTags = {
   categories: "categories",
   products: "products",
-  product: (idOrSlug: string) => `product:${idOrSlug}`,
+  product: (id: string) => `product:${id}`,
   pages: "pages",
   page: (slug: string) => `page:${slug}`,
 } as const;

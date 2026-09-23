@@ -1,6 +1,6 @@
 # ADR 007: SEO-driven rendering — self-hosted Next.js SSR/ISR storefront
 
-- **Status:** Accepted — 2026-09-21 (with the decision log below)
+- **Status:** Accepted — 2026-09-21; amended 2026-09-23 (opaque product URLs)
 - **Date:** 2026-09-21
 - **Deciders:** @Dahgoth (maintainer), PO decision input: 500,000 ₽ committed to SEO/organic traffic
 - **Supersedes:** ADR 006 §"Why an SPA and not Next.js" (rendering + origin only)
@@ -12,7 +12,7 @@
 
 | Decision | Choice | Doc impact |
 | --- | --- | --- |
-| Slug language | **Latin transliteration** (`/product/noutbuh-lenovo-thinkpad`) | 301 map, sitemap, E2E slug tests use translit; cyrillic not used in URLs |
+| Slug language | **Superseded 2026-09-23** — opaque product ids (`/product/<uuid>`); no transliteration (see §Amendment) | Slug machinery removed (migration 003); sitemap/E2E use fixture UUIDs |
 | Content publishing | **PO via admin editor** | Phase 4 ships the editor; no git-based publishing path |
 | Content editor | **Markdown + live preview** (not blocks/WYSIWYG) | Editor ~1 day; stored as markdown in `content_pages` |
 | VPS capacity | **Measure first** (Phase 1), upgrade only if headroom is thin | RAM measurement is a Phase 1 exit criterion |
@@ -27,6 +27,38 @@
 - **Related:** ADR 001 §1a (pure C API contract — unchanged), ADR 002
   (Timeweb hosting), `docs/research/2026-09-21-platform-review.md` §1–§2 and
   §6 (assumption S-1), `docs/frontend-v2-plan.md` (revised accordingly)
+
+## Amendment — product URLs are opaque IDs (2026-09-23, maintainer)
+
+**Decision: drop product transliteration slugs.** Product URLs are
+`/product/<uuid>`; categories stay `/category/<id>` (admin-owned TEXT id).
+The transliteration machinery (`backend/src/utils/slugify.js`,
+`products.slug` column + migration 002 §1, `uniqueSlug`, slug-or-id lookups,
+UUID→slug 301 redirects) is removed as overengineering:
+
+- **No legacy traffic to preserve.** The v1 storefront was never a working
+  public path, there are no real clients or indexed pages, and the 500k ₽
+  program has not started — there is nothing to 301.
+- **Slugs were pure cost, not SEO value.** Every committed variant (translit /
+  cyrillic / mixed) had already produced drift between SQL and JS, an
+  aborting migration, check-then-insert races, and 22P02 crash coverage —
+  none of which keyword URLs repay before the program exists. The SEO
+  acceptance bar (§3) is unchanged in every point that matters: indexable
+  HTML, sitemap, JSON-LD, IndexNow, Webmaster/GSC coverage, Lighthouse/CWV.
+- **`content_pages.slug` stays.** Content slugs are human-authored (editor
+  enforces the format), not machine-transliterated — the overengineering
+  verdict does not extend to them.
+
+**What changed:** migration 003 drops `products.slug` + its index (002 only
+ever ran in local dev DBs); backend reads single-UUID-guarded lookups
+(non-UUID values 404 before touching the DB); the storefront route is
+`/product/[id]`; sitemap/canonical/JSON-LD emit ids; the E2E matrix uses
+fixture UUIDs. ADR 001 pure C is untouched.
+
+**Superseded text below** (kept for the record): the §2 slug sentences, the
+Table row "Slug language", and any "keyword-bearing slugs (not bare UUIDs)"
+phrasing. The rest of this ADR (rendering, ISR, publishing, criteria 1–6)
+stands.
 
 ## Context
 
@@ -87,7 +119,7 @@ Implications that follow from the investment:
   the existing S3 bucket, not the full app (an SSR origin has no static
   full-app fallback).
 
-### 2. Slugs and redirects (backend involvement — required)
+### 2. [Retired 2026-09-23 — see §Amendment] Slugs and redirects (backend involvement — required)
 
 - `products.slug TEXT UNIQUE` added by migration + `GET /api/products/slug/:slug`
   (or accept slug-or-id on `GET /:id`); category `id` is already TEXT and

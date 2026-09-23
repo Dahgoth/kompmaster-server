@@ -16,7 +16,7 @@ interface CategoryPageProps {
   searchParams: Promise<{ search?: string; page?: string }>;
 }
 
-// The category `id` (TEXT, admin-owned) is the slug contract (ADR 007 §2).
+// Category URLs use the admin-owned TEXT id as an opaque identifier.
 async function loadParams(slug: string) {
   let categories: Awaited<ReturnType<typeof fetchCategories>> = [];
   try {

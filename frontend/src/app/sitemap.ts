@@ -51,7 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (!items.length) break;
       for (const product of items) {
         entries.push({
-          url: `${config.siteUrl}/product/${encodeURIComponent(product.slug ?? product.id)}`,
+          url: `${config.siteUrl}/product/${encodeURIComponent(product.id)}`,
           lastModified: new Date(product.updated_at),
           changeFrequency: "daily" as const,
           priority: 0.7,
