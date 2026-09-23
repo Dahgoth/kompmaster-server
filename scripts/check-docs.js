@@ -33,15 +33,19 @@ const isBackendWorkflowFile = (f) =>
   f.startsWith("backend/scripts/");
 const isFrontendCode = (f) => f.startsWith("frontend/") && !f.startsWith("frontend/terraform/");
 const isFrontendWorkflowFile = (f) =>
-  ["frontend/package.json", "frontend/vite.config.js"].includes(f);
+  ["frontend/package.json", "frontend/next.config.ts", "frontend/postcss.config.mjs"].includes(
+    f,
+  );
 const isTerraformCode = (f) => f.startsWith("terraform/") || f.startsWith("frontend/terraform/");
 const isRoute = (f) => f.startsWith("backend/src/routes/");
 const isFrontendPage = (f) =>
+  f.startsWith("frontend/src/app/") ||
   f.startsWith("frontend/src/pages/") ||
-  f.startsWith("frontend/src/components/") ||
-  f === "frontend/index.html";
+  f.startsWith("frontend/src/components/");
 const isFrontendStyle = (f) =>
-  f.startsWith("frontend/src/styles/") || f === "frontend/src/data/content.js";
+  f.startsWith("frontend/src/styles/") ||
+  f === "frontend/src/lib/content.ts" ||
+  f === "frontend/src/data/content.js";
 
 const ENV_FILES = new Set([
   "backend/src/config.js",
