@@ -4,6 +4,7 @@ import { apiRequest } from "@/api/client";
 import { contentPageSchema, type ContentPage } from "@/api/schemas";
 import { cacheTags } from "@/api/categories";
 import { renderMarkdown } from "@/lib/markdown";
+import { rethrowIfMisconfigured } from "@/lib/errors";
 
 interface ContentPageProps {
   params: Promise<{ slug: string }>;
@@ -16,7 +17,8 @@ async function loadPage(slug: string): Promise<ContentPage | null> {
     return await apiRequest(contentPageSchema, "GET", `/pages/${encodeURIComponent(slug)}`, {
       next: { revalidate: 300, tags: [cacheTags.pages, cacheTags.page(slug)] },
     });
-  } catch {
+  } catch (err) {
+    rethrowIfMisconfigured(err);
     return null;
   }
 }

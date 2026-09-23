@@ -9,6 +9,7 @@ import { config } from "@/config";
 import { AddToCartButton } from "@/features/cart/AddToCartButton";
 import { ProductReviews } from "@/features/reviews/ProductReviews";
 import type { Product } from "@/api/schemas";
+import { rethrowIfMisconfigured } from "@/lib/errors";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -27,7 +28,8 @@ export async function generateMetadata({
   let product;
   try {
     product = await fetchProduct(slug);
-  } catch {
+  } catch (err) {
+    rethrowIfMisconfigured(err);
     return { title: "Товар не найден" };
   }
   return {
@@ -41,7 +43,10 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = await fetchProduct(slug).catch(() => null);
+  const product = await fetchProduct(slug).catch((err: unknown) => {
+    rethrowIfMisconfigured(err);
+    return null;
+  });
   if (!product) notFound();
 
   // Legacy /product/:uuid links 301 to the canonical slug URL (ADR 007 §2).
@@ -163,7 +168,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
  * must never 500 the product page — reviews arrive best-effort.
  */
 async function ProductReviewsSection({ product }: { product: Product }) {
-  const reviews = await fetchProductReviews(product.id).catch(() => null);
+  const reviews = await fetchProductReviews(product.id).catch((err: unknown) => {
+    rethrowIfMisconfigured(err);
+    return null;
+  });
   return (
     <>
       {reviews && reviews.length ? (

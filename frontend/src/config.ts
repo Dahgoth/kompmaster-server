@@ -11,24 +11,63 @@ function clean(value: string | undefined): string | undefined {
   return value && value.trim() !== "" ? value.replace(/\/+$/, "") : undefined;
 }
 
+/**
+ * Configuration errors are deliberately distinct from transport errors: every
+ * server render wraps its fetch in a try/catch that degrades to an empty
+ * catalog or a 404, so a missing API_BASE would otherwise ship a storefront
+ * that renders "Каталог временно недоступен" on every page with a green build
+ * and no 5xx. Callers rethrow ConfigError instead of degrading.
+ */
+export class ConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfigError";
+  }
+}
+
 function apiBase(): string {
   const value = process.env.API_BASE;
-  if (value && value.trim() !== "") return value.replace(/\/+$/, "");
+  if (value && value.trim() !== "") {
+    const cleaned = value.replace(/\/+$/, "");
+    if (!/^https?:\/\//.test(cleaned)) {
+      throw new ConfigError(
+        `API_BASE must be an absolute http(s) URL for server-side fetches, got "${cleaned}"`,
+      );
+    }
+    return cleaned;
+  }
   if (process.env.NODE_ENV === "production") {
-    // Fail closed at build (RUNBOOK §4.4 lesson: a missing base produced a
-    // broken deploy). Dev builds fall through to the local backend.
-    throw new Error(
-      "API_BASE is required for production builds (e.g. https://api.compmasone.ru/api)",
+    // Fail closed (RUNBOOK §4.4 lesson: a missing base produced a broken
+    // deploy). Dev builds fall through to the local backend.
+    throw new ConfigError(
+      "API_BASE is required in production (e.g. https://api.compmasone.ru/api)",
     );
   }
   return "http://localhost:4000/api";
+}
+
+/**
+ * Boot-time guard, called from instrumentation.ts. Fails the server start (and
+ * the build) when the production env is incomplete, so a misconfigured deploy
+ * crashes loudly instead of serving an empty storefront.
+ */
+export function assertServerConfig(): void {
+  if (typeof window !== "undefined") return;
+  const base = apiBase();
+  const site = clean(process.env.SITE_URL);
+  if (process.env.NODE_ENV === "production" && !site) {
+    throw new ConfigError(
+      "SITE_URL is required in production: it sets metadataBase, canonicals and the sitemap host",
+    );
+  }
+  console.info(`[config] apiBase=${base} siteUrl=${site ?? "https://www.compmasone.ru"}`);
 }
 
 class ClientConfigProxy {
   /** Absolute base for server-side (RSC) fetches. Browser access = bug. */
   get apiBase(): string {
     if (typeof window !== "undefined") {
-      throw new Error(
+      throw new ConfigError(
         "config.apiBase is server-only — browser code must use config.clientApiBase (same-origin /api)",
       );
     }

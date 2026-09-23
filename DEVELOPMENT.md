@@ -325,6 +325,13 @@ this section is the detailed reference.
   degrade to plain text. `frontend/tests/markdown.test.ts` pins the escaping
   and the attribute-injection regression — do not weaken either without
   updating those tests.
+- Server-render error handling distinguishes misconfiguration from transient
+  API failure: `frontend/src/config.ts` throws `ConfigError`, and
+  `frontend/src/lib/errors.ts#rethrowIfMisconfigured` rethrows it from the
+  page-level catch sites (which otherwise degrade to an empty catalog / 404).
+  `frontend/src/instrumentation.ts#register` re-validates at server start,
+  so a production deploy with a missing `API_BASE`/`SITE_URL` crashes at
+  boot instead of serving a green but empty storefront.
 - `pnpm --filter kompmaster-frontend run typecheck` — `tsc --noEmit`
   (strict); CI runs it in the `frontend` job before tests.
 - Run both suites before committing: `pnpm test` and

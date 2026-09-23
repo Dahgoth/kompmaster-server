@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { fetchCategories, cacheTags } from "@/api/categories";
 import { CategoryCard } from "@/components/catalog/CategoryCard";
+import { rethrowIfMisconfigured } from "@/lib/errors";
 
 export const metadata: Metadata = {
   title: "Каталог",
@@ -17,7 +18,8 @@ export default async function CatalogPage() {
     categories = await fetchCategories({
       next: { revalidate: 60, tags: [cacheTags.categories] },
     });
-  } catch {
+  } catch (err) {
+    rethrowIfMisconfigured(err);
     // ISR backstop
   }
   const roots = categories.filter((c) => !c.parent_id);

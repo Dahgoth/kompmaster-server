@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { fetchCategories, cacheTags } from "@/api/categories";
 import { fetchProducts } from "@/api/products";
 import { config } from "@/config";
+import { rethrowIfMisconfigured } from "@/lib/errors";
 
 // Sitemap index semantics are not needed at PoC catalog sizes; the route is
 // tag-invalidated by product mutations and revalidates hourly regardless.
@@ -34,7 +35,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "daily" as const,
         priority: 0.8,
       }));
-  } catch {
+  } catch (err) {
+    rethrowIfMisconfigured(err);
     return staticRoutes;
   }
 
@@ -57,7 +59,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
       if (items.length < 100) break;
     }
-  } catch {
+  } catch (err) {
+    rethrowIfMisconfigured(err);
     // category entries already collected; product URLs missed this pass
   }
 

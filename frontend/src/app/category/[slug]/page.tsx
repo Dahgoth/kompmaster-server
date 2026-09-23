@@ -7,6 +7,7 @@ import { CatalogSearch } from "@/components/catalog/CatalogSearch";
 import { CategoryCard } from "@/components/catalog/CategoryCard";
 import { Pagination } from "@/components/catalog/Pagination";
 import { ProductCard } from "@/components/catalog/ProductCard";
+import { rethrowIfMisconfigured } from "@/lib/errors";
 
 const PAGE_SIZE = 30;
 
@@ -22,7 +23,8 @@ async function loadParams(slug: string) {
     categories = await fetchCategories({
       next: { revalidate: 60, tags: [cacheTags.categories] },
     });
-  } catch {
+  } catch (err) {
+    rethrowIfMisconfigured(err);
     return null;
   }
   const category = categories.find((c) => c.id === slug);
