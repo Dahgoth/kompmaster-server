@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
+const { isUuid } = require("../utils/uuid");
 const { adminLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
@@ -42,6 +43,9 @@ router.put(
     const { role } = req.body || {};
     if (!["user", "manager", "admin"].includes(role)) {
       return res.status(400).json({ error: "Роль должна быть user, manager или admin" });
+    }
+    if (!isUuid(req.params.id)) {
+      return res.status(404).json({ error: "Пользователь не найден" });
     }
     const { rows } = await db.query(
       "UPDATE users SET role = $1 WHERE id = $2 RETURNING id, login, role",

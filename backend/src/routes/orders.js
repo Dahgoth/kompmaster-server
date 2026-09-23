@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
+const { isUuid } = require("../utils/uuid");
 const { adminLimiter, orderCreateLimiter } = require("../middleware/rateLimit");
 const { notifyAdmin } = require("../utils/telegram");
 
@@ -20,6 +21,13 @@ router.post("/", orderCreateLimiter, requireAuth, async (req, res) => {
   const { items, receiveMethod, address, contactPhone } = req.body || {};
   if (!Array.isArray(items) || !items.length) {
     return res.status(400).json({ error: "Корзина пуста" });
+  }
+  // UUID-гард до транзакции: невалидный productId иначе уронит запрос с 22P02
+  // (invalid input syntax for type uuid) вместо чистого 400.
+  for (const item of items) {
+    if (!isUuid(item?.productId)) {
+      return res.status(400).json({ error: "Некорректный productId в корзине" });
+    }
   }
 
   const client = await db.getClient();
@@ -97,6 +105,7 @@ router.get("/my", requireAuth, async (req, res) => {
 });
 
 router.get("/my/:id", requireAuth, async (req, res) => {
+  if (!isUuid(req.params.id)) return res.status(404).json({ error: "Заказ не найден" });
   const { rows } = await db.query("SELECT * FROM orders WHERE id = $1 AND user_id = $2", [
     req.params.id,
     req.user.id,
@@ -150,6 +159,7 @@ router.put(
   async (req, res) => {
     const { status } = req.body || {};
     if (!status) return res.status(400).json({ error: "Не передан статус" });
+    if (!isUuid(req.params.id)) return res.status(404).json({ error: "Заказ не найден" });
     const { rows } = await db.query(
       "UPDATE orders SET status = $1, status_updated_at = now() WHERE id = $2 RETURNING *",
       [status, req.params.id],
@@ -171,6 +181,7 @@ router.post(
   requireRole(["admin", "manager"]),
   requireAdminPanelSession,
   async (req, res) => {
+    if (!isUuid(req.params.id)) return res.status(404).json({ error: "Заказ не найден" });
     const { reason } = req.body || {};
     const client = await db.getClient();
     try {
@@ -216,6 +227,7 @@ router.delete(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
+    if (!isUuid(req.params.id)) return res.status(404).json({ error: "Заказ не найден" });
     await db.query("DELETE FROM orders WHERE id = $1", [req.params.id]);
     res.json({ ok: true });
   },

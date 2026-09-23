@@ -5,6 +5,7 @@ const { requireAuth, requireRole, requireAdminPanelSession } = require("../middl
 const { adminLimiter } = require("../middleware/rateLimit");
 const { parsePriceFile, findDuplicateNames } = require("../utils/priceImport");
 const { revalidateStorefront } = require("../utils/revalidate");
+const { isUuid } = require("../utils/uuid");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -45,9 +46,8 @@ router.get("/", async (req, res) => {
 // /:id принимает product id (UUID). Транслит-слаги удалены (ADR 007,
 // поправка 2026-09-23 — см. docs/adr/007-seo-rendering-nextjs.md §5): URL
 // используется как непрозрачный идентификатор, как и категории (/category/:id).
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 router.get("/:id", async (req, res) => {
-  if (!UUID_RE.test(String(req.params.id))) {
+  if (!isUuid(req.params.id)) {
     return res.status(404).json({ error: "Товар не найден" });
   }
   const { rows } = await db.query("SELECT * FROM products WHERE id = $1", [req.params.id]);
@@ -94,7 +94,7 @@ router.put(
   requireAdminPanelSession,
   async (req, res) => {
     const { name, price, oldPrice, available, image, description, categoryId } = req.body || {};
-    if (!UUID_RE.test(String(req.params.id))) {
+    if (!isUuid(req.params.id)) {
       return res.status(404).json({ error: "Товар не найден" });
     }
     const existing = await db.query("SELECT id, price FROM products WHERE id = $1", [
@@ -135,7 +135,7 @@ router.delete(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
-    if (!UUID_RE.test(String(req.params.id))) {
+    if (!isUuid(req.params.id)) {
       return res.status(404).json({ error: "Товар не найден" });
     }
     const { rows } = await db.query("DELETE FROM products WHERE id = $1 RETURNING id", [

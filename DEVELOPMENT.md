@@ -424,6 +424,24 @@ was removed from the repository on 2026-09-17 after ADR 001 §1b-audit annex
 captured its behavior. If you need its historical behavior, consult the annex
 or git history (`git log --follow docs/legacy/`).
 
+### Route parameter validation (UUID guard)
+
+Any value bound to a `uuid` column must be validated before it reaches
+PostgreSQL: raw input triggers `22P02 invalid input syntax for type uuid`,
+which is an unhandled error and kills the process (found live 2026-09-22).
+Import the shared guard instead of hand-rolling a regex:
+
+```js
+const { isUuid } = require("../utils/uuid");
+if (!isUuid(req.params.id)) return res.status(404).json({ error: "…" });
+```
+
+Used by `products/:id`, `reviews/:id/approve|delete` and the manual-review
+body, `orders` (create item ids, `my/:id`, `:id/status`, `:id/cancel`, delete)
+and `users/:id/role`. Return 404 for an id-addressed resource, 400 when the id
+is part of a request body; never let the value reach the query unchecked.
+`backend/tests/uuid.test.js` pins the guard itself.
+
 ## Docker-based setup (databases only)
 
 `docker-compose.yml` provides PostgreSQL 16.15 (`postgres`) and MinIO

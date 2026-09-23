@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Non-UUID route parameters no longer crash the API with `22P02 invalid input
+  syntax for type uuid`. The 2026-09-22 `reviews/product/:id` fix is now closed
+  class-wide: one shared `backend/src/utils/uuid.js#isUuid` guard replaces the
+  duplicated per-file regexes and covers every uuid-column lookup —
+  `products/:id`, `reviews/:id/approve|delete` and the manual-review body,
+  `orders` (create item ids, `my/:id`, `:id/status`, `:id/cancel`, delete) and
+  `users/:id/role`. Malformed values return 400 or 404 before the query runs
+  (previously an unhandled error killed the process); verified live on all six
+  routes, with `backend/tests/uuid.test.js` pinning the guard.
 - Local dev: `docker-compose.yml` now pulls MinIO from Quay.io, pinned to
   `RELEASE.2025-09-07T16-13-09Z` — MinIO removed its Docker Hub organization,
   so `minio/minio` fails every `docker compose up` with `pull access denied /

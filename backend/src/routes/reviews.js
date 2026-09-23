@@ -3,6 +3,7 @@ const db = require("../db");
 const { requireAuth, requireRole, requireAdminPanelSession } = require("../middleware/auth");
 const { adminLimiter } = require("../middleware/rateLimit");
 const { notifyAdmin } = require("../utils/telegram");
+const { isUuid } = require("../utils/uuid");
 
 const router = express.Router();
 
@@ -11,9 +12,8 @@ const router = express.Router();
 // (invalid input syntax for type uuid) на произвольных строках — crash в prod
 // 2026-09-22. Транслит-слаги удалены (ADR 007, поправка 2026-09-23),
 // поэтому резолв сводится к UUID-гарду.
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function resolveProductId(client, id) {
-  if (!UUID_RE.test(String(id))) return null;
+  if (!isUuid(id)) return null;
   const { rows } = await client.query("SELECT id FROM products WHERE id = $1", [id]);
   return rows[0]?.id ?? null;
 }
@@ -88,6 +88,7 @@ router.put(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
+    if (!isUuid(req.params.id)) return res.status(404).json({ error: "Отзыв не найден" });
     const { rows } = await db.query(
       "UPDATE reviews SET status='approved' WHERE id=$1 RETURNING *",
       [req.params.id],
@@ -104,6 +105,7 @@ router.delete(
   requireRole(["admin"]),
   requireAdminPanelSession,
   async (req, res) => {
+    if (!isUuid(req.params.id)) return res.status(404).json({ error: "Отзыв не найден" });
     await db.query("DELETE FROM reviews WHERE id=$1", [req.params.id]);
     res.json({ ok: true });
   },
@@ -120,6 +122,10 @@ router.post(
     const { productId, authorName, rating, text, image } = req.body || {};
     if (!productId || !authorName || !rating)
       return res.status(400).json({ error: "Нужны productId, authorName, rating" });
+    // Тот же класс 22P02, что и на публичных маршрутах: productId уходит в
+    // uuid-колонку, поэтому невалидное значение отсекаем до INSERT.
+    if (!isUuid(productId))
+      return res.status(400).json({ error: "Некорректный productId (ожидается UUID)" });
     const { rows } = await db.query(
       `INSERT INTO reviews (product_id, author_name, rating, text, image, source, status)
      VALUES ($1,$2,$3,$4,$5,'admin','approved') RETURNING *`,
