@@ -2,49 +2,70 @@
 -- Applied once by: npm run migrate
 
 -- 1. Product slugs (latin transliteration, ADR 007 §2).
--- Existing rows are backfilled from the product name with a deterministic
--- SQL transliteration; collisions get a per-base ordinal suffix. Non-latin
--- leftovers (e.g. names without cyrillic/latin letters) fall back to the
--- product UUID, which also keeps every pre-migration /product/:uuid URL
--- resolving with zero redirects.
+--
+-- The transliteration MUST stay byte-for-byte equivalent to
+-- backend/src/utils/slugify.js (same table, same ъ/ь deletion, same 80-char
+-- cap); backend/tests/slugify.test.js pins the JS side. A dev database that
+-- already applied the pre-fix version of this file has wrong slugs baked in —
+-- recreate it (docker compose down -v) rather than re-running.
+--
+-- Uniqueness is resolved per row against the slugs that already exist, so
+-- CREATE UNIQUE INDEX below cannot fail. (The previous window-function
+-- version only deduped within identical bases, so "Ноутбук Lenovo" x2 plus
+-- "Ноутбук Lenovo 1" produced two rows with slug noutbuk-lenovo-1 and
+-- aborted the whole migration.)
 ALTER TABLE products ADD COLUMN IF NOT EXISTS slug TEXT;
 
-UPDATE products p
-SET slug = t.slug
-FROM (
-  SELECT
-    id,
-    CASE
-      WHEN count(*) OVER (PARTITION BY base) > 1
-        THEN base || '-' || (row_number() OVER (PARTITION BY base))
-      ELSE base
-    END AS slug
-  FROM (
-    SELECT
-      id,
-      regexp_replace(
+DO $do$
+DECLARE
+  rec       RECORD;
+  base_slug TEXT;
+  candidate TEXT;
+  n         INTEGER;
+BEGIN
+  FOR rec IN
+    SELECT id, name FROM products WHERE slug IS NULL ORDER BY created_at, id
+  LOOP
+    base_slug := regexp_replace(
+      left(
         regexp_replace(
-          replace(replace(replace(replace(replace(replace(replace(
-            translate(
-              lower(name),
-              'абвгдезийклмнопрстуфхцыэ',
-              'abvgdezijklmnoprstufhcyse'
-            ),
-            'ё', 'yo'
-          ), 'ж', 'zh'), 'ч', 'ch'), 'ш', 'sh'), 'щ', 'sch'), 'ю', 'yu'), 'я', 'ya'),
-          '[^a-z0-9]+', '-', 'gi'
+          regexp_replace(
+            replace(replace(replace(replace(replace(replace(replace(replace(replace(
+              translate(
+                lower(rec.name),
+                'абвгдезийклмнопрстуфхцыэ',
+                'abvgdezijklmnoprstufhcye'
+              ),
+              'ё', 'yo'
+            ), 'ж', 'zh'), 'ч', 'ch'), 'ш', 'sh'), 'щ', 'sch'),
+            'ю', 'yu'), 'я', 'ya'), 'ъ', ''), 'ь', ''),
+            '[^a-z0-9]+', '-', 'gi'
+          ),
+          '(^-+|-+$)', ''
         ),
-        '(^-+|-+$)', ''
-      ) AS base
-    FROM products
-    WHERE slug IS NULL
-  ) AS bases
-) AS t
-WHERE p.id = t.id;
+        80
+      ),
+      '-+$', ''
+    );
 
--- Names that transliterated to nothing (latin already, symbols only) keep
--- the UUID slug so the unique index can always be created.
-UPDATE products SET slug = id::text WHERE slug IS NULL OR slug = '';
+    -- Names that transliterate to nothing keep the UUID, which also means
+    -- every pre-migration /product/:uuid URL resolves with zero redirects.
+    IF base_slug = '' THEN
+      candidate := rec.id::text;
+    ELSE
+      candidate := base_slug;
+    END IF;
+
+    n := 1;
+    WHILE EXISTS (SELECT 1 FROM products WHERE slug = candidate) LOOP
+      n := n + 1;
+      candidate := base_slug || '-' || n;
+    END LOOP;
+
+    UPDATE products SET slug = candidate WHERE id = rec.id;
+  END LOOP;
+END
+$do$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_products_slug ON products(slug);
 

@@ -252,7 +252,8 @@ this section is the detailed reference.
   allowlist, `requireRole` 403 behavior, the rate limiters
   (Authorization-header keying, brute-force blocking), and the latin-translit
   slug generator (`utils/slugify.js`, ADR 007 — kept in sync with the SQL
-  backfill in migration 002). Expensive endpoints
+  backfill in migration 002; the tests pin э/ъ/ь/ё because those characters
+  previously drifted between the two implementations). Expensive endpoints
   are rate-limited via `backend/src/middleware/rateLimit.js`
   (`adminPanelVerifyLimiter`, `adminLimiter`, `orderCreateLimiter`) — new
   admin routes must place the limiter **first** in the route chain, before

@@ -129,7 +129,8 @@ frontend/
       common/             — Price, StatusPill, QuantityStepper, … (phase 3)
     features/             — auth, catalog, cart, checkout, orders, admin (phases 2–4)
     api/                  — fetch client, Zod schemas, query hooks (phase 2)
-    lib/                  — format, markdown (escaped renderer for /p/[slug]),
+    lib/                  — format, markdown (escaped renderer for /p/[slug];
+                            a security boundary — see tests/markdown.test.ts),
                             order-status, telemetry, seo, site
     config.ts             — build-time env resolution
 

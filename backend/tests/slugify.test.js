@@ -13,6 +13,18 @@ describe("slugify (latin translit, ADR 007)", () => {
     assert.equal(slugify("Юбилейная Яблоня"), "yubileynaya-yablonya");
   });
 
+  // These characters are the ones that drifted from the SQL backfill in
+  // migrations/002_storefront_v2.sql (э was mapped to "s" by a misaligned
+  // translate() table; ъ/ь became "-" instead of being deleted). Both sides
+  // must keep producing exactly these values.
+  it("matches the SQL backfill on the characters that previously drifted", () => {
+    assert.equal(slugify("Экран Dell 24"), "ekran-dell-24");
+    assert.equal(slugify("Электроника"), "elektronika");
+    assert.equal(slugify("подъезд"), "podezd");
+    assert.equal(slugify("ЬеСь"), "es");
+    assert.equal(slugify("Ёжик"), "yozhik");
+  });
+
   it("collapses non-alphanumerics into single dashes", () => {
     assert.equal(slugify("Видеокарта  /  RTX 3060 (б/у)"), "videokarta-rtx-3060-b-u");
   });
