@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "cd ../.. && pnpm --filter kompmaster-frontend build",
-  "outputDirectory": "frontend/.next/standalone",
+  "outputDirectory": ".next/standalone",
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "devCommand": "cd ../.. && pnpm --filter kompmaster-frontend dev"
