@@ -79,7 +79,7 @@ jobs:
         run: |
           STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
           STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
-          ./backend/scripts/deploy-storefront.sh --skip-build --color=${{ steps.color.outputs.color }} --promote
+          ./backend/scripts/deploy-storefront.sh --color=${{ steps.color.outputs.color }} --promote
         env:
           API_BASE: https://api.compmasone.ru/api
           SITE_URL: https://www.compmasone.ru
