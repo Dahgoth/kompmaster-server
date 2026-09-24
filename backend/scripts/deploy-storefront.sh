@@ -12,7 +12,7 @@
 # backend/scripts/measure-storefront-ram.sh (DEPLOY.md §8.4).
 #
 # Blue/Green deployment (Phase 8, DEPLOY.md §9):
-#   --color=blue|green|auto  deploy to specific color (blue:3000, green:3001)
+#   --color=blue|green  deploy to specific color (blue:3000, green:3001)
 #   --promote                after health gate, flip Caddy traffic to this color
 #
 # Server layout (DEPLOY.md §8.1):
@@ -22,7 +22,7 @@
 #
 # Usage:
 #   backend/scripts/deploy-storefront.sh [--dry-run] [--skip-build] [--check-public]
-#                                        [--color=blue|green|auto] [--promote]
+#                                        [--color=blue|green] [--promote]
 #
 # Env:
 #   STOREFRONT_SSH    ssh target            (default root@api.compmasone.ru;
