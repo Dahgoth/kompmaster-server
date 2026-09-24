@@ -58,6 +58,48 @@ surface, and setup.
    The full contribution process lives in `CONTRIBUTING.md`; the docs map is
    in `README.md`.
 
+7. **Resolve PR review threads when fixing issues.** When you address a review
+   comment (inline or review-level), you MUST resolve the thread after pushing
+   the fix. Use the GitHub API or UI to mark the conversation as resolved.
+   **Always include a clear comment stating what was fixed** (e.g., "Fixed:
+   changed X to Y in file Z"). This keeps the PR review history clean and
+   signals completion to reviewers. Do NOT resolve threads for issues that are
+   NOT yet fixed, and never resolve silently without a fix explanation.
+
+   **Handling GitHub review suggestions:**
+   - If a suggestion is correct and complete → click "Commit suggestion" or apply manually, then resolve with "Fixed: adopted suggestion from @reviewer"
+   - If a suggestion is partially correct → apply the valid parts, explain modifications in resolve comment
+   - If a suggestion is incorrect or conflicts with project conventions → explain why in a reply comment, then resolve with "Resolved: did not adopt suggestion because [reason]"
+   - If unsure → discuss with reviewer before resolving
+   - Never resolve a thread with an outstanding suggestion without addressing it
+
+   **Review scope awareness:** Per [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow), PR reviews typically focus on *diffs only* — they don't validate the full application, business logic, or runtime behavior. Reviewers may miss integration issues, migration edge cases, or configuration drift. When addressing review feedback, verify that fixes don't introduce regressions outside the diff scope.
+
+**Code review best practices reference:** See [`code-review-kilo-local.prompt.md`](https://gist.github.com/Dahgoth/c664758a593bd9ff59357119b8702796) for comprehensive code review workflow (read-only mode, diff anchoring, severity levels, summary format, `gh` CLI commands).
+
+## Verify claims before merge
+
+If a PR touches a documented guarantee (a word like "required", "fatal",
+"must", "always" in ENVIRONMENT.md/README/DESIGN.md) or a startup/boot path,
+the PR description must show the actual command output proving the guarantee
+holds — not just that it was intended to hold. Examples:
+
+- claim "missing JWT_SECRET is fatal in production" → paste the output of
+  running with NODE_ENV=production and JWT_SECRET unset, showing the process
+  exits non-zero;
+- claim "this is the Docker entrypoint" → paste `docker build && docker run`
+  actually booting, or `node --check` at minimum;
+- a config default → state explicitly whether it's meant to be safe for
+  production or dev-only, and enforce that distinction in code, not just in
+  a comment.
+
+If you can't produce that evidence, the guarantee doesn't exist yet — fix the
+code or fix the doc, don't merge the mismatch.
+
+This rule catches the class of bugs where docs claim X but code does Y —
+mismatches that current tooling (commitlint, ESLint, tests) doesn't catch
+because they validate format, not semantic correctness.
+
 ## Commit message format
 
 ```
