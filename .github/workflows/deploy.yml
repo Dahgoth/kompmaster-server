@@ -1,16 +1,8 @@
-name: Deploy
+name: Deploy Production
 
 on:
   push:
-    branches: [main]
     tags: ['v*.*.*']
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Target environment'
-        type: choice
-        options: [staging, production]
-        required: true
 
 permissions:
   contents: read
@@ -18,84 +10,9 @@ permissions:
   id-token: write
 
 jobs:
-  # Staging deploy on every push to main (Vercel Preview)
-  deploy-staging:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: staging
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build storefront
-        run: pnpm --filter kompmaster-frontend run build
-        env:
-          API_BASE: https://api.compmasone.ru/api
-          SITE_URL: https://staging-www.compmasone.ru
-
-      - name: Deploy to Vercel Preview
-        uses: amondnet/vercel-action@v25
-        if: env.VERCEL_TOKEN != ''
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod=false'
-        env:
-          API_BASE: https://api.compmasone.ru/api
-          SITE_URL: https://staging-www.compmasone.ru
-
-      - name: Create GitHub Deployment (staging)
-        uses: bobheadxi/deployments@v1
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: staging
-          ref: ${{ github.sha }}
-          auto-merge: false
-
-      - name: Update Deployment Status (success)
-        if: success()
-        uses: bobheadxi/deployments@v1
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: staging
-          ref: ${{ github.sha }}
-          status: success
-          deployment-url: https://staging-www.compmasone.ru
-
-      - name: Update Deployment Status (failure)
-        if: failure()
-        uses: bobheadxi/deployments@v1
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: staging
-          ref: ${{ github.sha }}
-          status: failure
-
-  # Production deploy on version tag push
   deploy-production:
-    if: startsWith(github.ref, 'refs/tags/v')
-    environment: production
+    # Uses Vercel's auto-created "Production" environment
+    environment: Production
     runs-on: self-hosted
     timeout-minutes: 30
     steps:
@@ -144,7 +61,7 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: production
+          env: Production
           ref: ${{ github.sha }}
           auto-merge: false
 
@@ -154,7 +71,7 @@ jobs:
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: production
+          env: Production
           ref: ${{ github.sha }}
           status: success
           deployment-url: https://www.compmasone.ru
@@ -165,6 +82,6 @@ jobs:
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: production
+          env: Production
           ref: ${{ github.sha }}
           status: failure

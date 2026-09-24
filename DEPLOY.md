@@ -384,94 +384,159 @@ Add `--color` flag to `deploy-storefront.sh`:
 
 ## 10. Automated GitHub Deployment + Vercel Staging (Phase 9)
 
-### 10.1 GitHub Environments
-Configure in GitHub repo settings:
-- **Environment: `staging`**
-  - Protection rules: None (auto-deploy on push to main)
-  - Secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-  - Deployment branch policy: `main` only
-  
-- **Environment: `production`**
-  - Protection rules: Required reviewers (1), wait timer (5 min)
-  - Secrets: `STOREFRONT_SSH_KEY`, `STOREFRONT_SSH_HOST`, `STOREFRONT_ROOT`
-  - Deployment branch policy: Tags matching `v*.*.*` only
+### 10.1 GitHub Environments — Use Vercel's Built-In Environments
 
-### 10.2 Deploy Workflow (`.github/workflows/deploy.yml`)
+**Do not create custom `staging`/`production` environments.** Vercel's GitHub integration automatically creates and manages two environments:
+
+| Vercel Environment | GitHub Environment Name | Purpose |
+|---|---|---|
+| Preview | `Preview` (auto-created) | Every PR and push to `main` gets a unique preview URL |
+| Production | `Production` (auto-created) | Only triggered by tagged releases (`v*.*.*`) |
+
+These environments appear in GitHub Settings → Environments and are managed by Vercel. They provide:
+- Deployment status on PRs/commits (green checkmarks)
+- Automatic deployment URLs in PR conversation
+- Protection rules enforced by Vercel (not GitHub)
+
+**Required GitHub secrets for Vercel integration** (already configured if Vercel is connected):
+- `VERCEL_TOKEN` — Vercel access token
+- `VERCEL_ORG_ID` — Organization ID
+- `VERCEL_PROJECT_ID` — Project ID
+
+### 10.2 Deploy Workflow — Only Production Needs a Workflow
+
+**Staging (Preview) is fully automated by Vercel** — no GitHub Actions workflow needed. Every push to any branch creates a Preview deployment automatically.
+
+**Only production deploy needs a workflow** (`.github/workflows/deploy.yml`):
+
 ```yaml
-name: Deploy
+name: Deploy Production
+
 on:
   push:
-    branches: [main]
     tags: ['v*.*.*']
-  workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        options: [staging, production]
-        required: true
+
+permissions:
+  contents: read
+  deployments: write
+  id-token: write
 
 jobs:
-  deploy-staging:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: staging
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy to Vercel Preview
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod=false'
-        env:
-          API_BASE: https://api.compmasone.ru/api
-          SITE_URL: https://staging-www.compmasone.ru
-
   deploy-production:
-    if: startsWith(github.ref, 'refs/tags/v')
-    environment: production
-    runs-on: self-hosted  # VPS runner with SSH access
+    environment: Production  # Uses Vercel's auto-created Production environment
+    runs-on: self-hosted     # VPS runner with SSH access
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STOREFRONT_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.STOREFRONT_SSH_HOST }}" >> ~/.ssh/known_hosts
+
       - name: Deploy storefront to VPS
         run: |
-          STOREFRONT_SSH=root@${{ secrets.STOREFRONT_SSH_HOST }} \
-          STOREFRONT_ROOT=${{ secrets.STOREFRONT_ROOT }} \
+          STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
+          STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
           ./backend/scripts/deploy-storefront.sh --skip-build
         env:
           API_BASE: https://api.compmasone.ru/api
           SITE_URL: https://www.compmasone.ru
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Deployment (production)
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+          ref: ${{ github.sha }}
+          auto-merge: false
+
+      - name: Update Deployment Status (success)
+        if: success()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+          ref: ${{ github.sha }}
+          status: success
+          deployment-url: https://www.compmasone.ru
+
+      - name: Update Deployment Status (failure)
+        if: failure()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+          ref: ${{ github.sha }}
+          status: failure
 ```
 
-### 10.3 Vercel Integration
-- Connect Vercel project to GitHub repo
-- Root Directory: `frontend`
-- Build Command: `pnpm --filter kompmaster-frontend build`
-- Install Command: `pnpm install --frozen-lockfile`
-- Framework Preset: Next.js
-- Environment Variables (per environment):
-  - `staging`: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://staging-www.compmasone.ru`
-  - `production`: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://www.compmasone.ru`
-- Preview deployments on every PR (automatic via Vercel GitHub App)
+### 10.3 Vercel Integration — Already Configured
+
+Current Vercel project settings (verified):
+- **Root Directory**: `frontend`
+- **Build Command**: `pnpm --filter kompmaster-frontend build`
+- **Install Command**: `pnpm install --frozen-lockfile`
+- **Framework Preset**: Next.js
+- **Environment Variables** (configured in Vercel dashboard per environment):
+  - Preview: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://<preview-url>.vercel.app`
+  - Production: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://www.compmasone.ru`
+
+No changes needed — Vercel GitHub App handles Preview deployments on every PR/push automatically.
 
 ## 11. SDLC Release/Canary Cycle (Phase 10)
 
 ### 11.1 Versioning Strategy
-- **Semantic Versioning** (SemVer 2.0.0) enforced by `release-please` or `semantic-release`
-- Conventional Commits → automatic version bump:
-  - `fix:` → PATCH (1.0.0 → 1.0.1)
-  - `feat:` → MINOR (1.0.0 → 1.1.0)
-  - `BREAKING CHANGE:` or `feat!:` → MAJOR (1.0.0 → 2.0.0)
-- Current version: **2.0.0** (major rewrite from v1 SPA to Next.js SSR/ISR)
+- **Semantic Versioning** (SemVer 2.0.0) — current version **2.0.0** (major rewrite)
+- Conventional Commits drive version bumps:
+  - `fix:` → PATCH
+  - `feat:` → MINOR  
+  - `BREAKING CHANGE:` or `feat!:` → MAJOR
 
-### 11.2 Release Workflow (`.github/workflows/release.yml`)
+### 11.2 Release Automation: `release-please` vs `semantic-release` — Tradeoffs for This Project
+
+| Factor | `release-please` (Google) | `semantic-release` |
+|---|---|---|
+| **Squash-merge handling** | ✅ Native support — analyzes squashed commit message | ❌ Problematic — sees only the squash commit, misses individual conventional commits |
+| **Changelog generation** | ✅ Built-in, configurable sections | ✅ Via `@semantic-release/changelog` plugin |
+| **GitHub Release creation** | ✅ Native | ✅ Via `@semantic-release/github` |
+| **npm publishing** | ❌ Not designed for it | ✅ Native (if we ever publish packages) |
+| **Monorepo support** | ⚠️ Limited (single package focus) | ✅ Good with `semantic-release-monorepo` |
+| **Configuration complexity** | Low (YAML config) | Higher (plugins, shareable configs) |
+| **Maintenance** | Google-maintained, stable | Community-maintained, more moving parts |
+
+**Recommendation for this project: `release-please`**
+
+Rationale:
+1. **We use squash-merge** (GitHub default for PRs) — `release-please` handles this natively by reading the squash commit message
+2. **Single package release** (monorepo but single version via root `package.json`) — `release-please` is designed for this
+3. **No npm publishing needed** — both apps deploy from Git tags, not npm registry
+4. **Simpler configuration** — one YAML file vs plugin ecosystem
+5. **Changelog format matches ours** — Keep a Changelog sections map directly
+
+**Implementation** (`.github/workflows/release.yml`):
+
 ```yaml
 name: Release
+
 on:
   push:
     branches: [main]
@@ -485,64 +550,152 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Release Please
+        id: release
+        uses: google-github-actions/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: node
           package-name: kompmaster-server
-          # Or use semantic-release with conventional commits
+          changelog-types: |
+            [{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"docs","section":"Documentation","hidden":false},{"type":"refactor","section":"Refactors","hidden":false},{"type":"perf","section":"Performance","hidden":false},{"type":"test","section":"Tests","hidden":false},{"type":"build","section":"Build System","hidden":false},{"type":"ci","section":"CI","hidden":false},{"type":"chore","section":"Chores","hidden":true},{"type":"revert","section":"Reverts","hidden":false}]
+
+      - name: Sync version to workspace
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          NEW_VERSION="${{ steps.release.outputs.version }}"
+          echo "New version released: $NEW_VERSION"
+          npm pkg set version="$NEW_VERSION" --workspace-root
+          node scripts/sync-versions.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json backend/package.json frontend/package.json
+          git commit -m "chore(release): version bump to $NEW_VERSION [skip ci]"
+          git push origin main
 ```
 
-Alternative with `semantic-release`:
-```yaml
-  semantic-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
+**How it works:**
+1. On every push to `main`, `release-please` creates/updates a **Release PR** with conventional commits since last release
+2. The Release PR shows the proposed version bump and generated changelog
+3. When you merge the Release PR (squash-merge), it creates the GitHub Release + tag
+3. The workflow then syncs the version to backend/frontend and pushes the version bump commit
+4. The tag triggers the production deploy workflow
 
 ### 11.3 Branch Strategy & Canary Deploys
-| Branch Pattern | Deploy Target | Version | Auto-Merge |
-|---|---|---|---|
-| `main` | Vercel Preview (staging) | Next pre-release (e.g., 2.1.0-rc.1) | No |
-| `feat/**`, `fix/**` | Vercel Preview (unique URL per PR) | Pre-release (e.g., 2.1.0-feat.new-feature.1) | No |
-| `release/**` | Staging VPS (optional) | Release candidate | No |
-| `v*.*.*` (tags) | Production VPS + GitHub Release | Exact version from tag | N/A |
 
-### 11.4 Dependabot + Auto-Merge
+| Branch Pattern | Deploy Target | Version | Notes |
+|---|---|---|---|
+| `main` | Vercel Preview (auto) | Next pre-release (e.g., `2.1.0-rc.1`) | Every push creates unique Preview URL |
+| `feat/**`, `fix/**` | Vercel Preview (auto) | Pre-release (e.g., `2.1.0-feat.new-feature.1`) | Unique Preview URL per PR |
+| `v*.*.*` (tags) | Production VPS + GitHub Release | Exact version from tag | Manual tag push or Release PR merge |
+
+**No Staging VPS needed** — Vercel Preview URLs are the staging environment.
+
+### 11.4 Dependabot — Auto-Merge for Patch Updates Only
+
+**Purpose**: Automate dependency updates without manual PR review for safe updates.
+
+**Configuration** (`.github/dependabot.yml`):
+
 ```yaml
-# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Moscow"
     commit-message:
       prefix: "chore(deps)"
+      prefix-development: "chore(deps:dev)"
+      include: "scope"
     groups:
       dev-dependencies:
         patterns: ["*"]
         dependency-type: "development"
-    auto-merge: true  # For patch updates only (configured via labels)
+      production-dependencies:
+        patterns: ["*"]
+        dependency-type: "production"
+    labels:
+      - "dependencies"
+      - "automerge-candidate"
+    auto-merge:
+      allowed: true
+    ignore:
+      - dependency-name: "next"
+        versions: ["15.x"]
+      - dependency-name: "react"
+        versions: ["19.x"]
+      - dependency-name: "react-dom"
+        versions: ["19.x"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Moscow"
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - "ci"
+      - "dependencies"
 ```
 
-### 11.5 Branch Protection Rules (GitHub Settings)
-- **main**: Require PR reviews (1), status checks (CI, E2E), linear history, no force push
-- **Tags `v*.*.*`**: Deploy to production only from signed tags
+**How auto-merge works:**
+1. Dependabot creates PR with `automerge-candidate` label
+2. **Only patch updates** (per SemVer) are auto-merged — minor/major require manual review
+3. Requires GitHub repo setting: **Settings → General → Pull Requests → Allow auto-merge** = enabled
+4. Branch protection must allow auto-merge to bypass required reviews for labeled PRs
+5. CI must pass on the Dependabot PR before merge
+
+**Why this is useful for solo dev:** Patch updates (security fixes, bug fixes) merge automatically overnight; you only review minor/major updates.
+
+### 11.5 Branch Protection Rules (Solo Dev Adaptation)
+
+Since you're the sole reviewer, adjust rules pragmatically:
+
+```yaml
+# GitHub Settings → Branches → Branch protection rules for `main`
+# Enable:
+- Require a pull request before merging
+  - Require approvals: 0 (you self-approve via "Approve" button on your own PR)
+  - Dismiss stale reviews on new commits: Yes
+  - Require review from Code Owners: No (no CODEOWNERS file)
+- Require status checks to pass before merging
+  - Required checks: `lint`, `test:backend`, `test:frontend`, `e2e`, `docs-sync`, `versions`
+- Require branches to be up to date before merging: Yes
+- Require linear history: Yes (enforces squash-merge, no merge commits)
+- Do not allow force pushes: Yes
+- Do not allow deletions: Yes
+```
+
+**Linear history + squash-merge**: Yes, "Require linear history" forces squash-merge (or rebase) — no merge commits. This is what `release-please` expects and works well with solo development.
+
+**Self-review workflow**: Create PR → CI passes → Click "Approve" on your own PR → Squash-merge → Release PR auto-created → Merge Release PR → Tag + deploy.
 
 ### 11.6 Changelog Automation
-- `release-please` generates `CHANGELOG.md` from conventional commits
-- Or `semantic-release` with `@semantic-release/changelog` plugin
-- Manual edits only for "Notable Changes" curation
+
+**With `release-please`**: Automatic. The Release PR body becomes the changelog entry. Sections map to conventional commit types:
+- `feat` → "Features"
+- `fix` → "Bug Fixes"  
+- `docs` → "Documentation"
+- `refactor`/`perf`/`test`/`build`/`ci` → respective sections
+- `chore` → hidden (internal only)
+
+**Manual curation**: Only the "Notable Changes" section in the Release PR needs human editing before merge — everything else is generated from commits.
+
+**No `semantic-release` needed** — adds complexity (plugins, npm auth) for no benefit since we don't publish to npm registry.
