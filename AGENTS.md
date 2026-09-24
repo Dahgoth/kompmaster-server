@@ -100,6 +100,37 @@ This rule catches the class of bugs where docs claim X but code does Y —
 mismatches that current tooling (commitlint, ESLint, tests) doesn't catch
 because they validate format, not semantic correctness.
 
+## Reasoning discipline for non-trivial changes
+
+Before proposing a fix or a "this is broken" claim, work three steps in order:
+
+1. **Observe without interpreting.** State the exact symptom — error text,
+   failing line, actual runtime behavior — before naming a cause.
+2. **Contrast against the documented baseline.** What does ENVIRONMENT.md /
+   README.md / DESIGN.md say should happen here? If you can't state the
+   baseline, you don't understand the bug yet.
+3. **Name the general rule, not the one-off patch.** What class of defect
+   produces this signature? (Example from this repo: "a config default with
+   no environment check produces a documented guarantee that silently does
+   not exist" — that's a class, not a one-time typo.)
+
+Then, before shipping a fix: **try to refute it.** State the boring
+explanation first — it already works, the check is elsewhere, the default is
+intentional — and check it against the evidence. Only patch once the boring
+explanation is ruled out. A fix nobody tried to refute is a guess wearing a
+confident tone.
+
+**Verify auditor findings against the live file before applying them** —
+including findings from another AI agent, a linter, or a security scanner.
+Confirm the cited line/behavior exists in the current code before writing a
+patch for it. A stale or imagined anchor gets rejected, not fixed.
+
+This is not abstract: today's review found two real bugs by applying exactly
+this loop — `ENVIRONMENT.md` documents `JWT_SECRET` as fatal-if-missing in
+production, but `src/config.js` doesn't check `NODE_ENV` or exit, so the
+"fatal" guarantee doesn't exist in the actual code path. No lint rule catches
+that; only checking "does the code do what the doc claims" does.
+
 ## Commit message format
 
 ```
