@@ -244,8 +244,6 @@ See `DEPLOY.md` §8–11 for full deploy topology, Blue/Green, and release cycle
 
 ## 9. Структура API (основные эндпоинты)
 
-## Структура API (основные эндпоинты)
-
 ```
 POST   /api/auth/register
 POST   /api/auth/login
