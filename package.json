@@ -22,7 +22,6 @@
     "test:e2e": "pnpm --filter kompmaster-frontend run e2e",
     "seed:e2e": "pnpm --filter kompmaster-server run seed:e2e",
     "build:frontend": "pnpm --filter kompmaster-frontend build",
-    "vercel-build": "corepack enable pnpm && pnpm --filter kompmaster-frontend build",
     "lint": "pnpm run lint:backend && pnpm run lint:frontend && pnpm run format:check",
     "lint:backend": "eslint backend scripts eslint.config.js",
     "lint:frontend": "eslint frontend",

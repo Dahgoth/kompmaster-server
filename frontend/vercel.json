@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm --filter kompmaster-frontend build",
+  "buildCommand": "pnpm --filter kompmaster-frontend build",
   "outputDirectory": "frontend/.next/standalone",
   "framework": "nextjs",
-  "installCommand": "echo 'skipping default install - handled in buildCommand'",
+  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
   "devCommand": "pnpm --filter kompmaster-frontend dev"
 }

@@ -256,9 +256,11 @@ fi
 echo "health gate: OK (порт $PORT, релиз $(cat "$STOREFRONT_ROOT/current/RELEASE" 2>/dev/null || echo '?'))"
 cur=$(readlink current 2>/dev/null || true)
 # Clean old releases per color (keep KEEP_RELEASES of each color)
+# Trim trailing slash from ls output for comparison with cur (no slash)
 for color in blue green; do
   ls -1dt "$STOREFRONT_ROOT"/releases/*-${color}/ 2>/dev/null | tail -n +"$((KEEP_RELEASES + 1))" | while read -r old; do
-    [ "$old" = "$cur" ] && continue
+    old_trimmed=${old%/}
+    [ "$old_trimmed" = "$cur" ] && continue
     rm -rf "$old"
   done
 done
@@ -281,7 +283,7 @@ if [ "$PROMOTE" = 1 ] && [ -n "$STOREFRONT_SSH" ]; then
       && sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR/' /etc/default/caddy \
       || echo 'STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR' >> /etc/default/caddy
     caddy reload --config /etc/caddy/Caddyfile --force
-  "
+  " || { echo 'Failed to update Caddy config or reload' >&2; exit 1; }
   echo "==> traffic switched to $DEPLOY_COLOR"
 fi
 

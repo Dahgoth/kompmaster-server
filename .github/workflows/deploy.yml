@@ -48,8 +48,9 @@ jobs:
           # STOREFRONT_ACTIVE_COLOR env var (blue|green).
           # Caddyfile defaults to blue when unset, so on first deploy (empty/missing)
           # the active color is blue → deploy to green.
+          # SSH failures propagate and fail the workflow (do not silently assume first deploy).
           COLOR="blue"
-          RESULT=$(ssh "root@${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" || RESULT="")
+          RESULT=$(ssh "root@${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2")
           if [ "$RESULT" = "green" ]; then
             COLOR="blue"
           elif [ "$RESULT" = "blue" ] || [ -z "$RESULT" ]; then

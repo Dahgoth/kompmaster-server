@@ -3,6 +3,8 @@ name: Release
 on:
   push:
     branches: [main]
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -31,11 +33,45 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: node
           package-name: kompmaster
+          manifest-file: .release-please-manifest.json
           changelog-types: |
             [{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"docs","section":"Documentation","hidden":false},{"type":"refactor","section":"Refactors","hidden":false},{"type":"perf","section":"Performance","hidden":false},{"type":"test","section":"Tests","hidden":false},{"type":"build","section":"Build System","hidden":false},{"type":"ci","section":"CI","hidden":false},{"type":"chore","section":"Chores","hidden":true},{"type":"revert","section":"Reverts","hidden":false}]
-          # release-please creates/updates a Release PR on each push to main.
-          # When the Release PR is merged (squash-merge), it creates the GitHub Release + tag.
-          # The Release PR itself contains the version bump commits for root, backend, frontend.
+          # release-please with monorepo manifest manages version for all three packages:
+          # root (kompmaster), backend (kompmaster-server), frontend (kompmaster-frontend)
+          # When Release PR is merged, it creates GitHub Release + tag + version bumps in manifest.
 
-# Version sync (root → backend/frontend) is handled by the Release PR commits.
-# When the Release PR is merged, the tag triggers the deploy-production workflow.
+  # Sync versions from manifest to package.json files after release
+  sync-versions:
+    needs: release-please
+    if: steps.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Sync versions from manifest
+        run: |
+          node scripts/sync-versions-from-manifest.js
+
+      - name: Commit version sync
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json backend/package.json frontend/package.json
+          git commit -m "chore(release): sync versions from manifest [skip ci]"
+          git push origin main
+
+  # Deploy production triggered by release
+  deploy-production:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tag: ${{ github.event.release.tag_name }}
+    secrets: inherit
