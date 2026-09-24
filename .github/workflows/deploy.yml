@@ -40,11 +40,25 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.STOREFRONT_SSH_HOST }}" >> ~/.ssh/known_hosts
 
+      - name: Detect inactive color
+        id: color
+        run: |
+          # Query Caddy Admin API to find current active upstream
+          # If API unavailable or no color set, default to blue
+          COLOR="blue"
+          if curl -sf "http://localhost:2019/config/apps/http/servers/www/routes/0/handle/0/routes/0/handler/upstreams" 2>/dev/null | grep -q "127.0.0.1:3001"; then
+            COLOR="blue"
+          elif curl -sf "http://localhost:2019/config/apps/http/servers/www/routes/0/handle/0/routes/0/handler/upstreams" 2>/dev/null | grep -q "127.0.0.1:3000"; then
+            COLOR="green"
+          fi
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "Deploying to inactive color: $COLOR"
+
       - name: Deploy storefront to VPS
         run: |
           STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
           STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
-          ./backend/scripts/deploy-storefront.sh --skip-build --color=blue --promote
+          ./backend/scripts/deploy-storefront.sh --skip-build --color=${{ steps.color.outputs.color }} --promote
         env:
           API_BASE: https://api.compmasone.ru/api
           SITE_URL: https://www.compmasone.ru

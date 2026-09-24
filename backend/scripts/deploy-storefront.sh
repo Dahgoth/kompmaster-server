@@ -276,7 +276,12 @@ fi
 # If --promote flag is set, flip Caddy traffic to this color
 if [ "$PROMOTE" = 1 ] && [ -n "$STOREFRONT_SSH" ]; then
   echo "==> promoting $DEPLOY_COLOR to active (flipping Caddy traffic)"
-  ssh "$STOREFRONT_SSH" "sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR/' /etc/default/caddy && caddy reload --config /etc/caddy/Caddyfile --force"
+  ssh "$STOREFRONT_SSH" "
+    grep -q '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy \
+      && sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR/' /etc/default/caddy \
+      || echo 'STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR' >> /etc/default/caddy
+    caddy reload --config /etc/caddy/Caddyfile --force
+  "
   echo "==> traffic switched to $DEPLOY_COLOR"
 fi
 
