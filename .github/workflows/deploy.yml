@@ -43,13 +43,14 @@ jobs:
       - name: Detect inactive color
         id: color
         run: |
-          # Query Caddy Admin API on the VPS to find current active upstream
-          # If API unavailable or no color set, default to blue
+          # Query the actual active color from /etc/default/caddy on the VPS
+          # The active color is set via STOREFRONT_ACTIVE_COLOR env var (blue|green)
+          # If unavailable or not set, default to blue
           COLOR="blue"
-          UPSTREAMS=$(ssh "${{ secrets.STOREFRONT_SSH_HOST }}" "curl -sf http://localhost:2019/config/apps/http/servers/www/routes/0/handle/0/routes/0/handler/upstreams 2>/dev/null" || echo "")
-          if echo "$UPSTREAMS" | grep -q "127.0.0.1:3001"; then
+          RESULT=$(ssh "${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" || echo "")
+          if [ "$RESULT" = "green" ]; then
             COLOR="blue"
-          elif echo "$UPSTREAMS" | grep -q "127.0.0.1:3000"; then
+          elif [ "$RESULT" = "blue" ]; then
             COLOR="green"
           fi
           echo "color=$COLOR" >> $GITHUB_OUTPUT
