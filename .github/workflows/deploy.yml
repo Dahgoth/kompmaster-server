@@ -45,13 +45,14 @@ jobs:
         run: |
           # Query the intended active color from /etc/default/caddy on the VPS
           # (source of truth for Caddy reloads). The active color is set via
-          # STOREFRONT_ACTIVE_COLOR env var (blue|green). Fail if SSH fails or
-          # value is unexpected.
+          # STOREFRONT_ACTIVE_COLOR env var (blue|green).
+          # Caddyfile defaults to blue when unset, so on first deploy (empty/missing)
+          # the active color is blue → deploy to green.
           COLOR="blue"
-          RESULT=$(ssh "${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2")
+          RESULT=$(ssh "root@${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" || RESULT="")
           if [ "$RESULT" = "green" ]; then
             COLOR="blue"
-          elif [ "$RESULT" = "blue" ]; then
+          elif [ "$RESULT" = "blue" ] || [ -z "$RESULT" ]; then
             COLOR="green"
           else
             echo "::error::Unexpected active color: '$RESULT' (expected blue|green)" >&2
