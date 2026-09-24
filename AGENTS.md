@@ -58,6 +58,79 @@ surface, and setup.
    The full contribution process lives in `CONTRIBUTING.md`; the docs map is
    in `README.md`.
 
+7. **Resolve PR review threads when fixing issues.** When you address a review
+   comment (inline or review-level), you MUST resolve the thread after pushing
+   the fix. Use the GitHub API or UI to mark the conversation as resolved.
+   **Always include a clear comment stating what was fixed** (e.g., "Fixed:
+   changed X to Y in file Z"). This keeps the PR review history clean and
+   signals completion to reviewers. Do NOT resolve threads for issues that are
+   NOT yet fixed, and never resolve silently without a fix explanation.
+
+   **Handling GitHub review suggestions:**
+   - If a suggestion is correct and complete → click "Commit suggestion" or apply manually, then resolve with "Fixed: adopted suggestion from @reviewer"
+   - If a suggestion is partially correct → apply the valid parts, explain modifications in resolve comment
+   - If a suggestion is incorrect or conflicts with project conventions → explain why in a reply comment, then resolve with "Resolved: did not adopt suggestion because [reason]"
+   - If unsure → discuss with reviewer before resolving
+   - Never resolve a thread with an outstanding suggestion without addressing it
+
+   **Review scope awareness:** Per [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow), PR reviews typically focus on *diffs only* — they don't validate the full application, business logic, or runtime behavior. Reviewers may miss integration issues, migration edge cases, or configuration drift. When addressing review feedback, verify that fixes don't introduce regressions outside the diff scope.
+
+**Code review best practices reference:** See [`code-review-kilo-local.prompt.md`](https://gist.github.com/Dahgoth/c664758a593bd9ff59357119b8702796) for comprehensive code review workflow (read-only mode, diff anchoring, severity levels, summary format, `gh` CLI commands).
+
+## Verify claims before merge
+
+If a PR touches a documented guarantee (a word like "required", "fatal",
+"must", "always" in ENVIRONMENT.md/README/DESIGN.md) or a startup/boot path,
+the PR description must show the actual command output proving the guarantee
+holds — not just that it was intended to hold. Examples:
+
+- claim "missing JWT_SECRET is fatal in production" → paste the output of
+  running with NODE_ENV=production and JWT_SECRET unset, showing the process
+  exits non-zero;
+- claim "this is the Docker entrypoint" → paste `docker build && docker run`
+  actually booting, or `node --check` at minimum;
+- a config default → state explicitly whether it's meant to be safe for
+  production or dev-only, and enforce that distinction in code, not just in
+  a comment.
+
+If you can't produce that evidence, the guarantee doesn't exist yet — fix the
+code or fix the doc, don't merge the mismatch.
+
+This rule catches the class of bugs where docs claim X but code does Y —
+mismatches that current tooling (commitlint, ESLint, tests) doesn't catch
+because they validate format, not semantic correctness.
+
+## Reasoning discipline for non-trivial changes
+
+Before proposing a fix or a "this is broken" claim, work three steps in order:
+
+1. **Observe without interpreting.** State the exact symptom — error text,
+   failing line, actual runtime behavior — before naming a cause.
+2. **Contrast against the documented baseline.** What does ENVIRONMENT.md /
+   README.md / DESIGN.md say should happen here? If you can't state the
+   baseline, you don't understand the bug yet.
+3. **Name the general rule, not the one-off patch.** What class of defect
+   produces this signature? (Example from this repo: "a config default with
+   no environment check produces a documented guarantee that silently does
+   not exist" — that's a class, not a one-time typo.)
+
+Then, before shipping a fix: **try to refute it.** State the boring
+explanation first — it already works, the check is elsewhere, the default is
+intentional — and check it against the evidence. Only patch once the boring
+explanation is ruled out. A fix nobody tried to refute is a guess wearing a
+confident tone.
+
+**Verify auditor findings against the live file before applying them** —
+including findings from another AI agent, a linter, or a security scanner.
+Confirm the cited line/behavior exists in the current code before writing a
+patch for it. A stale or imagined anchor gets rejected, not fixed.
+
+This is not abstract: today's review found two real bugs by applying exactly
+this loop — `ENVIRONMENT.md` documents `JWT_SECRET` as fatal-if-missing in
+production, but `src/config.js` doesn't check `NODE_ENV` or exit, so the
+"fatal" guarantee doesn't exist in the actual code path. No lint rule catches
+that; only checking "does the code do what the doc claims" does.
+
 ## Commit message format
 
 ```
@@ -166,6 +239,8 @@ Corepack (`corepack enable pnpm`). Target a single app with
 - `pnpm run lint:commit` — validate the last commit message.
 - `pnpm --filter kompmaster-server <script>` /
   `pnpm --filter kompmaster-frontend <script>` — run any script in one app only.
+- `./backend/scripts/deploy-storefront.sh` — deploy storefront (rsync + PM2 + health gate).
+- `./backend/scripts/measure-storefront-ram.sh` — measure storefront RSS under load.
 
 ## Project-specific notes
 
@@ -179,9 +254,11 @@ Corepack (`corepack enable pnpm`). Target a single app with
   domain table below satisfied in the same PR.
 - Database schema changes go into `backend/migrations/` as new `NNN_*.sql`
   files; existing applied migrations must not be edited.
-- Operational scripts live at `backend/scripts/` (`deploy.sh`, `backup.sh`).
+- Operational scripts live at `backend/scripts/` (`deploy.sh`, `backup.sh`, `deploy-storefront.sh`, `measure-storefront-ram.sh`).
 - Deploy: the API runs under PM2 with a CWD of `backend/` so `dotenv` loads
   `backend/.env` (template `backend/.env.example`). Start with
   `pm2 start src/index.js --name kompmaster-api --cwd /opt/compmaster/backend`.
   The automated deploy helper is `backend/scripts/deploy.sh`.
+  The storefront deploy is `backend/scripts/deploy-storefront.sh`
+  (rsync + PM2 + health gate + rollback); see `DEPLOY.md` §8.
 - Never commit `.env`, `node_modules/`, or the contents of `uploads/`.

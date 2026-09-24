@@ -15,3 +15,65 @@ api.{$DOMAIN:compmasone.ru} {
   encode zstd gzip
   reverse_proxy 127.0.0.1:{$PORT:4000}
 }
+
+# Storefront v2 (ADR 007 phase 6): SSR under PM2 behind this block, replacing
+# the S3-website www target at the phase-7 cutover (DEPLOY.md §8). Until the
+# www DNS record points here, Caddy retries certificate issuance for this
+# block in the background and the two hosts above are unaffected — deploy the
+# updated Caddyfile before the DNS flip, not after.
+#
+# Blue/Green deployment (Phase 8): two upstream pools (blue:3000, green:3001)
+# with health checks. Active color controlled via Caddy Admin API or config reload.
+# See DEPLOY.md §9 for deploy flow.
+www.{$DOMAIN:compmasone.ru} {
+  encode zstd gzip
+
+  # Content-hashed build assets never change: cache for a year.
+  header /_next/static/* Cache-Control "public, max-age=31536000, immutable"
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    X-Frame-Options "SAMEORIGIN"
+    # Report-only on purpose: Next's inline hydration scripts need a nonce for
+    # an enforcing policy, and a nonce-less CSP blanks the storefront. Review
+    # reports first, then promote with per-request nonces (DEPLOY.md §8.2).
+    Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.{$DOMAIN:compmasone.ru} https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+    -Server
+  }
+
+  # Blue/Green upstream with health checks
+  # Active color determined by STOREFRONT_ACTIVE_COLOR env (blue|green)
+  # Default: blue (port 3000) — set via /etc/default/caddy or systemd env
+  @blue_upstream {
+    path *
+    expression {env.STOREFRONT_ACTIVE_COLOR} == "blue"
+  }
+  @green_upstream {
+    path *
+    expression {env.STOREFRONT_ACTIVE_COLOR} == "green"
+  }
+
+  reverse_proxy @blue_upstream 127.0.0.1:3000 {
+    health_uri /api/health
+    health_interval 10s
+    health_timeout 3s
+    health_status 200
+  }
+  reverse_proxy @green_upstream 127.0.0.1:3001 {
+    health_uri /api/health
+    health_interval 10s
+    health_timeout 3s
+    health_status 200
+  }
+
+  # Default upstream (blue) with health checks — used when STOREFRONT_ACTIVE_COLOR
+  # is unset or invalid. This ensures traffic always goes to a monitored upstream.
+  reverse_proxy 127.0.0.1:3000 {
+    health_uri /api/health
+    health_interval 10s
+    health_timeout 3s
+    health_status 200
+  }
+}

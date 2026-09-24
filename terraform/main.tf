@@ -2,21 +2,24 @@
 # Provisions ONLY infra: project, VPS, firewall, S3 buckets, DNS.
 # App deploy (code, .env, migrations) and secrets stay outside Terraform — see DEVELOPMENT.md.
 #
-# Topology (ADR-001 §1a pure C — backend serves /api/* only, frontend is a
-# separate static artifact, Option B):
+# Topology (ADR-001 §1a pure C, ADR-007 phase 6):
 #
 #   compmasone.ru        A     → VPS (floating IP)   Caddy 301 → https://www.compmasone.ru
 #   compmasone.ru        AAAA  → VPS (native IPv6)   Caddy 301 → https://www.compmasone.ru
-#   www.compmasone.ru    CNAME → S3 (or CDN)         frontend bucket, static website + SSL
+#   www.compmasone.ru    A     → VPS (floating IP)   Caddy → PM2 storefront :3000 (phase 6+)
+#   www.compmasone.ru    AAAA  → VPS (native IPv6)   Caddy → PM2 storefront :3000 (phase 6+)
 #   api.compmasone.ru    A     → VPS (floating IP)   Caddy reverse_proxy → 127.0.0.1:PORT
 #   api.compmasone.ru    AAAA  → VPS (native IPv6)   Caddy reverse_proxy → 127.0.0.1:PORT
-#   assets.compmasone.ru CNAME → S3                  media bucket + SSL
+#   assets.compmasone.ru CNAME → S3 (or CDN)         media bucket + SSL
 #
 # The apex cannot be a CNAME on Timeweb DNS, hence the www-canonical redirect.
+# The storefront is now self-hosted on the VPS (Next.js SSR/ISR under PM2) —
+# S3 website hosting for `www` is retired (phase 6). The `kompmaster-frontend`
+# S3 bucket is no longer provisioned. Media bucket `assets.compmasone.ru`
+# remains for product photos.
 # CDN is NOT provisioned here: terraform-provider-timeweb-cloud v1.8.2 has no
-# CDN resource. After attaching it in the panel/API, set
-# frontend_cdn_enabled = true + frontend_cdn_cname in terraform.tfvars and
-# re-apply — Terraform stays the source of truth for the www CNAME (no drift).
+# CDN resource. After attaching it in the panel/API for the media bucket, set
+# media_cdn_enabled = true + media_cdn_cname in terraform.tfvars and re-apply.
 
 resource "twc_floating_ip" "server_ipv4" {
   availability_zone = var.availability_zone
@@ -29,9 +32,8 @@ resource "twc_floating_ip" "server_ipv4" {
 }
 
 locals {
-  # www points at S3 directly until the CDN resource exists; then at the CDN.
-  frontend_cname_target = var.frontend_cdn_enabled ? var.frontend_cdn_cname : "s3.timeweb.com"
-  media_cname_target    = var.media_cdn_enabled ? var.media_cdn_cname : "s3.timeweb.com"
+  # Media CNAME target — S3 or CDN
+  media_cname_target = var.media_cdn_enabled ? var.media_cdn_cname : "s3.timeweb.com"
 
   # Server IPs for DNS records — floating IP for IPv4, native for IPv6
   server_ipv4 = twc_floating_ip.server_ipv4.ip
@@ -55,12 +57,6 @@ data "twc_s3_preset" "media" {
   location      = var.location
   storage_class = var.s3_storage_class
   disk          = var.s3_disk_mb
-}
-
-data "twc_s3_preset" "frontend" {
-  location      = var.location
-  storage_class = var.s3_storage_class
-  disk          = var.frontend_s3_disk_mb
 }
 
 resource "twc_project" "main" {
@@ -197,22 +193,24 @@ resource "twc_dns_rr" "api_aaaa" {
   depends_on = [twc_server.main]
 }
 
-# Static frontend: while CDN is off, CNAME → s3.timeweb.com (bucket website +
-# S3-issued SSL). Once the CDN is attached, CNAME → the CDN target (CDN
-# terminates TLS). Either way Terraform owns the record value — no manual
-# panel edits that a later apply would revert.
-resource "twc_dns_rr" "www" {
+# www hostname — points to VPS (Caddy terminates TLS, proxies to PM2 storefront).
+# A-record (IPv4 from floating IP) + AAAA-record (IPv6 native) to the VPS.
+resource "twc_dns_rr" "www_a" {
   zone_id = data.twc_dns_zone.main.id
   name    = var.frontend_subdomain
-  type    = "CNAME"
-  value   = local.frontend_cname_target
+  type    = "A"
+  value   = local.server_ipv4
 
-  lifecycle {
-    precondition {
-      condition     = length(trimspace(local.frontend_cname_target)) > 0
-      error_message = "frontend_cdn_cname must be set when frontend_cdn_enabled = true."
-    }
-  }
+  depends_on = [twc_floating_ip.server_ipv4]
+}
+
+resource "twc_dns_rr" "www_aaaa" {
+  zone_id = data.twc_dns_zone.main.id
+  name    = var.frontend_subdomain
+  type    = "AAAA"
+  value   = local.server_ipv6
+
+  depends_on = [twc_server.main]
 }
 
 # Media hostname: CNAME → s3.timeweb.com (or CDN target when CDN attached).
@@ -240,38 +238,4 @@ resource "twc_s3_bucket_subdomain" "media" {
   release_cert = true
 
   depends_on = [twc_dns_rr.assets]
-}
-
-# Static storefront (Option B): public bucket + S3 website hosting. The SPA
-# router is history-based, so 404s fall back to index.html for deep links.
-resource "twc_s3_bucket" "frontend" {
-  name      = var.frontend_bucket_name
-  type      = "public"
-  preset_id = data.twc_s3_preset.frontend.id
-
-  description           = "KompMaster PoC storefront (frontend/dist, served via website hosting + CDN)"
-  is_allow_auto_upgrade = true
-  project_id            = twc_project.main.id
-
-  website_config {
-    enabled    = true
-    index_page = var.frontend_index_page
-
-    error_pages {
-      code     = 404
-      document = var.frontend_spa_fallback
-    }
-  }
-}
-
-# S3 issues the www cert only while S3 serves the bucket directly; with the
-# CDN attached the CDN terminates TLS for www and this binding is dropped.
-resource "twc_s3_bucket_subdomain" "frontend" {
-  count = var.frontend_cdn_enabled ? 0 : 1
-
-  bucket_id    = twc_s3_bucket.frontend.id
-  subdomain    = "${var.frontend_subdomain}.${var.domain}"
-  release_cert = true
-
-  depends_on = [twc_dns_rr.www]
 }

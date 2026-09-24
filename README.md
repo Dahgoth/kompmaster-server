@@ -186,7 +186,52 @@ sudo apt-get install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d api.ваш-домен.ru
 ```
 
-## 7. Резервные копии (обязательно перед боевым запуском)
+## 7. Витрина на Vercel (Phase 9)
+
+Витрина деплоится на Vercel в режиме **Preview** (на каждый PR/push) и **Production** (по тегу `v*.*.*`).
+
+### Vercel Dashboard Settings (Critical for Monorepo)
+
+| Setting | Value | Why |
+|---------|-------|-----|
+| **Root Directory** | `.` (repo root) | Monorepo needs hoisted `pnpm-lock.yaml` at workspace root |
+| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` before custom commands |
+| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root |
+| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Enable corepack FIRST |
+
+**Vercel config** (`frontend/vercel.json`):
+```json
+{
+  "buildCommand": "pnpm --filter kompmaster-frontend build",
+  "outputDirectory": "frontend/.next/standalone",
+  "framework": "nextjs",
+  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
+  "devCommand": "pnpm --filter kompmaster-frontend dev"
+}
+```
+
+**Critical footguns:**
+1. **Framework Preset = Next.js** → Auto-detection runs `pnpm install` before custom commands → pnpm wrapper missing error. **Fix: Framework = Other**.
+2. **Root Directory = `frontend/`** → Can't access repo-root `pnpm-lock.yaml`. **Fix: Root = `.`**.
+3. **Install in `buildCommand`** → Defeats Vercel caching. **Fix: Install in `installCommand`**.
+4. **Corepack not enabled** → Vercel's pnpm v12.4.2 wrapper missing. **Fix: `corepack enable pnpm` in `installCommand`**.
+
+See `DEPLOY.md` §10.3 and §12 for full footguns list and lessons learned.
+
+### Environments
+- **Preview** (auto): Every PR/push → unique URL
+- **Production** (manual): Tag `v*.*.*` → VPS via self-hosted runner + GitHub Release
+
+### Production Deploy Flow
+1. Push to `main` → Release PR updated by `release-please`
+2. Merge Release PR (squash-merge) → GitHub Release + tag `vX.Y.Z`
+3. Tag push → `deploy.yml` workflow triggered
+4. `deploy.yml` → Blue/Green deploy to VPS → promote traffic
+
+See `DEPLOY.md` §8–11 for full deploy topology, Blue/Green, and release cycle.
+
+## 8. Резервные копии (обязательно перед боевым запуском)
 
 Простейший вариант — ежедневный дамп базы через cron:
 ```bash
@@ -197,7 +242,7 @@ sudo certbot --nginx -d api.ваш-домен.ru
 есть встроенное резервирование, отдельно бэкапить обычно не нужно, но
 уточните у конкретного провайдера.
 
-## Структура API (основные эндпоинты)
+## 9. Структура API (основные эндпоинты)
 
 ```
 POST   /api/auth/register

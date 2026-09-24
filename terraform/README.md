@@ -1,10 +1,12 @@
 # Terraform — KompMaster PoC infrastructure (Timeweb Cloud)
 
 Provisions the PoC runtime for Option B (ADR-001 §1a pure C, ADR-002 Option
-D+A): a single Cloud-50 VPS in St. Petersburg (spb-3) running **only the API**,
-with native IPv6 + Terraform-managed floating IPv4 for dual-stack. The storefront
-is served as a static artifact from S3 website hosting (+ CDN attached manually),
-and a separate media bucket for product photos (also behind CDN). The repository
+D+A): a single Cloud-50 VPS in St. Petersburg (spb-3) running **the API and the
+storefront (Next.js SSR/ISR under PM2)**, with native IPv6 +
+Terraform-managed floating IPv4 for dual-stack. The storefront was formerly
+served as a static artifact from S3 website hosting (+ CDN); phase 6 migrated it
+to the VPS (see `DEPLOY.md` §8). A separate media bucket for product photos
+remains behind CDN. The repository
 is a pnpm workspace with the API under `backend/`; see
 [ADR 003](../docs/adr/003-monorepo-workspace-and-versioning.md) for the layout,
 runtime working directory, and fixed shared versioning decisions.
@@ -36,11 +38,18 @@ Resulting topology (dual-stack):
 ```
 compmasone.ru        A     → VPS (floating IP)   Caddy 301 → https://www.compmasone.ru
 compmasone.ru        AAAA  → VPS (native IPv6)   Caddy 301 → https://www.compmasone.ru
-www.compmasone.ru    CNAME → CDN / S3            frontend bucket (static website + SSL)
+www.compmasone.ru    A     → VPS (floating IP)   Caddy → PM2 storefront :3000 (phase 6+)
+www.compmasone.ru    AAAA  → VPS (native IPv6)   Caddy → PM2 storefront :3000 (phase 6+)
 api.compmasone.ru    A     → VPS (floating IP)   Caddy reverse_proxy → 127.0.0.1:PORT
 api.compmasone.ru    AAAA  → VPS (native IPv6)   Caddy reverse_proxy → 127.0.0.1:PORT
 assets.compmasone.ru CNAME → CDN / S3            media bucket
 ```
+
+The canonical storefront is `https://www.compmasone.ru`. The `www` record
+now points to the VPS (Caddy terminates TLS, proxies to PM2 storefront on
+port 3000). The S3 website hosting for `www` is retired (phase 6). The
+`kompmaster-frontend` S3 bucket is unused for the storefront; media bucket
+`assets.compmasone.ru` remains for product photos.
 
 The canonical storefront is `https://www.compmasone.ru` because **Timeweb DNS
 allows CNAME only on subdomains** — the zone apex cannot point at S3, so the
@@ -83,16 +92,33 @@ override e.g. `ssh_keys_ids`. Restrict `ssh_allowed_cidr` after first login.
 
 ## Deploying the storefront
 
-Terraform creates the bucket + hosting but does **not** upload build output:
+**Phase 6 (self-hosted Next.js SSR/ISR, ADR 007 §Decision 1):** the S3
+website hosting for `www` is **retired**. The storefront is deployed as a
+standalone artifact to the VPS under PM2, behind Caddy.
 
 ```bash
-VITE_API_BASE=https://api.compmasone.ru/api pnpm --filter kompmaster-frontend build
-# or, from the package directory:
-(cd frontend && VITE_API_BASE=https://api.compmasone.ru/api pnpm run build)
-# then sync frontend/dist/ to the frontend bucket (credentials from
-# terraform output frontend_access_key/frontend_secret_key)
-aws --endpoint-url https://s3.timeweb.com s3 sync frontend/dist/ s3://<frontend_bucket_full_name> --delete
+# From repository root or worktree:
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh [--skip-build] [--dry-run]
 ```
+
+What the script does (see `DEPLOY.md` §8):
+1. Build with `API_BASE`/`SITE_URL` embedded (`pnpm --filter kompmaster-frontend build`).
+2. Assemble artifact from `frontend/.next/standalone/` + `node_modules/` + static + public.
+3. Boot-verify on scratch port 3199 (catches broken bundle before ship).
+4. Ship to `/opt/compmaster/storefront/releases/<utc-stamp>/` via rsync `--delete`.
+5. Atomic symlink flip `current` → new release.
+6. PM2 start (resolves script path at start; flip works without reload).
+7. Health gate on `http://127.0.0.1:3000/` with auto-rollback.
+8. Prune old releases (`KEEP_RELEASES=3`).
+
+Local mode (`STOREFRONT_SSH=""`): writes locally, no PM2, prints manual start command.
+Dry-run (`--dry-run`): build + assemble + boot-verify, exits before activate.
+
+**Retired**: `aws s3 sync` of `frontend/dist` to S3 bucket (was Vite static export).
+The `kompmaster-frontend` S3 bucket is now unused for the storefront
+(media bucket `assets.compmasone.ru` remains for product photos).
 
 Vercel is connected for storefront preview/staging/fallback. Its Root Directory
 is `frontend`; install from the repository root and build with `pnpm` (typically
@@ -149,9 +175,14 @@ storefront directly.
 
 ## Why `www` is canonical
 
-CNAME at the zone apex is not supported by Timeweb DNS, and S3/CDN origins are
-hostnames, not IPs. The apex therefore 301-redirects to `www.` from Caddy.
-Keep both origins in `FRONTEND_ORIGIN` (see ENVIRONMENT.md).
+CNAME at the zone apex is not supported by Timeweb DNS. The apex therefore
+301-redirects to `www.` from Caddy. Keep both origins in `FRONTEND_ORIGIN`
+(see ENVIRONMENT.md).
+
+**Phase 6+**: The `www` DNS record now points to the VPS (A/AAAA records),
+not to S3/CDN. Caddy on the VPS terminates TLS and reverse-proxies to the
+PM2-managed Next.js storefront. The S3 `kompmaster-frontend` bucket is
+retired for the storefront (media bucket remains).
 
 ## CI notes
 

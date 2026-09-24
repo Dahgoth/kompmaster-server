@@ -193,3 +193,618 @@ curl -I https://compmasone.ru        # 301 → https://www.compmasone.ru
 - Offsite зашифрованный `pg_dump` в dedicated backup bucket — основной recovery control (ADR-005).
 - Скрипт бэкапа ре-ассертит S3 versioning каждый запуск; включите в панели если API фейлит.
 - Тестируйте восстановление ежеквартально — drill is the control, not the archive.
+
+## 8. Витрина (Next.js SSR/ISR) — Deploy Topology (ADR 006/007)
+
+### 8.1 Директории на VPS
+```
+/opt/compmaster/storefront/
+├── current           # symlink → releases/<utc-stamp> (atomic flip)
+├── releases/
+│   ├── 20260923081541/   # full standalone artifact (self-contained)
+│   └── ...
+├── shared/
+│   └── storefront.env    # PORT, HOSTNAME, NODE_ENV, API_BASE, SITE_URL, ...
+└── node_modules/        # (hoisted from workspace root at build time)
+```
+
+### 8.2 Артефакт (`output: "standalone"` + tracing от workspace root)
+Собирается на билд-машине (CI/локально):
+```bash
+cd /path/to/workspace
+pnpm --filter kompmaster-frontend build
+# → frontend/.next/standalone/
+#    ├── frontend/          # server.js + .next/ (app bundle)
+#    └── node_modules/      # next, styled-jsx, @next/env, @swc/helpers, react, react-dom
+# frontend/.next/static/    # immutable hashed assets
+# frontend/public/          # static public files
+```
+Скрипт `backend/scripts/deploy-storefront.sh` собирает deploy-артефакт:
+```
+<artifact>/
+├── server.js
+├── package.json
+├── .next/                  # compiled app (from standalone/frontend/.next)
+├── node_modules/           # runtime closure (copied from standalone/node_modules)
+├── public/
+└── RELEASE                 # git short SHA (health gate prints it)
+```
+
+### 8.3 Деплой (single script, idempotent)
+```bash
+# На билд-машине или локально:
+cd /path/to/workspace
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh [--skip-build] [--dry-run]
+```
+Что делает скрипт (порядок важен):
+1. **Build** (если не `--skip-build`): `pnpm --filter kompmaster-frontend build` с `API_BASE`/`SITE_URL` запечёнными.
+2. **Assemble**: rsync standalone + node_modules + static + public → temp artifact.
+3. **Boot-verify**: стартует `node server.js` на scratch-порту 3199 (env: `API_BASE`, `SITE_URL`), ждёт `/` 200 OK → ловит broken bundle *до* ship. Флаг `BOOT_CHECK_PORT` меняет порт.
+4. **Ship**: rsync `--delete` artifact → `$STOREFRONT_ROOT/releases/<utc-stamp>/`.
+5. **Marker**: пишет `RELEASE` (git short SHA) в релизную директорию (health gate печатает его).
+6. **Flip**: `ln -sfn releases/<stamp> current` (atomic).
+7. **PM2** (remote mode): `pm2 delete kompmaster-storefront 2>/dev/null; pm2 start current/server.js --name kompmaster-storefront --cwd $STOREFRONT_ROOT/current -- PORT=3000 HOSTNAME=127.0.0.1 NODE_ENV=production API_BASE=... SITE_URL=...`
+   - PM2 резолвит путь к скрипту *на старте* → symlink flip работает без reload.
+8. **Health gate**: `curl -f http://127.0.0.1:3000/` (или `$STOREFRONT_PORT`), при фейле — авто-rollback `ln -sfn previous current` + `pm2 restart`.
+9. **Prune**: `KEEP_RELEASES=3` (переменная окружения), удаляет старые релизы.
+
+Локальный режим (`STOREFRONT_SSH=""`): кладёт в `$STOREFRONT_ROOT`, PM2 не трогает, печатает команду для ручного запуска.
+
+### 8.4 Caddy: `www` блок (добавлен в `Caddyfile`)
+```caddy
+www.{$DOMAIN} {
+    encode zstd gzip
+    @static {
+        path /_next/static/*
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+    header Strict-Transport-Security "max-age=31536000"
+    header X-Content-Type-Options "nosniff"
+    header Referrer-Policy "strict-origin-when-cross-origin"
+    header X-Frame-Options "SAMEORIGIN"
+    header -Server
+    # CSP Report-Only (nonce требует middleware — пока Report-Only):
+    header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.{$DOMAIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; report-uri /api/report-csp"
+    reverse_proxy 127.0.0.1:{$STOREFRONT_PORT:3000}
+}
+```
+- `STOREFRONT_PORT` задаётся в `/etc/default/caddy` (default 3000).
+- Caddy ретраит Let's Encrypt до DNS cutover — можно деплоить заранее.
+- В `terraform/` Caddy читает `/etc/default/caddy` (Debian пакет).
+
+### 8.5 DNS Cutover (S3 → Self-hosted)
+1. Деплой витрины на VPS (скрипт выше), убедиться в health gate PASS.
+2. В Timeweb панели: `www` CNAME с `s3.timeweb.com` → IP VPS (floating IP) или CNAME на VPS hostname.
+3. CDN purge (панель Timeweb CDN) — старые edge-кэши S3 уйдут через TTL.
+4. `curl -I https://www.compmasone.ru` → `Server: Caddy`, `X-Content-Type-Options: nosniff`, CSP-Report-Only header present.
+5. Rollback plan: вернуть CNAME на S3 + CDN purge (мгновенно).
+
+### 8.6 RAM Measurement & VPS Headroom
+Скрипт: `backend/scripts/measure-storefront-ram.sh`
+- Собирает fresh standalone, стартует на scratch-порту (default 3100), прогоняет 4 раунда × 14 маршрутов (статические + SSR без бэкенда), сэмплирует RSS каждые 0.2с.
+- Локальный baseline: **80 MB peak** (PASS vs бюджет 512 MB).
+- На VPS (staging API): запустить тот же скрипт, получить реальный peak.
+- Формула headroom: `free -m` → колонка `available` − (RSS postgres + RSS kompmaster-api + storefront_peak) ≥ 512 MB запаса.
+- Если не укладывается — апгрейд VPS или снижение `RAM_BUDGET_MB` (переменная скрипта).
+
+### 8.7 Операционные команды
+```bash
+# Статус PM2
+pm2 status kompmaster-storefront
+
+# Логи
+pm2 logs kompmaster-storefront
+
+# Ручной rollback (symlink + pm2 restart)
+cd /opt/compmaster/storefront
+ln -sfn releases/20260923081541 current
+pm2 restart kompmaster-storefront
+
+# Запуск measure-скрипта на VPS (staging API)
+cd /opt/compmaster
+API_BASE=https://staging-api.compmasone.ru/api \
+SITE_URL=https://staging-www.compmasone.ru \
+./backend/scripts/measure-storefront-ram.sh
+
+# Dry-run деплоя (нет side effects)
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+./backend/scripts/deploy-storefront.sh --dry-run --skip-build
+```
+
+## 9. Blue/Green Zero-Downtime Deployment (Phase 8)
+
+### 9.1 Architecture
+Two PM2 processes run simultaneously on different ports:
+- **Blue**: `kompmaster-storefront-blue` on port 3000 (current production)
+- **Green**: `kompmaster-storefront-green` on port 3001 (candidate)
+
+Caddy upstream configuration with active health checks:
+```caddy
+www.{$DOMAIN} {
+    # ... headers ...
+    
+    @blue_up {
+        path *
+    }
+    reverse_proxy @blue_up 127.0.0.1:3000 {
+        health_uri /api/health
+        health_interval 10s
+        health_timeout 3s
+        health_status 200
+    }
+}
+```
+
+### 9.2 Deploy Flow
+```bash
+# Deploy to inactive color (e.g., green when blue is active)
+STOREFRONT_SSH=root@api.compmasone.ru \
+STOREFRONT_ROOT=/opt/compmaster/storefront \
+DEPLOY_COLOR=green \
+./backend/scripts/deploy-storefront.sh --skip-build
+```
+Script changes:
+- Deploys to `releases/<stamp>-green/` instead of `releases/<stamp>/`
+- Starts PM2 process `kompmaster-storefront-green` on port 3001
+- Runs health gate against port 3001
+- Does NOT flip traffic — only prepares candidate
+
+### 9.3 Traffic Switch (Atomic, Zero-Downtime)
+```bash
+# On VPS, after candidate passes health gate:
+cd /opt/compmaster/storefront
+# 1. Verify green is healthy
+curl -sf http://127.0.0.1:3001/api/health
+# 2. Switch Caddy upstream (edit Caddyfile or use Caddy API)
+#    Option A: Edit Caddyfile, reload Caddy (sub-second, no connection drop)
+#    Option B: Caddy Admin API: `curl -X POST localhost:2019/config/apps/http/servers/www/routes/0/handle/0/routes/0/handler/upstreams -d '{"dial": "127.0.0.1:3001"}'`
+# 3. Verify new traffic serves green
+curl -sf -H 'Host: www.compmasone.ru' http://127.0.0.1/api/health
+# 4. Stop old blue process (after drain period)
+pm2 stop kompmaster-storefront-blue
+```
+
+### 9.4 Rollback (Instant)
+```bash
+# Revert Caddy upstream to blue (port 3000)
+# Option A: Caddyfile reload
+# Option B: Caddy Admin API
+# Blue process is still running (was only stopped, not deleted)
+pm2 restart kompmaster-storefront-blue
+```
+
+### 9.5 Deploy Script Changes Needed
+Add `--color` flag to `deploy-storefront.sh`:
+- `--color=blue|green` — deploy to specific color directory and PM2 name
+- `--promote` — after health gate, flip Caddy upstream (requires Caddy admin API or config reload)
+- Default: `--color=auto` (detects inactive color from current Caddy upstream)
+
+## 10. Automated GitHub Deployment + Vercel Staging (Phase 9)
+
+### 10.1 GitHub Environments — Use Vercel's Built-In Environments
+
+**Do not create custom `staging`/`production` environments.** Vercel's GitHub integration automatically creates and manages two environments:
+
+| Vercel Environment | GitHub Environment Name | Purpose |
+|---|---|---|
+| Preview | `Preview` (auto-created) | Every PR and push to `main` gets a unique preview URL |
+| Production | `Production` (auto-created) | Only triggered by tagged releases (`v*.*.*`) |
+
+These environments appear in GitHub Settings → Environments and are managed by Vercel. They provide:
+- Deployment status on PRs/commits (green checkmarks)
+- Automatic deployment URLs in PR conversation
+- Protection rules enforced by Vercel (not GitHub)
+
+**Required GitHub secrets for Vercel integration** (already configured if Vercel is connected):
+- `VERCEL_TOKEN` — Vercel access token
+- `VERCEL_ORG_ID` — Organization ID
+- `VERCEL_PROJECT_ID` — Project ID
+
+### 10.2 Deploy Workflow — Only Production Needs a Workflow
+
+**Staging (Preview) is fully automated by Vercel** — no GitHub Actions workflow needed. Every push to any branch creates a Preview deployment automatically.
+
+**Only production deploy needs a workflow** (`.github/workflows/deploy.yml`):
+
+```yaml
+name: Deploy Production
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+  deployments: write
+  id-token: write
+
+jobs:
+  deploy-production:
+    environment: Production  # Uses Vercel's auto-created Production environment
+    runs-on: self-hosted     # VPS runner with SSH access
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STOREFRONT_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.STOREFRONT_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy storefront to VPS
+        run: |
+          STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
+          STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
+          ./backend/scripts/deploy-storefront.sh --skip-build
+        env:
+          API_BASE: https://api.compmasone.ru/api
+          SITE_URL: https://www.compmasone.ru
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Deployment (production)
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+          ref: ${{ github.sha }}
+          auto-merge: false
+
+      - name: Update Deployment Status (success)
+        if: success()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+          ref: ${{ github.sha }}
+          status: success
+          deployment-url: https://www.compmasone.ru
+
+      - name: Update Deployment Status (failure)
+        if: failure()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+          ref: ${{ github.sha }}
+          status: failure
+```
+
+### 10.3 Vercel Integration — Correct Configuration for Monorepo
+
+**Important**: The Vercel dashboard must be configured as follows for monorepo deployments with pnpm hoisting:
+
+| Setting | Value | Rationale |
+|---------|-------|-----------|
+| **Root Directory** | `.` (repo root) | Monorepo needs access to hoisted `pnpm-lock.yaml` and `node_modules` at workspace root |
+| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` BEFORE custom commands, causing pnpm wrapper missing error |
+| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root with hoisted deps available |
+| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Must enable corepack FIRST to install correct pnpm version |
+
+**Vercel config file** (`frontend/vercel.json`):
+```json
+{
+  "buildCommand": "pnpm --filter kompmaster-frontend build",
+  "outputDirectory": "frontend/.next/standalone",
+  "framework": "nextjs",
+  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
+  "devCommand": "pnpm --filter kompmaster-frontend dev"
+}
+```
+
+### Vercel Footguns & Lessons Learned
+
+#### 1. Framework Preset = Next.js → Auto-detection runs `pnpm install` BEFORE custom commands
+Vercel's Next.js detection runs its own `pnpm install` BEFORE any custom `installCommand`/`buildCommand`, using its own pnpm wrapper which fails with "pnpm wrapper missing" error.
+**Fix**: Set Framework Preset = `Other` to disable auto-detection.
+
+#### 2. Root Directory = `frontend/` → Can't access repo-root `pnpm-lock.yaml`
+Vercel runs commands from the configured Root Directory. With `frontend/`, it can't reach the workspace root `pnpm-lock.yaml` and hoisted `node_modules`.
+**Fix**: Root Directory = `.` (repo root).
+
+#### 3. Install in `buildCommand` → Defeats Vercel build caching
+Moving `pnpm install` to `buildCommand` means every deploy does a fresh install with zero cache benefit.
+**Fix**: Keep install in `installCommand`, enable corepack there.
+
+#### 4. `vercel-build` script in root `package.json` → Dead code
+When `vercel.json` has explicit `buildCommand`, the `vercel-build` script in `package.json` is never used.
+**Fix**: Remove or use consistently.
+
+#### 5. Corepack not enabled → Vercel's pnpm wrapper missing
+Vercel's pnpm wrapper for v12.4.2 was missing in their build environment.
+**Fix**: `corepack enable pnpm` in `installCommand`.
+
+### Monorepo pnpm Hoisting (Required for Vercel & VPS)
+- `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
+- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
+- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
+- Build MUST run from repo root (`Root Directory = .`)
+
+---
+
+## 11. SDLC Release/Canary Cycle (Phase 10)
+
+### 11.1 Versioning Strategy
+- **Semantic Versioning** (SemVer 2.0.0) — current version **2.0.0** (major rewrite)
+- Conventional Commits drive version bumps:
+  - `fix:` → PATCH
+  - `feat:` → MINOR  
+  - `BREAKING CHANGE:` or `feat!:` → MAJOR
+
+### 11.2 Release Automation: `release-please` with Monorepo Manifest
+
+**Recommendation for this project: `release-please`**
+
+Rationale:
+1. **We use squash-merge** (GitHub default for PRs) — `release-please` handles this natively by reading the squash commit message
+2. **Single package release** (monorepo but single version via root `package.json`) — `release-please` is designed for this
+3. **No npm publishing needed** — both apps deploy from Git tags, not npm registry
+4. **Simpler configuration** — one YAML file + manifest file vs plugin ecosystem
+5. **Changelog format matches ours** — Keep a Changelog sections map directly
+
+**Implementation** (`.github/workflows/release.yml` + `.release-please-manifest.json`):
+
+```yaml
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Release Please
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node
+          package-name: kompmaster
+          manifest-file: .release-please-manifest.json
+          changelog-types: ${{ file('.github/release-changelog-types.json') }}
+          # release-please with monorepo manifest manages version for all three packages:
+          # root (kompmaster), backend (kompmaster-server), frontend (kompmaster-frontend)
+          # When Release PR is merged (squash-merge), it creates GitHub Release + tag + version bumps in manifest.
+
+# The Release PR contains version bumps for all packages in the manifest.
+# When merged (squash-merge), it creates the GitHub Release + tag.
+# The tag push triggers deploy.yml naturally via its `on: push: tags` trigger.
+```
+
+**Manifest file** (`.release-please-manifest.json`):
+```json
+{
+  "kompmaster": "2.0.0",
+  "kompmaster-server": "2.0.0",
+  "kompmaster-frontend": "2.0.0"
+}
+```
+
+**Changelog types** (`.github/release-changelog-types.json`):
+```json
+{
+  "changelog-types": [
+    {"type": "feat", "section": "Features", "hidden": false},
+    {"type": "fix", "section": "Bug Fixes", "hidden": false},
+    {"type": "docs", "section": "Documentation", "hidden": false},
+    {"type": "refactor", "section": "Refactors", "hidden": false},
+    {"type": "perf", "section": "Performance", "hidden": false},
+    {"type": "test", "section": "Tests", "hidden": false},
+    {"type": "build", "section": "Build System", "hidden": false},
+    {"type": "ci", "section": "CI", "hidden": false},
+    {"type": "chore", "section": "Chores", "hidden": true},
+    {"type": "revert", "section": "Reverts", "hidden": false}
+  ]
+}
+```
+
+**How it works:**
+1. On every push to `main`, `release-please` creates/updates a **Release PR** with conventional commits since last release
+2. The Release PR shows the proposed version bump and generated changelog for all 3 packages
+3. When you merge the Release PR (squash-merge), it creates the GitHub Release + tag + updates manifest with new versions
+4. The tag push triggers `deploy.yml` naturally via its `on: push: tags` trigger
+
+**No separate sync job needed** — version bumps are in the Release PR itself. When the Release PR is merged (squash-merge), versions are synced in the manifest. The tag push triggers deploy.
+
+### 11.3 Branch Strategy & Canary Deploys
+
+| Branch Pattern | Deploy Target | Version | Notes |
+|---|---|---|---|
+| `main` | Vercel Preview (auto) | Next pre-release (e.g., `2.1.0-rc.1`) | Every push creates unique Preview URL |
+| `feat/**`, `fix/**` | Vercel Preview (auto) | Pre-release (e.g., `2.1.0-feat.new-feature.1`) | Unique Preview URL per PR |
+| `v*.*.*` (tags) | Production VPS + GitHub Release | Exact version from tag | Manual tag push or Release PR merge |
+
+**No Staging VPS needed** — Vercel Preview URLs are the staging environment.
+
+### 11.4 Dependabot — Auto-Merge for Patch Updates Only
+
+**Purpose**: Automate dependency updates without manual PR review for safe updates.
+
+**Configuration** (`.github/dependabot.yml`):
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Moscow"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps:dev)"
+      include: "scope"
+    groups:
+      dev-dependencies:
+        patterns: ["*"]
+        dependency-type: "development"
+      production-dependencies:
+        patterns: ["*"]
+        dependency-type: "production"
+    labels:
+      - "dependencies"
+      - "automerge-candidate"
+    auto-merge:
+      allowed: true
+    ignore:
+      - dependency-name: "next"
+        versions: ["15.x"]
+      - dependency-name: "react"
+        versions: ["19.x"]
+      - dependency-name: "react-dom"
+        versions: ["19.x"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Moscow"
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - "ci"
+      - "dependencies"
+```
+
+**How auto-merge works:**
+1. Dependabot creates PR with `automerge-candidate` label
+2. **Only patch updates** (per SemVer) are auto-merged — minor/major require manual review
+3. Requires GitHub repo setting: **Settings → General → Pull Requests → Allow auto-merge** = enabled
+4. Branch protection must allow auto-merge to bypass required reviews for labeled PRs
+5. CI must pass on the Dependabot PR before merge
+
+**Why this is useful for solo dev:** Patch updates (security fixes, bug fixes) merge automatically overnight; you only review minor/major updates.
+
+### 11.5 Branch Protection Rules (Solo Dev Adaptation)
+
+Since you're the sole reviewer, adjust rules pragmatically:
+
+```yaml
+# GitHub Settings → Branches → Branch protection rules for `main`
+# Enable:
+- Require a pull request before merging
+  - Require approvals: 0 (you self-approve via "Approve" button on your own PR)
+  - Dismiss stale reviews on new commits: Yes
+  - Require review from Code Owners: No (no CODEOWNERS file)
+- Require status checks to pass before merging
+  - Required checks: `lint`, `test:backend`, `test:frontend`, `e2e`, `docs-sync`, `versions`
+- Require branches to be up to date before merging: Yes
+- Require linear history: Yes (enforces squash-merge, no merge commits)
+- Do not allow force pushes: Yes
+- Do not allow deletions: Yes
+```
+
+**Linear history + squash-merge**: Yes, "Require linear history" forces squash-merge (or rebase) — no merge commits. This is what `release-please` expects and works well with solo development.
+
+**Self-review workflow**: Create PR → CI passes → Click "Approve" on your own PR → Squash-merge → Release PR auto-created → Merge Release PR → Tag + deploy.
+
+### 11.6 Changelog Automation
+
+**With `release-please`**: Automatic. The Release PR body becomes the changelog entry. Sections map to conventional commit types:
+- `feat` → "Features"
+- `fix` → "Bug Fixes"  
+- `docs` → "Documentation"
+- `refactor`/`perf`/`test`/`build`/`ci` → respective sections
+- `chore` → hidden (internal only)
+
+**Manual curation**: Only the "Notable Changes" section in the Release PR needs human editing before merge — everything else is generated from commits.
+
+**No `semantic-release` needed** — adds complexity (plugins, npm auth) for no benefit since we don't publish to npm registry.
+
+---
+
+## 12. Lessons Learned & Footguns (Retrospective)
+
+### Vercel Deployment: Critical Footguns
+
+| # | Footgun | Symptom | Root Cause | Fix |
+|---|---------|---------|------------|-----|
+| 1 | Framework Preset = Next.js | `pnpm wrapper missing` error | Auto-detection runs `pnpm install` BEFORE custom commands | Framework Preset = `Other` |
+| 2 | Root Directory = `frontend/` | `ERR_PNPM_NO_LOCKFILE` | Can't access repo-root `pnpm-lock.yaml` | Root Directory = `.` (repo root) |
+| 3 | Install in `buildCommand` | No build caching | Every deploy does fresh install | Move to `installCommand` |
+| 4 | `vercel-build` script in `package.json` | Dead code | Overridden by `vercel.json` `buildCommand` | Remove or use consistently |
+| 5 | Corepack not enabled | `pnpm wrapper missing` | Vercel's pnpm v12.4.2 wrapper missing | `corepack enable pnpm` in `installCommand` |
+
+### Monorepo pnpm Hoisting Requirements
+- `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
+- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
+- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
+- Build MUST run from repo root (`Root Directory = .`)
+
+### Release Pipeline (release-please) Lessons
+- **Monorepo manifest** (`.release-please-manifest.json`) tracks versions for all 3 packages
+- **Release PR** contains version bumps for all packages in manifest
+- **Squash-merge Release PR** → Creates GitHub Release + tag + updates manifest
+- **Tag push** → Triggers `deploy.yml` naturally via `on: push: tags`
+- **No separate sync job needed** — version bumps are in the Release PR itself
+
+### Blue/Green Deployment Lessons
+- Two PM2 processes: `kompmaster-storefront-blue` (3000) + `kompmaster-storefront-green` (3001)
+- Active color controlled by `STOREFRONT_ACTIVE_COLOR` in `/etc/default/caddy`
+- **First deploy**: empty `STOREFRONT_ACTIVE_COLOR` → Caddy defaults to blue → deploy to green
+- **Promote** = update `/etc/default/caddy` + `caddy reload` with specific error messages
+
+### Deploy Script Hardening Lessons
+- **Boot-verify** on scratch port 3199 BEFORE shipping artifact to VPS
+- **Health gate** on VPS with auto-rollback (symlink + PM2 restart)
+- **Per-color cleanup** keeps KEEP_RELEASES of each color independently
+- **Promote step** validates config write + Caddy reload separately with specific errors
+- **First deploy handling**: empty `STOREFRONT_ACTIVE_COLOR` → Caddy defaults to blue → deploy to green
+
+### GitHub Actions Workflow Lessons
+- **`workflow_call` tag input**: must be `required: true` if script requires it
+- **Tag validation**: use `${{ inputs.tag }}` not `${{ github.ref_name }}` in `workflow_call`
+- **Release step**: use validated tag from `$GITHUB_ENV` not `github.ref_name`
+- **Reusable workflow**: add `workflow_call` with `inputs:` for manual triggers
+
+### Reasoning Discipline (from Issue #9)
+1. **Observe without interpreting** — exact symptom before naming cause
+2. **Contrast against documented baseline** — what does ENVIRONMENT.md/README.md say?
+3. **Name the general rule** — class of defect, not one-off patch
+4. **Refute before shipping** — state boring explanation first, check evidence
+5. **Verify auditor findings against live file** — confirm cited line exists before patching
+
+### Verify Claims Before Merge (from Issue #9)
+If a PR touches a documented guarantee ("required", "fatal", "must", "always"), the PR description must show actual command output proving the guarantee holds — not just that it was intended to hold.

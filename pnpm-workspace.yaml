@@ -13,3 +13,13 @@ packages:
 allowBuilds:
   esbuild: true
   msw: true
+
+# npm-style flat node_modules (real directories, not store symlinks). Required
+# by the storefront deploy: with the default isolated layout, `next build`'s
+# standalone trace emits `next` as a ~300KB stub in `.next/node_modules` with
+# `standalone/node_modules` symlinked into it, so the bundle Next.js docs call
+# "deployable" cannot boot outside the build tree (missing lazily-required
+# files: `require("./cpu-profile")` is the first casualty). With hoisted
+# linking the standalone output is self-contained and rsync-able
+# (backend/scripts/deploy-storefront.sh, DEPLOY.md §8).
+nodeLinker: hoisted

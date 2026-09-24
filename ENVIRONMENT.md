@@ -139,7 +139,7 @@ After `terraform apply`, map outputs into `.env`:
 | `s3_secret_key` | `S3_SECRET_KEY` `[SECRET]` |
 | `s3_public_url` | `S3_PUBLIC_URL` |
 | `server_ipv4` | Informational (DNS `@`/`api` A-records already point here) |
-| `api_url` | Bake `VITE_API_BASE=<api_url>/api` into the frontend build |
+| `api_url` | Bake `API_BASE=<api_url>/api` into the Next.js storefront build |
 | `frontend_url` | Canonical storefront (include in `FRONTEND_ORIGIN`) |
 
 `DATABASE_URL` still targets PostgreSQL on the VPS itself (embedded/Docker),
@@ -148,16 +148,77 @@ not a managed cluster — Terraform does not output it. Set
 `www` first; the apex redirects to it); payment/SMS variables stay empty at
 PoC launch (manual checkout, Telegram/e-mail only).
 
-On the VPS, Caddy reads `DOMAIN` and `PORT` from its environment — the
-Debian/Ubuntu package loads `/etc/default/caddy` (see `DEPLOY.md` §5). The
-`Caddyfile` carries PoC defaults (`compmasone.ru`, `4000`) so an unset `DOMAIN`
-cannot produce an empty site address.
+On the VPS, Caddy reads `DOMAIN`, `PORT`, and `STOREFRONT_PORT` from its
+environment — the Debian/Ubuntu package loads `/etc/default/caddy` (see
+`DEPLOY.md` §5). The `Caddyfile` carries PoC defaults (`compmasone.ru`,
+`4000`, `3000`) so an unset `DOMAIN`/`STOREFRONT_PORT` cannot produce an empty
+site address.
 
-Frontend build output (`frontend/dist`) is deployed to the `kompmaster-frontend`
-bucket via S3 sync (credentials from `frontend_access_key`/`frontend_secret_key`
-outputs) — see `terraform/README.md §Deploying the storefront`. When the CDN is
-attached, flip `frontend_cdn_enabled = true` + `frontend_cdn_cname` in
-`terraform.tfvars` and re-apply (Terraform keeps owning the `www` CNAME — no
-manual DNS edits). Where to *store* all of these credentials (gitignored
-`terraform/secrets/` files, password manager, VPS `.env`) and how to rotate
-them: `terraform/RUNBOOK.md`.
+Frontend build output (Next.js standalone artifact) is deployed via
+`backend/scripts/deploy-storefront.sh` (rsync + PM2 + health gate) — see
+`DEPLOY.md` §8. The old `aws s3 sync` for the Vite frontend is retired.
+
+## Storefront runtime environment (Next.js 15 standalone)
+
+These variables are required at **runtime** (not baked at build, except
+`API_BASE` and `SITE_URL` which are embedded via `next.config.ts` rewrites and
+instrumentation). The deploy script writes them to
+`/opt/compmaster/storefront/shared/storefront.env` and PM2 injects them at
+process start.
+
+| Variable | Purpose | Required | Default / Notes |
+|---|---|---|---|
+| `PORT` | HTTP port for the storefront server | Yes | `3000` (PM2 default); Caddy reverse-proxies here via `STOREFRONT_PORT` |
+| `HOSTNAME` | Bind address | Yes | `127.0.0.1` |
+| `NODE_ENV` | Must be `production` for fail-closed config | Yes | `production` |
+| `API_BASE` | Backend API base URL, e.g. `https://api.compmasone.ru/api` | Yes | Baked at build *and* required at runtime (instrumentation guard) |
+| `SITE_URL` | Canonical storefront URL, e.g. `https://www.compmasone.ru` | Yes | Baked at build; used for sitemap, meta, revalidate links |
+| `REVALIDATE_SECRET` | Shared secret for `/api/revalidate` hook (header `x-revalidate-secret`) | No | If unset, on-demand ISR hook is no-op; ISR TTL is the backstop |
+| `INDEXNOW_KEY` | Secret for `/api/indexnow` endpoint (IndexNow protocol) | No | If unset, endpoint returns 404 |
+
+Example `/etc/default/caddy` additions:
+```bash
+STOREFRONT_PORT=3000
+```
+Caddy `www` block uses `{$STOREFRONT_PORT:3000}`.
+
+## Vercel Deployment Configuration (Phase 9)
+
+The Vercel project must be configured for monorepo deployment with pnpm hoisting:
+
+| Setting | Value | Rationale |
+|---------|-------|-----------|
+| **Root Directory** | `.` (repo root) | Monorepo needs access to hoisted `pnpm-lock.yaml` and `node_modules` at workspace root |
+| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` BEFORE custom commands, causing pnpm wrapper missing error |
+| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root with hoisted deps available |
+| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Must enable corepack FIRST to install correct pnpm version |
+
+**Vercel config file** (`frontend/vercel.json`):
+```json
+{
+  "buildCommand": "pnpm --filter kompmaster-frontend build",
+  "outputDirectory": "frontend/.next/standalone",
+  "framework": "nextjs",
+  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
+  "devCommand": "pnpm --filter kompmaster-frontend dev"
+}
+```
+
+### Vercel Footguns (Critical)
+
+1. **Framework Preset = Next.js** → Vercel auto-detection runs `pnpm install` BEFORE custom commands, using its own pnpm wrapper which fails with "pnpm wrapper missing" error. **Fix: Framework Preset = `Other`**.
+
+2. **Root Directory = `frontend/`** → Can't access repo-root `pnpm-lock.yaml` and hoisted `node_modules`. **Fix: Root Directory = `.` (repo root)**.
+
+3. **Install in `buildCommand`** → Defeats Vercel build caching (every deploy does fresh install). **Fix: Keep install in `installCommand`**.
+
+4. **`vercel-build` script in root `package.json`** → Dead code when `vercel.json` has explicit `buildCommand`. **Fix: Remove or use consistently**.
+
+5. **Corepack not enabled** → Vercel's pnpm v12.4.2 wrapper missing. **Fix: `corepack enable pnpm` in `installCommand`**.
+
+### Monorepo pnpm Hoisting Requirements
+- `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
+- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
+- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
+- Build MUST run from repo root (`Root Directory = .`)

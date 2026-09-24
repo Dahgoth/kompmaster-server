@@ -1,13 +1,19 @@
 import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Tracing root must be the workspace root so Next's file trace reaches the
+// hoisted node_modules (pnpm nodeLinker: hoisted places deps at repo root).
+const tracingRoot = path.resolve(__dirname, "..");
 
 const nextConfig: NextConfig = {
   // Self-hosted on the Timeweb VPS behind Caddy (ADR 007 §Decision 1):
   // standalone output gives a deployable server bundle for PM2.
   output: "standalone",
   reactStrictMode: true,
-  // Worktree-local builds: the tracing root must be the worktree, not the
-  // cheapest common ancestor of the user's lockfile copies.
-  outputFileTracingRoot: __dirname,
+  // Workspace-root tracing so standalone captures hoisted deps.
+  outputFileTracingRoot: tracingRoot,
 
   // Lint is gated by the CI `frontend` job (eslint.config.js + typecheck);
   // next build's integrated lint pass would double-run it with a divergent
