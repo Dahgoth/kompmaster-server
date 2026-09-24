@@ -7,7 +7,7 @@ on:
     inputs:
       tag:
         description: 'Tag to deploy (e.g., v2.0.0)'
-        required: false
+        required: true
         type: string
 
 permissions:
@@ -41,6 +41,7 @@ jobs:
             echo "::error::Tag $TAG does not match semantic version format vX.Y.Z" >&2
             exit 1
           fi
+          echo "TAG=$TAG" >> $GITHUB_ENV
           echo "Deploying version: $TAG"
 
       - name: Setup SSH key
@@ -84,7 +85,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.TAG }}
           generate_release_notes: true
           draft: false
           prerelease: false
