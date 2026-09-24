@@ -21,10 +21,10 @@ The project requires a self-hosted GitHub Actions runner on the production VPS t
 **Use a self-hosted runner on the production VPS for production deploys only**, with the following mitigations (all implemented):
 
 1. **Workflow scope strictly limited** — deploy workflow (`deploy.yml`) only runs on tag pushes (`v*.*.*`), NOT on PRs or pushes to branches
-3. **Runner labels restricted** — only `self-hosted,linux,x64,vps` label; deploy workflow explicitly requires this label
-4. **Runner user isolation** — dedicated `github-runner` user with minimal sudo privileges (`pm2`, `caddy reload`, `systemctl reload caddy` only)
-5. **No PR-triggered runs on self-hosted** — PR checks run exclusively on GitHub-hosted runners (configured in `ci.yml`)
-6. **Tag-only deployment** — production deploy only triggers on signed version tags (`v*.*.*`), not on arbitrary commits
+2. **Runner labels restricted** — only `self-hosted,linux,x64,vps` label; deploy workflow explicitly requires this label
+3. **Runner user isolation** — dedicated `github-runner` user with minimal sudo privileges (`pm2`, `caddy reload`, `systemctl reload caddy` only)
+4. **No PR-triggered runs on self-hosted** — PR checks run exclusively on GitHub-hosted runners (configured in `ci.yml`)
+5. **Tag-only deployment** — production deploy only triggers on signed version tags (`v*.*.*`), not on arbitrary commits
 
 ---
 
@@ -66,18 +66,6 @@ For a public repository, GitHub-hosted runners are generally safer. However, we 
 | Runner token theft | Low | Medium | Annual rotation; scoped to repo |
 
 **Key finding**: The "public repo + self-hosted runner = dangerous" warning applies when workflows run on PRs/pushes. Our `deploy.yml` only triggers on `push: tags: ['v*.*.*']` and `workflow_call` — **never on PRs**. This neutralizes the primary attack vector.
-
----
-
-## Alternatives Considered
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **Self-hosted runner (chosen)** | No SSH keys in secrets; full VPS access; zero egress | Public repo risk (mitigated); runner maintenance |
-| **GitHub-hosted runner + SSH key** | No runner maintenance; isolated ephemeral | SSH key in secrets; network egress |
-| **GitHub-hosted runner + deploy via webhook** | No runner; no SSH key in secrets | Webhook endpoint needed; auth complexity |
-| **Third-party CI (GitLab CI, CircleCI, etc.)** | Mature runner management | Vendor lock-in; cost; complexity |
-| **GitHub Actions + `rsync` over SSH action** | Standard actions; no custom runner | SSH key in secrets; less PM2/Caddy control |
 
 ---
 
