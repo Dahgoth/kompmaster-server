@@ -181,3 +181,44 @@ Example `/etc/default/caddy` additions:
 STOREFRONT_PORT=3000
 ```
 Caddy `www` block uses `{$STOREFRONT_PORT:3000}`.
+
+## Vercel Deployment Configuration (Phase 9)
+
+The Vercel project must be configured for monorepo deployment with pnpm hoisting:
+
+| Setting | Value | Rationale |
+|---------|-------|-----------|
+| **Root Directory** | `.` (repo root) | Monorepo needs access to hoisted `pnpm-lock.yaml` and `node_modules` at workspace root |
+| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` BEFORE custom commands, causing pnpm wrapper missing error |
+| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root with hoisted deps available |
+| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Must enable corepack FIRST to install correct pnpm version |
+
+**Vercel config file** (`frontend/vercel.json`):
+```json
+{
+  "buildCommand": "pnpm --filter kompmaster-frontend build",
+  "outputDirectory": "frontend/.next/standalone",
+  "framework": "nextjs",
+  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
+  "devCommand": "pnpm --filter kompmaster-frontend dev"
+}
+```
+
+### Vercel Footguns (Critical)
+
+1. **Framework Preset = Next.js** → Vercel auto-detection runs `pnpm install` BEFORE custom commands, using its own pnpm wrapper which fails with "pnpm wrapper missing" error. **Fix: Framework Preset = `Other`**.
+
+2. **Root Directory = `frontend/`** → Can't access repo-root `pnpm-lock.yaml` and hoisted `node_modules`. **Fix: Root Directory = `.` (repo root)**.
+
+3. **Install in `buildCommand`** → Defeats Vercel build caching (every deploy does fresh install). **Fix: Keep install in `installCommand`**.
+
+4. **`vercel-build` script in root `package.json`** → Dead code when `vercel.json` has explicit `buildCommand`. **Fix: Remove or use consistently**.
+
+4. **Corepack not enabled** → Vercel's pnpm v12.4.2 wrapper missing. **Fix: `corepack enable pnpm` in `installCommand`**.
+
+### Monorepo pnpm Hoisting Requirements
+- `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
+- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
+- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
+- Build MUST run from repo root (`Root Directory = .`)

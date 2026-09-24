@@ -489,18 +489,58 @@ jobs:
           status: failure
 ```
 
-### 10.3 Vercel Integration — Already Configured
+### 10.3 Vercel Integration — Correct Configuration for Monorepo
 
-Current Vercel project settings (verified):
-- **Root Directory**: `frontend`
-- **Build Command**: `pnpm --filter kompmaster-frontend build`
-- **Install Command**: `pnpm install --frozen-lockfile`
-- **Framework Preset**: Next.js
-- **Environment Variables** (configured in Vercel dashboard per environment):
-  - Preview: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://<preview-url>.vercel.app`
-  - Production: `API_BASE=https://api.compmasone.ru/api`, `SITE_URL=https://www.compmasone.ru`
+**Important**: The Vercel dashboard must be configured as follows for monorepo deployments with pnpm hoisting:
 
-No changes needed — Vercel GitHub App handles Preview deployments on every PR/push automatically.
+| Setting | Value | Rationale |
+|---------|-------|-----------|
+| **Root Directory** | `.` (repo root) | Monorepo needs access to hoisted `pnpm-lock.yaml` and `node_modules` at workspace root |
+| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` BEFORE custom commands, causing pnpm wrapper missing error |
+| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root with hoisted deps available |
+| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Must enable corepack FIRST to install correct pnpm version |
+
+**Vercel config file** (`frontend/vercel.json`):
+```json
+{
+  "buildCommand": "pnpm --filter kompmaster-frontend build",
+  "outputDirectory": "frontend/.next/standalone",
+  "framework": "nextjs",
+  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
+  "devCommand": "pnpm --filter kompmaster-frontend dev"
+}
+```
+
+### Vercel Footguns & Lessons Learned
+
+#### 1. Framework Preset = Next.js → Auto-detection runs `pnpm install` BEFORE custom commands
+Vercel's Next.js detection runs its own `pnpm install` BEFORE any custom `installCommand`/`buildCommand`, using its own pnpm wrapper which fails with "pnpm wrapper missing" error.
+**Fix**: Set Framework Preset = `Other` to disable auto-detection.
+
+#### 2. Root Directory = `frontend/` → Can't access repo-root `pnpm-lock.yaml`
+Vercel runs commands from the configured Root Directory. With `frontend/`, it can't reach the workspace root `pnpm-lock.yaml` and hoisted `node_modules`.
+**Fix**: Root Directory = `.` (repo root).
+
+#### 3. Install in `buildCommand` → Defeats Vercel build caching
+Moving `pnpm install` to `buildCommand` means every deploy does a fresh install with zero cache benefit.
+**Fix**: Keep install in `installCommand`, enable corepack there.
+
+#### 4. `vercel-build` script in root `package.json` → Dead code
+When `vercel.json` has explicit `buildCommand`, the `vercel-build` script in `package.json` is never used.
+**Fix**: Remove or use consistently.
+
+#### 5. Corepack not enabled → Vercel's pnpm wrapper missing
+Vercel's pnpm wrapper for v12.4.2 was missing in their build environment.
+**Fix**: `corepack enable pnpm` in `installCommand`.
+
+### Monorepo pnpm Hoisting (Required for Vercel & VPS)
+- `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
+- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
+- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
+- Build MUST run from repo root (`Root Directory = .`)
+
+---
 
 ## 11. SDLC Release/Canary Cycle (Phase 10)
 
@@ -511,17 +551,7 @@ No changes needed — Vercel GitHub App handles Preview deployments on every PR/
   - `feat:` → MINOR  
   - `BREAKING CHANGE:` or `feat!:` → MAJOR
 
-### 11.2 Release Automation: `release-please` vs `semantic-release` — Tradeoffs for This Project
-
-| Factor | `release-please` (Google) | `semantic-release` |
-|---|---|---|
-| **Squash-merge handling** | ✅ Native support — analyzes squashed commit message | ❌ Problematic — sees only the squash commit, misses individual conventional commits |
-| **Changelog generation** | ✅ Built-in, configurable sections | ✅ Via `@semantic-release/changelog` plugin |
-| **GitHub Release creation** | ✅ Native | ✅ Via `@semantic-release/github` |
-| **npm publishing** | ❌ Not designed for it | ✅ Native (if we ever publish packages) |
-| **Monorepo support** | ⚠️ Limited (single package focus) | ✅ Good with `semantic-release-monorepo` |
-| **Configuration complexity** | Low (YAML config) | Higher (plugins, shareable configs) |
-| **Maintenance** | Google-maintained, stable | Community-maintained, more moving parts |
+### 11.2 Release Automation: `release-please` with Monorepo Manifest
 
 **Recommendation for this project: `release-please`**
 
@@ -529,10 +559,10 @@ Rationale:
 1. **We use squash-merge** (GitHub default for PRs) — `release-please` handles this natively by reading the squash commit message
 2. **Single package release** (monorepo but single version via root `package.json`) — `release-please` is designed for this
 3. **No npm publishing needed** — both apps deploy from Git tags, not npm registry
-4. **Simpler configuration** — one YAML file vs plugin ecosystem
+4. **Simpler configuration** — one YAML file + manifest file vs plugin ecosystem
 5. **Changelog format matches ours** — Keep a Changelog sections map directly
 
-**Implementation** (`.github/workflows/release.yml`):
+**Implementation** (`.github/workflows/release.yml` + `.release-please-manifest.json`):
 
 ```yaml
 name: Release
@@ -545,6 +575,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
   release-please:
@@ -566,30 +597,52 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: node
-          package-name: kompmaster-server
-          changelog-types: |
-            [{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"docs","section":"Documentation","hidden":false},{"type":"refactor","section":"Refactors","hidden":false},{"type":"perf","section":"Performance","hidden":false},{"type":"test","section":"Tests","hidden":false},{"type":"build","section":"Build System","hidden":false},{"type":"ci","section":"CI","hidden":false},{"type":"chore","section":"Chores","hidden":true},{"type":"revert","section":"Reverts","hidden":false}]
+          package-name: kompmaster
+          manifest-file: .release-please-manifest.json
+          changelog-types: ${{ file('.github/release-changelog-types.json') }}
+          # release-please with monorepo manifest manages version for all three packages:
+          # root (kompmaster), backend (kompmaster-server), frontend (kompmaster-frontend)
+          # When Release PR is merged (squash-merge), it creates GitHub Release + tag + version bumps in manifest.
 
-      - name: Sync version to workspace
-        if: steps.release.outputs.release_created == 'true'
-        run: |
-          NEW_VERSION="${{ steps.release.outputs.version }}"
-          echo "New version released: $NEW_VERSION"
-          npm pkg set version="$NEW_VERSION" --workspace-root
-          node scripts/sync-versions.js
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json backend/package.json frontend/package.json
-          git commit -m "chore(release): version bump to $NEW_VERSION [skip ci]"
-          git push origin main
+# The Release PR contains version bumps for all packages in the manifest.
+# When merged (squash-merge), it creates the GitHub Release + tag.
+# The tag push triggers deploy.yml naturally via its `on: push: tags` trigger.
+```
+
+**Manifest file** (`.release-please-manifest.json`):
+```json
+{
+  "kompmaster": "2.0.0",
+  "kompmaster-server": "2.0.0",
+  "kompmaster-frontend": "2.0.0"
+}
+```
+
+**Changelog types** (`.github/release-changelog-types.json`):
+```json
+{
+  "changelog-types": [
+    {"type": "feat", "section": "Features", "hidden": false},
+    {"type": "fix", "section": "Bug Fixes", "hidden": false},
+    {"type": "docs", "section": "Documentation", "hidden": false},
+    {"type": "refactor", "section": "Refactors", "hidden": false},
+    {"type": "perf", "section": "Performance", "hidden": false},
+    {"type": "test", "section": "Tests", "hidden": false},
+    {"type": "build", "section": "Build System", "hidden": false},
+    {"type": "ci", "section": "CI", "hidden": false},
+    {"type": "chore", "section": "Chores", "hidden": true},
+    {"type": "revert", "section": "Reverts", "hidden": false}
+  ]
+}
 ```
 
 **How it works:**
 1. On every push to `main`, `release-please` creates/updates a **Release PR** with conventional commits since last release
-2. The Release PR shows the proposed version bump and generated changelog
-3. When you merge the Release PR (squash-merge), it creates the GitHub Release + tag
-3. The workflow then syncs the version to backend/frontend and pushes the version bump commit
-4. The tag triggers the production deploy workflow
+2. The Release PR shows the proposed version bump and generated changelog for all 3 packages
+3. When you merge the Release PR (squash-merge), it creates the GitHub Release + tag + updates manifest with new versions
+4. The tag push triggers `deploy.yml` naturally via its `on: push: tags` trigger
+
+**No separate sync job needed** — version bumps are in the Release PR itself. When the Release PR is merged (squash-merge), versions are synced in the manifest. The tag push triggers deploy.
 
 ### 11.3 Branch Strategy & Canary Deploys
 
@@ -699,3 +752,59 @@ Since you're the sole reviewer, adjust rules pragmatically:
 **Manual curation**: Only the "Notable Changes" section in the Release PR needs human editing before merge — everything else is generated from commits.
 
 **No `semantic-release` needed** — adds complexity (plugins, npm auth) for no benefit since we don't publish to npm registry.
+
+---
+
+## 12. Lessons Learned & Footguns (Retrospective)
+
+### Vercel Deployment: Critical Footguns
+
+| # | Footgun | Symptom | Root Cause | Fix |
+|---|---------|---------|------------|-----|
+| 1 | Framework Preset = Next.js | `pnpm wrapper missing` error | Auto-detection runs `pnpm install` BEFORE custom commands | Framework Preset = `Other` |
+| 2 | Root Directory = `frontend/` | `ERR_PNPM_NO_LOCKFILE` | Can't access repo-root `pnpm-lock.yaml` | Root Directory = `.` (repo root) |
+| 3 | Install in `buildCommand` | No build caching | Every deploy does fresh install | Move to `installCommand` |
+| 4 | `vercel-build` script in `package.json` | Dead code | Overridden by `vercel.json` `buildCommand` | Remove or use consistently |
+| 5 | Corepack not enabled | `pnpm wrapper missing` | Vercel's pnpm v12.4.2 wrapper missing | `corepack enable pnpm` in `installCommand` |
+
+### Monorepo pnpm Hoisting Requirements
+- `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
+- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
+- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
+- Build MUST run from repo root (`Root Directory = .`)
+
+### Release Pipeline (release-please) Lessons
+- **Monorepo manifest** (`.release-please-manifest.json`) tracks versions for all 3 packages
+- **Release PR** contains version bumps for all packages in manifest
+- **Squash-merge Release PR** → Creates GitHub Release + tag + updates manifest
+- **Tag push** → Triggers `deploy.yml` naturally via `on: push: tags`
+- **No separate sync job needed** — version bumps are in the Release PR itself
+
+### Blue/Green Deployment Lessons
+- Two PM2 processes: `kompmaster-storefront-blue` (3000) + `kompmaster-storefront-green` (3001)
+- Active color controlled by `STOREFRONT_ACTIVE_COLOR` in `/etc/default/caddy`
+- **First deploy**: empty `STOREFRONT_ACTIVE_COLOR` → Caddy defaults to blue → deploy to green
+- **Promote** = update `/etc/default/caddy` + `caddy reload` with specific error messages
+
+### Deploy Script Hardening Lessons
+- **Boot-verify** on scratch port 3199 BEFORE shipping artifact to VPS
+- **Health gate** on VPS with auto-rollback (symlink + PM2 restart)
+- **Per-color cleanup** keeps KEEP_RELEASES of each color independently
+- **Promote step** validates config write + Caddy reload separately with specific errors
+- **First deploy handling**: empty `STOREFRONT_ACTIVE_COLOR` → Caddy defaults to blue → deploy to green
+
+### GitHub Actions Workflow Lessons
+- **`workflow_call` tag input**: must be `required: true` if script requires it
+- **Tag validation**: use `${{ inputs.tag }}` not `${{ github.ref_name }}` in `workflow_call`
+- **Release step**: use validated tag from `$GITHUB_ENV` not `github.ref_name`
+- **Reusable workflow**: add `workflow_call` with `inputs:` for manual triggers
+
+### Reasoning Discipline (from Issue #9)
+1. **Observe without interpreting** — exact symptom before naming cause
+2. **Contrast against documented baseline** — what does ENVIRONMENT.md/README.md say?
+3. **Name the general rule** — class of defect, not one-off patch
+4. **Refute before shipping** — state boring explanation first, check evidence
+5. **Verify auditor findings against live file** — confirm cited line exists before patching
+
+### Verify Claims Before Merge (from Issue #9)
+If a PR touches a documented guarantee ("required", "fatal", "must", "always"), the PR description must show actual command output proving the guarantee holds — not just that it was intended to hold.
