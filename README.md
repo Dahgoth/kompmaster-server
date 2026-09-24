@@ -186,18 +186,7 @@ sudo apt-get install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d api.ваш-домен.ru
 ```
 
-## 9. Резервные копии (обязательно перед боевым запуском)
-
-Простейший вариант — ежедневный дамп базы через cron:
-```bash
-# crontab -e
-0 3 * * * pg_dump -U kompmaster kompmaster | gzip > /backups/kompmaster_$(date +\%F).sql.gz
-```
-Фото уже лежат в S3-хранилище — у большинства провайдеров (Selectel, R2)
-есть встроенное резервирование, отдельно бэкапить обычно не нужно, но
-уточните у конкретного провайдера.
-
-## 8. Витрина на Vercel (Phase 9)
+## 7. Витрина на Vercel (Phase 9)
 
 Витрина деплоится на Vercel в режиме **Preview** (на каждый PR/push) и **Production** (по тегу `v*.*.*`).
 
@@ -242,7 +231,7 @@ See `DEPLOY.md` §10.3 and §12 for full footguns list and lessons learned.
 
 See `DEPLOY.md` §8–11 for full deploy topology, Blue/Green, and release cycle.
 
-## 9. Резервные копии (обязательно перед боевым запуском)
+## 8. Резервные копии (обязательно перед боевым запуском)
 
 Простейший вариант — ежедневный дамп базы через cron:
 ```bash
@@ -252,6 +241,8 @@ See `DEPLOY.md` §8–11 for full deploy topology, Blue/Green, and release cycle
 Фото уже лежат в S3-хранилище — у большинства провайдеров (Selectel, R2)
 есть встроенное резервирование, отдельно бэкапить обычно не нужно, но
 уточните у конкретного провайдера.
+
+## 9. Структура API (основные эндпоинты)
 
 ## Структура API (основные эндпоинты)
 

@@ -215,7 +215,7 @@ The Vercel project must be configured for monorepo deployment with pnpm hoisting
 
 4. **`vercel-build` script in root `package.json`** → Dead code when `vercel.json` has explicit `buildCommand`. **Fix: Remove or use consistently**.
 
-4. **Corepack not enabled** → Vercel's pnpm v12.4.2 wrapper missing. **Fix: `corepack enable pnpm` in `installCommand`**.
+5. **Corepack not enabled** → Vercel's pnpm v12.4.2 wrapper missing. **Fix: `corepack enable pnpm` in `installCommand`**.
 
 ### Monorepo pnpm Hoisting Requirements
 - `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
