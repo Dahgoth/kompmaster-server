@@ -32,9 +32,11 @@ jobs:
 
       - name: Verify tag format
         run: |
-          TAG="${{ inputs.tag }}"
+          # For tag push: github.ref_name (e.g., "v2.0.0")
+          # For workflow_call: inputs.tag
+          TAG="${{ github.event_name == 'workflow_call' && inputs.tag || github.ref_name }}"
           if [ -z "$TAG" ]; then
-            echo "::error::Tag input is required for workflow_call trigger" >&2
+            echo "::error::Tag is required" >&2
             exit 1
           fi
           if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
