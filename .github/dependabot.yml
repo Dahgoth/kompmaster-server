@@ -21,11 +21,6 @@ updates:
     labels:
       - "dependencies"
       - "automerge-candidate"
-    # Auto-merge for patch updates only (configured via GitHub branch protection)
-    # Requires: "Allow auto-merge" enabled in repo settings + dependabot labels
-    auto-merge:
-      # Only auto-merge if all status checks pass
-      allowed: true
     ignore:
       - dependency-name: "next"
         versions: ["15.x"]  # Major version pins handled manually

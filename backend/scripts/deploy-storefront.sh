@@ -41,7 +41,7 @@ cd "$repo_root"
 DRY_RUN=0
 SKIP_BUILD=0
 CHECK_PUBLIC=0
-DEPLOY_COLOR="auto"
+DEPLOY_COLOR="blue"
 PROMOTE=0
 for arg in "$@"; do
   case "$arg" in
@@ -50,14 +50,14 @@ for arg in "$@"; do
     --check-public) CHECK_PUBLIC=1 ;;
     --color=*) DEPLOY_COLOR="${arg#--color=}" ;;
     --promote) PROMOTE=1 ;;
-    *) echo "неизвестный аргумент: $arg (доступны --dry-run, --skip-build, --check-public, --color=blue|green|auto, --promote)"; exit 1 ;;
+    *) echo "неизвестный аргумент: $arg (доступны --dry-run, --skip-build, --check-public, --color=blue|green, --promote)"; exit 1 ;;
   esac
 done
 
 # Validate color argument
 case "$DEPLOY_COLOR" in
-  blue|green|auto) ;;
-  *) echo "неверный --color: $DEPLOY_COLOR (ожидается blue, green или auto)"; exit 1 ;;
+  blue|green) ;;
+  *) echo "неверный --color: $DEPLOY_COLOR (ожидается blue или green)"; exit 1 ;;
 esac
 
 STOREFRONT_SSH="${STOREFRONT_SSH-root@api.compmasone.ru}"
@@ -67,13 +67,6 @@ SITE_URL="${SITE_URL-https://www.compmasone.ru}"
 STOREFRONT_PORT="${STOREFRONT_PORT-3000}"
 BOOT_CHECK_PORT="${BOOT_CHECK_PORT-3199}"
 KEEP_RELEASES="${KEEP_RELEASES-3}"
-
-# Determine color-specific settings
-if [ "$DEPLOY_COLOR" = "auto" ]; then
-  # Detect inactive color from Caddy upstream (requires Caddy admin API access)
-  # For now, default to blue if no current deployment exists
-  DEPLOY_COLOR="blue"
-fi
 
 # Color-specific port and PM2 name
 case "$DEPLOY_COLOR" in
@@ -87,10 +80,8 @@ case "$DEPLOY_COLOR" in
     ;;
 esac
 
-# Override STOREFRONT_PORT for this deployment if color is specified
-if [ "$DEPLOY_COLOR" != "auto" ]; then
-  STOREFRONT_PORT="$COLOR_PORT"
-fi
+# Override STOREFRONT_PORT for this deployment
+STOREFRONT_PORT="$COLOR_PORT"
 
 # Single source of truth for the release version (AGENTS.md rule 3).
 node scripts/check-versions.js
@@ -264,9 +255,12 @@ if [ "$ok" != 1 ]; then
 fi
 echo "health gate: OK (порт $PORT, релиз $(cat "$STOREFRONT_ROOT/current/RELEASE" 2>/dev/null || echo '?'))"
 cur=$(readlink current 2>/dev/null || true)
-ls -1dt "$STOREFRONT_ROOT"/releases/*/ | tail -n +"$((KEEP_RELEASES + 1))" | while read -r old; do
-  [ "$old" = "$cur" ] && continue
-  rm -rf "$old"
+# Clean old releases per color (keep KEEP_RELEASES of each color)
+for color in blue green; do
+  ls -1dt "$STOREFRONT_ROOT"/releases/*-${color}/ 2>/dev/null | tail -n +"$((KEEP_RELEASES + 1))" | while read -r old; do
+    [ "$old" = "$cur" ] && continue
+    rm -rf "$old"
+  done
 done
 REMOTE
 )
@@ -282,7 +276,7 @@ fi
 # If --promote flag is set, flip Caddy traffic to this color
 if [ "$PROMOTE" = 1 ] && [ -n "$STOREFRONT_SSH" ]; then
   echo "==> promoting $DEPLOY_COLOR to active (flipping Caddy traffic)"
-  ssh "$STOREFRONT_SSH" "export STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR; caddy reload --config /etc/caddy/Caddyfile --force"
+  ssh "$STOREFRONT_SSH" "sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR/' /etc/default/caddy && caddy reload --config /etc/caddy/Caddyfile --force"
   echo "==> traffic switched to $DEPLOY_COLOR"
 fi
 

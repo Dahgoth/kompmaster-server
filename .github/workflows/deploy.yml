@@ -11,8 +11,11 @@ permissions:
 
 jobs:
   deploy-production:
-    # Uses Vercel's auto-created "Production" environment
-    environment: Production
+    # Custom GitHub Environment for VPS production deploy (not Vercel's "Production")
+    # Create in GitHub Settings → Environments → production-vps
+    # Add secrets: STOREFRONT_SSH_KEY, STOREFRONT_SSH_HOST, STOREFRONT_ROOT
+    # Protection rules: required reviewers (1), wait timer (5 min)
+    environment: production-vps
     runs-on: self-hosted
     timeout-minutes: 30
     steps:
@@ -41,7 +44,7 @@ jobs:
         run: |
           STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
           STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
-          ./backend/scripts/deploy-storefront.sh --skip-build
+          ./backend/scripts/deploy-storefront.sh --skip-build --color=blue --promote
         env:
           API_BASE: https://api.compmasone.ru/api
           SITE_URL: https://www.compmasone.ru
@@ -61,7 +64,7 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: Production
+          env: production-vps
           ref: ${{ github.sha }}
           auto-merge: false
 
@@ -71,7 +74,7 @@ jobs:
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: Production
+          env: production-vps
           ref: ${{ github.sha }}
           status: success
           deployment-url: https://www.compmasone.ru
@@ -82,6 +85,6 @@ jobs:
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: Production
+          env: production-vps
           ref: ${{ github.sha }}
           status: failure

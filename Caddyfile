@@ -45,7 +45,7 @@ www.{$DOMAIN:compmasone.ru} {
 
   # Blue/Green upstream with health checks
   # Active color determined by STOREFRONT_ACTIVE_COLOR env (blue|green)
-  # Default: blue (port 3000)
+  # Default: blue (port 3000) — set via /etc/default/caddy or systemd env
   @blue_upstream {
     path *
     expression {env.STOREFRONT_ACTIVE_COLOR} == "blue"
@@ -68,6 +68,12 @@ www.{$DOMAIN:compmasone.ru} {
     health_status 200
   }
 
-  # Fallback if no color env set (defaults to blue)
-  reverse_proxy 127.0.0.1:{$STOREFRONT_PORT:3000}
+  # Default upstream (blue) with health checks — used when STOREFRONT_ACTIVE_COLOR
+  # is unset or invalid. This ensures traffic always goes to a monitored upstream.
+  reverse_proxy 127.0.0.1:3000 {
+    health_uri /api/health
+    health_interval 10s
+    health_timeout 3s
+    health_status 200
+  }
 }
