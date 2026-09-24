@@ -194,7 +194,7 @@ curl -I https://www.compmasone.ru
 
 | Step | Status | Owner |
 |------|--------|-------|
-| GitHub Environments & Secrets | ☐ | DevOps |
+| GitHub Environments & Secrets | ✅ Done | DevOps |
 | Self-hosted Runner on VPS | ✅ Done | DevOps |
 | REVALIDATE_SECRET / INDEXNOW_KEY | ☐ | DevOps |
 | First Production Deploy (tag) | ☐ | DevOps |
