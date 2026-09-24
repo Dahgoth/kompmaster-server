@@ -43,7 +43,7 @@ try {
 
   // Update root package.json
   const rootPkg = readJson(rootPkgPath);
-  if (manifest.kompmaster && manifest.kompmaster !== rootPkg.version) {
+  if (manifest.kompmaster !== rootPkg.version) {
     console.log(`Root: ${rootPkg.version} -> ${manifest.kompmaster}`);
     rootPkg.version = manifest.kompmaster;
     writeJson(rootPkgPath, rootPkg);
@@ -51,7 +51,7 @@ try {
 
   // Update backend package.json
   const backendPkg = readJson(backendPkgPath);
-  if (manifest["kompmaster-server"] && manifest["kompmaster-server"] !== backendPkg.version) {
+  if (manifest["kompmaster-server"] !== backendPkg.version) {
     console.log(`Backend: ${backendPkg.version} -> ${manifest["kompmaster-server"]}`);
     backendPkg.version = manifest["kompmaster-server"];
     writeJson(backendPkgPath, backendPkg);
@@ -59,7 +59,7 @@ try {
 
   // Update frontend package.json
   const frontendPkg = readJson(frontendPkgPath);
-  if (manifest["kompmaster-frontend"] && manifest["kompmaster-frontend"] !== frontendPkg.version) {
+  if (manifest["kompmaster-frontend"] !== frontendPkg.version) {
     console.log(`Frontend: ${frontendPkg.version} -> ${manifest["kompmaster-frontend"]}`);
     frontendPkg.version = manifest["kompmaster-frontend"];
     writeJson(frontendPkgPath, frontendPkg);
