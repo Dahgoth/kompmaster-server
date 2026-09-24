@@ -43,15 +43,19 @@ jobs:
       - name: Detect inactive color
         id: color
         run: |
-          # Query the actual active color from /etc/default/caddy on the VPS
-          # The active color is set via STOREFRONT_ACTIVE_COLOR env var (blue|green)
-          # If unavailable or not set, default to blue
+          # Query the intended active color from /etc/default/caddy on the VPS
+          # (source of truth for Caddy reloads). The active color is set via
+          # STOREFRONT_ACTIVE_COLOR env var (blue|green). Fail if SSH fails or
+          # value is unexpected.
           COLOR="blue"
-          RESULT=$(ssh "${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" || echo "")
+          RESULT=$(ssh "${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2")
           if [ "$RESULT" = "green" ]; then
             COLOR="blue"
           elif [ "$RESULT" = "blue" ]; then
             COLOR="green"
+          else
+            echo "::error::Unexpected active color: '$RESULT' (expected blue|green)" >&2
+            exit 1
           fi
           echo "color=$COLOR" >> $GITHUB_OUTPUT
           echo "Deploying to inactive color: $COLOR"
