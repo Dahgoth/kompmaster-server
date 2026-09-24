@@ -279,11 +279,13 @@ fi
 if [ "$PROMOTE" = 1 ] && [ -n "$STOREFRONT_SSH" ]; then
   echo "==> promoting $DEPLOY_COLOR to active (flipping Caddy traffic)"
   ssh "$STOREFRONT_SSH" "
-    grep -q '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy \
-      && sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR/' /etc/default/caddy \
-      || echo 'STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR' >> /etc/default/caddy
-    caddy reload --config /etc/caddy/Caddyfile --force
-  " || { echo 'Failed to update Caddy config or reload' >&2; exit 1; }
+    if grep -q '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy; then
+      sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR/' /etc/default/caddy || { echo 'Failed to update Caddy config' >&2; exit 1; }
+    else
+      echo 'STOREFRONT_ACTIVE_COLOR=$DEPLOY_COLOR' >> /etc/default/caddy || { echo 'Failed to write Caddy config' >&2; exit 1; }
+    fi
+    caddy reload --config /etc/caddy/Caddyfile --force || { echo 'Caddy reload failed' >&2; exit 1; }
+  "
   echo "==> traffic switched to $DEPLOY_COLOR"
 fi
 
