@@ -44,6 +44,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# Single-package release: only root package (.) with single root CHANGELOG.md
-# When Release PR is merged (merge commit), it creates GitHub Release + tag + version bump in manifest.
-# The tag push triggers deploy.yml naturally via its `on: push: tags` trigger.
+      - name: Trigger deploy workflow
+        if: steps.release.outputs.release_created == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          script: |
+            const tag = '${{ steps.release.outputs.tag_name }}';
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main',
+              inputs: { tag }
+            });
