@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1](https://github.com/Dahgoth/kompmaster-server/compare/v2.3.0...v2.3.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **deploy:** add condition to skip release creation on release event; fix permissions ([83183da](https://github.com/Dahgoth/kompmaster-server/commit/83183da6f71bccd582e373720f6271b7529a5fa2))
+* **deploy:** add release trigger for release-please API tag creation ([bc54199](https://github.com/Dahgoth/kompmaster-server/commit/bc54199706687d71f06684b3a1b5b9cc0afb8179))
+* **deploy:** add release trigger for release-please API tag creation ([#73](https://github.com/Dahgoth/kompmaster-server/issues/73)) ([81cd91f](https://github.com/Dahgoth/kompmaster-server/commit/81cd91f805a309fb746bd113f83f056d658b6bd5))
+
 ## [Unreleased]
 
 ### Bug Fixes
