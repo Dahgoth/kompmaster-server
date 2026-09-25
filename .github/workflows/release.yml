@@ -40,7 +40,13 @@ jobs:
 
       - name: Sync versions
         if: steps.release.outputs.release_created == 'true'
-        run: pnpm run version:sync
+        run: |
+          pnpm run version:sync
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/package.json frontend/package.json
+          git commit -m "chore: sync backend/frontend versions to ${{ steps.release.outputs.tag_name }}"
+          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
