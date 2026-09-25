@@ -4,6 +4,10 @@ inputs:
   pattern:
     description: "ERE regex pattern to match changed files (e.g., '^backend/|^scripts/')"
     required: true
+  exclude-pattern:
+    description: "Optional ERE regex pattern to exclude matched files (e.g., '^frontend/terraform/')"
+    required: false
+    default: ""
   output-name:
     description: "Name of the output variable (e.g., 'backend', 'frontend')"
     required: false
@@ -26,8 +30,11 @@ runs:
         fi
         echo "base: $base"
         # Use git diff with error handling (don't suppress git errors)
-        files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>&1 |
-          grep -E '${{ inputs.pattern }}' || true)
+        files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>/dev/null |
+          grep -E '${{ inputs.pattern }}')
+        if [ -n "${{ inputs.exclude-pattern }}" ] && [ -n "$files" ]; then
+          files=$(echo "$files" | grep -v -E '${{ inputs.exclude-pattern }}' || true)
+        fi
         if [ -n "$files" ]; then
           echo "${{ inputs.output-name }}=true" >> $GITHUB_OUTPUT
           echo "${{ inputs.output-name }} changes detected:"
