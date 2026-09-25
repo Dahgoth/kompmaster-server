@@ -68,6 +68,8 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Enable pnpm via corepack
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm run lint:commit
 
@@ -106,6 +108,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Enable pnpm via corepack
+        if: steps.changes.outputs.backend == 'true'
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.changes.outputs.backend == 'true'
       - name: Lint backend
@@ -174,6 +179,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Enable pnpm via corepack
+        if: steps.changes.outputs.frontend == 'true'
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.changes.outputs.frontend == 'true'
       - name: Lint frontend
@@ -253,6 +261,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Enable pnpm via corepack
+        if: steps.changes.outputs.e2e == 'true'
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.changes.outputs.e2e == 'true'
       - name: Install Playwright browsers
