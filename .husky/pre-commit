@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run Prettier formatting check before commit
+# This prevents formatting errors from being committed
+pnpm run format:check

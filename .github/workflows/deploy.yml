@@ -2,7 +2,7 @@ name: Deploy Production
 
 on:
   push:
-    tags: ['v*.*.*']
+    tags: ['v*.*.*', 'kompmaster-v*.*.*']
   workflow_call:
     inputs:
       tag:
