@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Bug Fixes
+
+* **deploy:** add release trigger for release-please API tag creation ([bc54199](https://github.com/Dahgoth/kompmaster-server/commit/bc54199))
+
 ## [2.3.0](https://github.com/Dahgoth/kompmaster-server/compare/v2.2.0...v2.3.0) (2026-09-25)
 
 

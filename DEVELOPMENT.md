@@ -458,7 +458,8 @@ The release uses `include-component-in-tag: false` to produce clean `v*.*.*`
 tags that match the deploy workflow trigger.
 
 **Deploy workflow** (`.github/workflows/deploy.yml`) triggers on both
-`v*.*.*` and `kompmaster-v*.*.*` tags for backward compatibility. New releases
+`v*.*.*` and `kompmaster-v*.*.*` tags for backward compatibility, and on
+`release.published` events (for release-please API-created tags). New releases
 will use clean `v*.*.*` tags since `include-component-in-tag: false` is set
 in the release-please config.
 
