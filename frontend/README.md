@@ -159,6 +159,13 @@ Postgres, seeds fixtures, builds the storefront against the API, and runs 20
 specs. CI uses only GitHub or verified-Marketplace actions pinned to full
 commit SHAs.
 
+**Release-please PRs** (created by `github-actions[bot]`) skip `docs-sync`,
+`versions`, and `commitlint` jobs to avoid false failures — release-please
+manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
+version but doesn't run project-specific hooks. The release workflow
+(`.github/workflows/release.yml`) runs `pnpm run version:sync` when a release
+is created so the release PR has synced versions across all packages.
+
 Run locally before pushing:
 ```bash
 pnpm run lint:frontend
