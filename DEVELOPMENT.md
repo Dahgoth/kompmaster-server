@@ -447,8 +447,9 @@ manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
 version but doesn't run project-specific hooks (`version:sync`, docs sync).
 The skip is implemented via `if: github.actor != 'github-actions[bot]'`
 on those three jobs. The release workflow
-(`.github/workflows/release.yml`) runs `pnpm run version:sync` when a release
-is created so the release PR has synced versions across all packages.
+(`.github/workflows/release.yml`) uses `googleapis/release-please-action@v5`
+with a config file (`.release-please-config.json`) and runs `pnpm run version:sync`
+when a release is created so the release PR has synced versions across all packages.
 
 Run `pnpm test` and `pnpm run lint` locally before pushing; the Husky
 `pre-push` hook runs only the suites whose area changed plus the docs-in-sync
