@@ -5,6 +5,12 @@ on:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g., v2.0.0)'
+        required: true
+        type: string
   workflow_call:
     inputs:
       tag:
@@ -37,9 +43,10 @@ jobs:
           # For tag push: github.ref_name (e.g., "v2.0.0")
           # For release event: github.event.release.tag_name
           # For workflow_call: inputs.tag
+          # For workflow_dispatch: inputs.tag
           if [ "${{ github.event_name }}" = "release" ]; then
             TAG="${{ github.event.release.tag_name }}"
-          elif [ "${{ github.event_name }}" = "workflow_call" ]; then
+          elif [ "${{ github.event_name }}" = "workflow_call" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG="${{ inputs.tag }}"
           else
             TAG="${{ github.ref_name }}"

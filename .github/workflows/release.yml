@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -13,6 +14,7 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -47,12 +49,17 @@ jobs:
           git add backend/package.json frontend/package.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
-            git push || { echo "::error::Failed to push version sync commit"; exit 1; }
+            git push origin HEAD:main || { echo "::error::Failed to push version sync commit"; exit 1; }
+            # Verify push propagated before triggering deploy
+            for i in {1..10}; do
+              if git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then
+                break
+              fi
+              sleep 2
+            done
           else
             echo "No version changes to commit"
           fi
-          # Wait for push propagation before triggering deploy
-          sleep 5
           TAG="${{ steps.release.outputs.tag_name }}"
           gh workflow run deploy.yml --ref main -f tag="$TAG"
         env:
