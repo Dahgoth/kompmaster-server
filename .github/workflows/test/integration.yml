@@ -119,11 +119,14 @@ jobs:
           fetch-depth: 0
       - name: Create test commit
         run: |
+          ORIGINAL_HEAD=$(git rev-parse HEAD)
           git config user.name "test"
           git config user.email "test@test.com"
           echo "test" > test-file.txt
           git add test-file.txt
           git commit -m "test commit"
+          # Push the test commit so verify-push can find it
+          git push origin HEAD:main
 
       - name: Test verify-push logic (linear backoff)
         id: test-verify

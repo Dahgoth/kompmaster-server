@@ -38,17 +38,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate correlation ID
-        run: |
-          echo "DEPLOYMENT_ID=$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:8}" >> $GITHUB_ENV
-          echo "DEPLOY_START_TIME=$SECONDS" >> $GITHUB_ENV
-          echo "::notice title=Deploy Started::deployment_id=${{ env.DEPLOYMENT_ID }} tag=${{ github.ref_name }} runner=${{ runner.name }}"
-
       - name: Extract and validate tag
         uses: ./.github/actions/extract-tag
         id: extract
         with:
           tag: ${{ inputs.tag }}
+
+      - name: Generate correlation ID
+        run: |
+          echo "DEPLOYMENT_ID=$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:8}" >> $GITHUB_ENV
+          echo "DEPLOY_START_TIME=$SECONDS" >> $GITHUB_ENV
+          echo "::notice title=Deploy Started::deployment_id=${{ env.DEPLOYMENT_ID }} tag=${{ steps.extract.outputs.tag }} runner=${{ runner.name }}"
 
       - name: Check if already deployed (idempotency guard)
         id: idempotency
