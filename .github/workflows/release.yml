@@ -25,6 +25,9 @@ jobs:
           node-version: '24'
           cache: 'pnpm'
 
+      - name: Enable pnpm via corepack
+        run: corepack enable pnpm
+
       - name: Release Please
         id: release
         uses: googleapis/release-please-action@0dfd8538845b8e92600d271a895a5372865d4062
