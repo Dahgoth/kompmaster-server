@@ -647,3 +647,4 @@ canonical port is `4000`.)
 
 Each migration runs in its own transaction; a failed migration rolls back and
 is not recorded. Fix the SQL and re-run `pnpm run migrate`.
+
