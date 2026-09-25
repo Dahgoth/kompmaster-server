@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
 
@@ -85,7 +85,7 @@ jobs:
           SITE_URL: https://www.compmasone.ru
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ env.TAG }}
           generate_release_notes: true
@@ -95,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Deployment (production)
-        uses: bobheadxi/deployments@v1
+        uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -105,7 +105,7 @@ jobs:
 
       - name: Update Deployment Status (success)
         if: success()
-        uses: bobheadxi/deployments@v1
+        uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -116,7 +116,7 @@ jobs:
 
       - name: Update Deployment Status (failure)
         if: failure()
-        uses: bobheadxi/deployments@v1
+        uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
