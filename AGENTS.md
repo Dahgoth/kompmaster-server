@@ -29,12 +29,13 @@ surface, and setup.
 
 ## Worktree & Branch Protection
 
-**NEVER destroy git worktrees or branches.** Worktrees and branches are developer workspaces — not disposable. You MUST NOT delete, remove, prune, or otherwise destroy any worktree or branch unless:
+**Do not destroy git worktrees or branches without explicit user consent and a verified restoration path.** Worktrees and branches are developer workspaces — not disposable. You MUST NOT delete, remove, prune, or otherwise destroy any worktree or branch unless:
 - The user EXPLICITLY requests it in writing, AND
 - A verified backup/snapshot strategy exists that guarantees FULL restoration (git reflog, stash, bundle, or explicit copy) BEFORE the destructive action.
 - Even with explicit user consent, destruction without a verified, tested restoration path is FORBIDDEN.
-- Default to working within the existing worktree rather than the repository root.
-Violating this rule destroys developer state, review history, and CI context — it is a cardinal error.
+- Run commands from the workspace root unless a subdirectory is explicitly required.
+
+Normal branch hygiene (deleting merged branches via GitHub UI, cleaning up local merged branches with `git branch -d`) is permitted and does not require this process. This rule protects against accidental destruction of active work, review history, and CI context.
 
 ## Ground rules
 
