@@ -419,23 +419,27 @@ this section is the detailed reference.
 ## CI (GitHub Actions)
 
 CI is defined in `.github/workflows/ci.yml` and runs on every push and PR.
-The workflow is **path-filtered** via inline `git diff` (no third-party actions)
-so each job runs only when its area changes:
+The workflow is **path-filtered** via a reusable composite action
+(`.github/actions/detect-changes`) that uses inline `git diff` with POSIX ERE
+regex patterns (no third-party actions), so each job runs only when its area
+changes:
 
 | Job        | Trigger (any file under)                                 | Steps                                    |
 | ---------- | -------------------------------------------------------- | ---------------------------------------- |
 | `docs-sync` | *always*                                                 | `node scripts/check-docs.js --base …`    |
 | `versions`  | *always*                                                 | `node scripts/check-versions.js`         |
 | `commitlint`| *PRs only*                                               | `pnpm run lint:commit`                   |
-| `backend`   | `backend/**`, `scripts/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `docker-compose.yml`, `Caddyfile`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → syntax-check → test |
-| `frontend`  | `frontend/**` (excl. `frontend/terraform/**`), `DESIGN.md`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → typecheck → test → build |
-| `e2e`       | union of `backend` + `frontend` + `scripts` + `docker-compose.yml` + config files | Postgres service → checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → Playwright install → migrate → seed → build & run Tier A matrix (chromium + WebKit mobile) |
-| `compose`   | `docker-compose.yml`                                     | checkout → docker compose config/pull    |
-| `terraform` | `terraform/**`, `frontend/terraform/**`                  | checkout → setup-terraform (pinned 1.9.8) → fmt/validate |
+| `backend`   | `backend/**`, `scripts/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `docker-compose.yml`, `Caddyfile`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → syntax-check → test |
+| `frontend`  | `frontend/**` (excl. `frontend/terraform/**`), `DESIGN.md`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → typecheck → test → build |
+| `e2e`       | union of `backend` + `frontend` + `scripts` + `docker-compose.yml` + config files | Postgres service → checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → Playwright install → migrate → seed → build & run Tier A matrix (chromium + WebKit mobile) |
+| `compose`   | `docker-compose.yml`                                     | checkout → detect-changes → docker compose config/pull    |
+| `terraform` | `terraform/**`, `frontend/terraform/**`                  | checkout → detect-changes → setup-terraform (pinned 1.9.8) → fmt/validate |
 
 All actions are pinned to full commit SHAs and are from GitHub or verified
 Marketplace creators. pnpm is installed via `corepack enable pnpm` after
-`actions/setup-node` (no `pnpm/action-setup`; not GitHub-verified).
+`actions/setup-node` (no `pnpm/action-setup`; not GitHub-verified). The
+`dorny/paths-filter` action was replaced with the `detect-changes` composite
+action using POSIX ERE regex patterns.
 
 Run `pnpm test` and `pnpm run lint` locally before pushing; the Husky
 `pre-push` hook runs only the suites whose area changed plus the docs-in-sync
