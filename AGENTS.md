@@ -29,13 +29,7 @@ surface, and setup.
 
 ## Worktree & Branch Protection
 
-**Do not destroy git worktrees or branches without explicit user consent and a verified restoration path.** Worktrees and branches are developer workspaces — not disposable. You MUST NOT delete, remove, prune, or otherwise destroy any worktree or branch unless:
-- The user EXPLICITLY requests it in writing, AND
-- A verified backup/snapshot strategy exists that guarantees FULL restoration (git reflog, stash, bundle, or explicit copy) BEFORE the destructive action.
-- Even with explicit user consent, destruction without a verified, tested restoration path is FORBIDDEN.
-- Run commands from the workspace root unless a subdirectory is explicitly required.
-
-Normal branch hygiene (deleting merged branches via GitHub UI, cleaning up local merged branches with `git branch -d`) is permitted and does not require this process. This rule protects against accidental destruction of active work, review history, and CI context.
+**Do not delete branches or worktrees that contain unmerged work or active CI context.** Routine cleanup of merged branches (via GitHub UI or `git branch -d`) and stale worktrees is encouraged. This rule protects against accidental destruction of active work, review history, and CI context.
 
 ## Ground rules
 
@@ -230,6 +224,8 @@ This is a single pnpm workspace: one root `pnpm-lock.yaml` installs both apps.
 pnpm is pinned through `packageManager` in the root `package.json` and run via
 Corepack (`corepack enable pnpm`). Target a single app with
 `pnpm --filter <name> <script>` (e.g. `pnpm --filter kompmaster-server test`).
+
+**Run commands from the workspace root unless a subdirectory is explicitly required.**
 
 - `pnpm install` — install dependencies for both apps and set up Husky hooks
   (via `prepare`).
