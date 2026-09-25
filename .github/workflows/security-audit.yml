@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   audit:
@@ -34,3 +35,15 @@ jobs:
         run: pnpm audit --prod --audit-level=high
       - name: Audit signatures (verify package integrity)
         run: pnpm audit signatures
+      - name: Notify on audit failure
+        if: failure()
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔒 Security Audit Failed: High/Critical Vulnerabilities Found',
+              body: 'Daily security audit detected vulnerabilities. Check the workflow run for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              labels: ['security', 'automated']
+            })

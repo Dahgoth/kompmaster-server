@@ -31,7 +31,8 @@ runs:
         echo "Verifying push to origin/$BRANCH (max $MAX_RETRIES retries, base interval ${BASE_INTERVAL}s)"
 
         for i in $(seq 1 $MAX_RETRIES); do
-          if git ls-remote --exit-code origin $BRANCH | grep -q "$(git rev-parse HEAD)"; then
+          # Suppress stderr to handle branch-not-found (exit code 2) gracefully
+          if git ls-remote --exit-code origin $BRANCH 2>/dev/null | grep -q "$(git rev-parse HEAD)"; then
             echo "Push verified on attempt $i"
             echo "success=true" >> $GITHUB_OUTPUT
             exit 0
@@ -42,7 +43,7 @@ runs:
         done
 
         # Final check
-        if git ls-remote --exit-code origin $BRANCH | grep -q "$(git rev-parse HEAD)"; then
+        if git ls-remote --exit-code origin $BRANCH 2>/dev/null | grep -q "$(git rev-parse HEAD)"; then
           echo "Push verified on final check"
           echo "success=true" >> $GITHUB_OUTPUT
           exit 0

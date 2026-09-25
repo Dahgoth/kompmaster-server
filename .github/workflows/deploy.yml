@@ -47,22 +47,30 @@ jobs:
       - name: Generate correlation ID
         run: |
           echo "DEPLOYMENT_ID=$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:8}" >> $GITHUB_ENV
-          echo "DEPLOY_START_TIME=$SECONDS" >> $GITHUB_ENV
+          echo "DEPLOY_START_TIME=$(date +%s)" >> $GITHUB_ENV
           echo "::notice title=Deploy Started::deployment_id=${{ env.DEPLOYMENT_ID }} tag=${{ steps.extract.outputs.tag }} runner=${{ runner.name }}"
 
       - name: Check if already deployed (idempotency guard)
         id: idempotency
         run: |
-          # Check if release exists and is published on main branch
-          if gh release view "${{ env.TAG }}" --json isDraft,targetCommitish -q '.isDraft == false and .targetCommitish == "main"' >/dev/null 2>&1; then
-            echo "already_deployed=true" >> $GITHUB_OUTPUT
-            echo "Release ${{ env.TAG }} already deployed on main — skipping"
-          else
-            echo "already_deployed=false" >> $GITHUB_OUTPUT
+          # Check for successful deployment instead of just release existence
+          # Query GitHub Deployments API for successful deployment in production-vps
+          DEPLOYMENTS=$(gh api repos/${{ github.repository }}/deployments --jq '.[] | select(.environment=="production-vps" and .ref=="${{ github.sha }}")' 2>/dev/null)
+          if [ -n "$DEPLOYMENTS" ]; then
+            # Get the latest deployment status
+            DEPLOYMENT_ID=$(echo "$DEPLOYMENTS" | jq -r '.id' | head -1)
+            if [ -n "$DEPLOYMENT_ID" ] && [ "$DEPLOYMENT_ID" != "null" ]; then
+              STATUS=$(gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses --jq '.[0].state' 2>/dev/null)
+              if [ "$STATUS" = "success" ]; then
+                echo "already_deployed=true" >> $GITHUB_OUTPUT
+                echo "Deployment already successful — skipping"
+                exit 0
+              fi
+            fi
           fi
+          echo "already_deployed=false" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.extract.outputs.tag }}
 
       - name: Setup SSH key
         if: steps.idempotency.outputs.already_deployed != 'true'
@@ -151,6 +159,6 @@ jobs:
         if: always() && steps.idempotency.outputs.already_deployed != 'true'
         run: |
           STATUS="${{ job.status }}"
-          START_TIME=${DEPLOY_START_TIME:-$SECONDS}
-          DURATION=$((SECONDS - START_TIME))
+          START_TIME=${DEPLOY_START_TIME:-$(date +%s)}
+          DURATION=$(( $(date +%s) - START_TIME ))
           echo "::notice title=Deploy Finished::deployment_id=${{ env.DEPLOYMENT_ID }} status=$STATUS duration_seconds=$DURATION"
