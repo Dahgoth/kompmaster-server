@@ -450,11 +450,21 @@ jobs. The release workflow (`.github/workflows/release.yml`) uses
 `googleapis/release-please-action@v5` with a config file
 (`.release-please-config.json`) for a **single root package** (`.`) producing a
 single root `CHANGELOG.md`. This matches the ADR 003 deployment model where
-backend and storefront always deploy from the same tag.
+backend and storefront always deploy from the same tag. Version sync is
+handled by the root `package.json` as the single source of truth, and the
+release workflow runs `pnpm run version:sync` after a release is created to
+propagate the version to `backend/package.json` and `frontend/package.json`.
+The release uses `include-component-in-tag: false` to produce clean `v*.*.*`
+tags that match the deploy workflow trigger.
 
-Run `pnpm test` and `pnpm run lint` locally before pushing; the Husky
-`pre-push` hook runs only the suites whose area changed plus the docs-in-sync
-and version checks.
+**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on both
+`v*.*.*` and `kompmaster-v*.*.*` tags for backward compatibility. New releases
+will use clean `v*.*.*` tags since `include-component-in-tag: false` is set
+in the release-please config.
+
+**Pre-commit hook** runs `pnpm run format:check` (Prettier) to prevent
+formatting errors from being committed. The `pre-push` hook runs the full
+suite of checks including docs-in-sync and version alignment.
 
 ## Branch Protection
 

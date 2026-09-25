@@ -38,6 +38,12 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      - name: Sync versions
+        if: steps.release.outputs.release_created == 'true'
+        run: pnpm run version:sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 # Single-package release: only root package (.) with single root CHANGELOG.md
 # When Release PR is merged (merge commit), it creates GitHub Release + tag + version bump in manifest.
 # The tag push triggers deploy.yml naturally via its `on: push: tags` trigger.
