@@ -64,7 +64,6 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24
@@ -78,24 +77,30 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect backend changes
         id: changes
-        with:
-          filters: |
-            backend:
-              - 'backend/**'
-              - 'scripts/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'docker-compose.yml'
-              - 'Caddyfile'
-              - 'eslint.config.js'
-              - '.prettierrc.json'
-              - '.prettierignore'
-              - '.editorconfig'
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
-        if: steps.changes.outputs.backend == 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+            if [ -z "$base" ]; then
+              git fetch --no-tags origin main
+              base=$(git merge-base HEAD origin/main)
+            fi
+          fi
+          echo "base: $base"
+          # Check if any backend-relevant files changed
+          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD \
+            | grep -E '^(backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|Caddyfile$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)' || true)
+          if [ -n "$files" ]; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "Backend changes detected:"
+            echo "$files"
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+            echo "No backend changes"
+          fi
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.changes.outputs.backend == 'true'
         with:
@@ -140,20 +145,30 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect frontend changes
         id: changes
-        with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-              - '!frontend/terraform/**'
-              - 'DESIGN.md'
-              - 'eslint.config.js'
-              - '.prettierrc.json'
-              - '.prettierignore'
-              - '.editorconfig'
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
-        if: steps.changes.outputs.frontend == 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+            if [ -z "$base" ]; then
+              git fetch --no-tags origin main
+              base=$(git merge-base HEAD origin/main)
+            fi
+          fi
+          echo "base: $base"
+          # Check if any frontend-relevant files changed
+          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD \
+            | grep -E '^(frontend/(?!terraform/).+|DESIGN\.md$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)' || true)
+          if [ -n "$files" ]; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "Frontend changes detected:"
+            echo "$files"
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+            echo "No frontend changes"
+          fi
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.changes.outputs.frontend == 'true'
         with:
@@ -209,25 +224,30 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect e2e changes
         id: changes
-        with:
-          filters: |
-            e2e:
-              - 'frontend/**'
-              - '!frontend/terraform/**'
-              - 'backend/**'
-              - 'scripts/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'docker-compose.yml'
-              - 'eslint.config.js'
-              - '.prettierrc.json'
-              - '.prettierignore'
-              - '.editorconfig'
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
-        if: steps.changes.outputs.e2e == 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+            if [ -z "$base" ]; then
+              git fetch --no-tags origin main
+              base=$(git merge-base HEAD origin/main)
+            fi
+          fi
+          echo "base: $base"
+          # Check if any e2e-relevant files changed
+          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD \
+            | grep -E '^(frontend/(?!terraform/).+|backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)' || true)
+          if [ -n "$files" ]; then
+            echo "e2e=true" >> $GITHUB_OUTPUT
+            echo "E2E changes detected:"
+            echo "$files"
+          else
+            echo "e2e=false" >> $GITHUB_OUTPUT
+            echo "No E2E changes"
+          fi
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.changes.outputs.e2e == 'true'
         with:
@@ -286,12 +306,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect compose changes
         id: changes
-        with:
-          filters: |
-            compose:
-              - 'docker-compose.yml'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+            if [ -z "$base" ]; then
+              git fetch --no-tags origin main
+              base=$(git merge-base HEAD origin/main)
+            fi
+          fi
+          echo "base: $base"
+          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD \
+            | grep -E '^docker-compose\.yml$' || true)
+          if [ -n "$files" ]; then
+            echo "compose=true" >> $GITHUB_OUTPUT
+            echo "Compose changes detected"
+          else
+            echo "compose=false" >> $GITHUB_OUTPUT
+            echo "No compose changes"
+          fi
       - name: Validate compose config
         if: steps.changes.outputs.compose == 'true'
         run: docker compose config -q
@@ -305,13 +341,28 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect terraform changes
         id: changes
-        with:
-          filters: |
-            terraform:
-              - 'terraform/**'
-              - 'frontend/terraform/**'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+            if [ -z "$base" ]; then
+              git fetch --no-tags origin main
+              base=$(git merge-base HEAD origin/main)
+            fi
+          fi
+          echo "base: $base"
+          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD \
+            | grep -E '^(terraform/|frontend/terraform/)' || true)
+          if [ -n "$files" ]; then
+            echo "terraform=true" >> $GITHUB_OUTPUT
+            echo "Terraform changes detected"
+          else
+            echo "terraform=false" >> $GITHUB_OUTPUT
+            echo "No terraform changes"
+          fi
       # Pinned CLI (repo pins node/pnpm the same way); required_version is >= 1.5.
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
         if: steps.changes.outputs.terraform == 'true'
