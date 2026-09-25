@@ -64,11 +64,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24
-          cache: pnpm
+      - name: Enable pnpm via corepack
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm run lint:commit
 
@@ -78,29 +78,19 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect backend changes
+        uses: ./.github/actions/detect-changes
         id: changes
         with:
-          filters: |
-            backend:
-              - 'backend/**'
-              - 'scripts/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'docker-compose.yml'
-              - 'Caddyfile'
-              - 'eslint.config.js'
-              - '.prettierrc.json'
-              - '.prettierignore'
-              - '.editorconfig'
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
-        if: steps.changes.outputs.backend == 'true'
+          pattern: '^(backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|Caddyfile$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
+          output-name: backend
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.changes.outputs.backend == 'true'
         with:
           node-version: 24
-          cache: pnpm
+      - name: Enable pnpm via corepack
+        if: steps.changes.outputs.backend == 'true'
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.changes.outputs.backend == 'true'
       - name: Lint backend
@@ -124,8 +114,8 @@ jobs:
           # package is CommonJS and a few pre-existing legacy files use ESM
           # syntax (ADR 001 legacy quarantine), which `node --check` rejects
           # even though this change did not touch their content.
-          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD \
-            | grep -E '^backend/(src|tests|scripts)/.*\.js$' || true)
+          files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>/dev/null |
+            grep -E '^backend/(src|tests|scripts)/.*\.js$')
           if [ -n "$files" ]; then
             for f in $files; do node --check "$f"; done
           else
@@ -140,25 +130,21 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect frontend changes
+        uses: ./.github/actions/detect-changes
         id: changes
         with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-              - '!frontend/terraform/**'
-              - 'DESIGN.md'
-              - 'eslint.config.js'
-              - '.prettierrc.json'
-              - '.prettierignore'
-              - '.editorconfig'
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
-        if: steps.changes.outputs.frontend == 'true'
+          # POSIX ERE: match frontend/ files plus DESIGN.md and config files
+          pattern: '^(frontend/([^/]+/)*[^/]+|DESIGN\.md$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
+          exclude-pattern: '^frontend/terraform/'
+          output-name: frontend
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.changes.outputs.frontend == 'true'
         with:
           node-version: 24
-          cache: pnpm
+      - name: Enable pnpm via corepack
+        if: steps.changes.outputs.frontend == 'true'
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.changes.outputs.frontend == 'true'
       - name: Lint frontend
@@ -209,30 +195,21 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect e2e changes
+        uses: ./.github/actions/detect-changes
         id: changes
         with:
-          filters: |
-            e2e:
-              - 'frontend/**'
-              - '!frontend/terraform/**'
-              - 'backend/**'
-              - 'scripts/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'docker-compose.yml'
-              - 'eslint.config.js'
-              - '.prettierrc.json'
-              - '.prettierignore'
-              - '.editorconfig'
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
-        if: steps.changes.outputs.e2e == 'true'
+          # POSIX ERE: frontend/ (excl terraform), backend/, scripts/, config files
+          pattern: '^(frontend/([^/]+/)*[^/]+|backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
+          exclude-pattern: '^frontend/terraform/'
+          output-name: e2e
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: steps.changes.outputs.e2e == 'true'
         with:
           node-version: 24
-          cache: pnpm
+      - name: Enable pnpm via corepack
+        if: steps.changes.outputs.e2e == 'true'
+        run: corepack enable pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.changes.outputs.e2e == 'true'
       - name: Install Playwright browsers
@@ -286,12 +263,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+        with:
+          fetch-depth: 0
+      - name: Detect compose changes
+        uses: ./.github/actions/detect-changes
         id: changes
         with:
-          filters: |
-            compose:
-              - 'docker-compose.yml'
+          pattern: '^docker-compose\.yml$'
+          output-name: compose
       - name: Validate compose config
         if: steps.changes.outputs.compose == 'true'
         run: docker compose config -q
@@ -305,13 +284,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad
+      - name: Detect terraform changes
+        uses: ./.github/actions/detect-changes
         id: changes
         with:
-          filters: |
-            terraform:
-              - 'terraform/**'
-              - 'frontend/terraform/**'
+          pattern: '^(terraform/|frontend/terraform/)'
+          output-name: terraform
       # Pinned CLI (repo pins node/pnpm the same way); required_version is >= 1.5.
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
         if: steps.changes.outputs.terraform == 'true'

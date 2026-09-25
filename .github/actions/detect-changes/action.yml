@@ -1,0 +1,50 @@
+name: "Detect Changes"
+description: "Detect changed files matching a pattern since the merge-base with main"
+inputs:
+  pattern:
+    description: "ERE regex pattern to match changed files (e.g., '^backend/|^scripts/')"
+    required: true
+  exclude-pattern:
+    description: "Optional ERE regex pattern to exclude matched files (e.g., '^frontend/terraform/')"
+    required: false
+    default: ""
+  output-name:
+    description: "Name of the output variable (e.g., 'backend', 'frontend')"
+    required: false
+    default: "changes"
+runs:
+  using: "composite"
+  steps:
+    - name: Detect changes
+      id: detect
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          base="${{ github.event.pull_request.base.sha }}"
+        else
+          base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+          if [ -z "$base" ]; then
+            git fetch --no-tags origin main
+            base=$(git merge-base HEAD origin/main)
+          fi
+        fi
+        echo "base: $base"
+        # Use git diff; let errors surface so failures don't silently become "no changes"
+        files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD |
+          grep -E '${{ inputs.pattern }}'; grep_exit=$?)
+        if [ $grep_exit -eq 2 ]; then
+          echo "::error::grep failed with invalid pattern or error" >&2
+          exit 1
+        fi
+        # grep_exit 0 = matches found, 1 = no matches (normal), both OK
+        if [ -n "${{ inputs.exclude-pattern }}" ] && [ -n "$files" ]; then
+          files=$(echo "$files" | grep -v -E '${{ inputs.exclude-pattern }}')
+        fi
+        if [ -n "$files" ]; then
+          echo "${{ inputs.output-name }}=true" >> $GITHUB_OUTPUT
+          echo "${{ inputs.output-name }} changes detected:"
+          echo "$files"
+        else
+          echo "${{ inputs.output-name }}=false" >> $GITHUB_OUTPUT
+          echo "No ${{ inputs.output-name }} changes"
+        fi
