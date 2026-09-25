@@ -19,18 +19,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
           cache: 'pnpm'
 
-      - name: Enable pnpm
-        run: corepack enable pnpm
-
       - name: Release Please
         id: release
-        uses: googleapis/release-please-action@v5
+        uses: googleapis/release-please-action@0dfd8538845b8e92600d271a895a5372865d4062
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
