@@ -27,6 +27,10 @@ surface, and setup.
 - `CHANGELOG.md` — Keep a Changelog.
 - `README.md` — index of all of the above plus the API surface.
 
+## Worktree & Branch Protection
+
+**Do not delete branches or worktrees that contain unmerged work or active CI context.** Routine cleanup of merged branches (via GitHub UI or `git branch -d`) and stale worktrees is encouraged. This rule protects against accidental destruction of active work, review history, and CI context.
+
 ## Ground rules
 
 1. **Never commit directly to `main`.** All changes go through a branch and a
@@ -220,6 +224,8 @@ This is a single pnpm workspace: one root `pnpm-lock.yaml` installs both apps.
 pnpm is pinned through `packageManager` in the root `package.json` and run via
 Corepack (`corepack enable pnpm`). Target a single app with
 `pnpm --filter <name> <script>` (e.g. `pnpm --filter kompmaster-server test`).
+
+**Run commands from the workspace root unless a subdirectory is explicitly required.**
 
 - `pnpm install` — install dependencies for both apps and set up Husky hooks
   (via `prepare`).

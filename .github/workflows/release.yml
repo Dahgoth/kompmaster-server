@@ -27,23 +27,10 @@ jobs:
           release-type: node
           package-name: kompmaster
           manifest-file: .release-please-manifest.json
-          changelog-types: |
-            [
-              {"type": "feat", "section": "Features", "hidden": false},
-              {"type": "fix", "section": "Bug Fixes", "hidden": false},
-              {"type": "docs", "section": "Documentation", "hidden": false},
-              {"type": "refactor", "section": "Refactors", "hidden": false},
-              {"type": "perf", "section": "Performance", "hidden": false},
-              {"type": "test", "section": "Tests", "hidden": false},
-              {"type": "build", "section": "Build System", "hidden": false},
-              {"type": "ci", "section": "CI", "hidden": false},
-              {"type": "chore", "section": "Chores", "hidden": true},
-              {"type": "revert", "section": "Reverts", "hidden": false}
-            ]
+          changelog-types: ${{ file('.github/release-changelog-types.json') }}
           # release-please with monorepo manifest manages version for all three packages:
           # root (kompmaster), backend (kompmaster-server), frontend (kompmaster-frontend)
           # When Release PR is merged (squash-merge), it creates GitHub Release + tag + version bumps in manifest.
-          # REQUIRES: Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests" = ENABLED
 
 # The Release PR contains version bumps for all packages in the manifest.
 # When merged (squash-merge), it creates the GitHub Release + tag.
