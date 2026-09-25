@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Non-UUID route parameters no longer crash the API with `22P02 invalid input
+- **PR #56**: GitHub Actions CI failures after PR #55 merge:
+  - Pinned all 10 GitHub Actions to full commit SHAs (org policy requirement)
+  - Inlined `changelog-types` array in `release.yml` — the `${{ file() }}` expression is not valid in GitHub Actions and caused "Invalid workflow file" error
+- **PR #55**: Reverted repository to PR #36 baseline (commit 8b0f6c2) while preserving lessons learned from PRs #37–#51:
+  - Removed `--skip-build` from VPS deploy (PR #47 fix retained)
+  - Removed unnecessary `Setup Node` step from `release-please` workflow (PR #51 fix retained)
+  - Fixed `release-changelog-types.json` format for `file()` function compatibility (PR #48 fix retained)
+  - Deleted obsolete `release.yml.disabled` file (added in PR #50)
+
+### Added
+- **AGENTS.md**: Worktree & Branch Protection rule — do not delete branches/worktrees containing unmerged work or active CI context; routine cleanup of merged branches permitted
+- **AGENTS.md**: Command execution guidance — run commands from workspace root unless subdirectory explicitly required
   syntax for type uuid`. The 2026-09-22 `reviews/product/:id` fix is now closed
   class-wide: one shared `backend/src/utils/uuid.js#isUuid` guard replaces the
   duplicated per-file regexes and covers every uuid-column lookup —
