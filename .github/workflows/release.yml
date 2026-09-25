@@ -38,18 +38,6 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Sync versions
-        if: steps.release.outputs.release_created == 'true'
-        run: |
-          pnpm install --frozen-lockfile --ignore-scripts
-          pnpm run version:sync
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-# release-please with monorepo manifest manages version for all three packages:
-# root (kompmaster), backend (kompmaster-server), frontend (kompmaster-frontend)
-# When Release PR is merged (merge commit), it creates GitHub Release + tag + version bumps in manifest.
-#
-# The Release PR contains version bumps for all packages in the manifest.
-# When merged (merge commit), it creates the GitHub Release + tag.
+# Single-package release: only root package (.) with single root CHANGELOG.md
+# When Release PR is merged (merge commit), it creates GitHub Release + tag + version bump in manifest.
 # The tag push triggers deploy.yml naturally via its `on: push: tags` trigger.

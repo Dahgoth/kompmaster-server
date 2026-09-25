@@ -164,8 +164,9 @@ commit SHAs.
 manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
 version but doesn't run project-specific hooks. The release workflow
 (`.github/workflows/release.yml`) uses `googleapis/release-please-action@v5`
-with a config file (`.release-please-config.json`) and runs `pnpm run version:sync`
-when a release is created so the release PR has synced versions across all packages.
+with a config file (`.release-please-config.json`) for a **single root package**
+producing a **single root `CHANGELOG.md`** (no per-package changelogs), matching
+the ADR 003 deployment model where backend and storefront deploy together.
 
 Run locally before pushing:
 ```bash
