@@ -19,14 +19,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Enable pnpm via corepack
+        run: corepack enable pnpm
+
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
           cache: 'pnpm'
-
-      - name: Enable pnpm via corepack
-        run: corepack enable pnpm
 
       - name: Release Please
         id: release
