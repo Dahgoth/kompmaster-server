@@ -29,8 +29,8 @@ runs:
           fi
         fi
         echo "base: $base"
-        # Use git diff with error handling (don't suppress git errors)
-        files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>/dev/null |
+        # Use git diff; let errors surface so failures don't silently become "no changes"
+        files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD |
           grep -E '${{ inputs.pattern }}' || true)
         if [ -n "${{ inputs.exclude-pattern }}" ] && [ -n "$files" ]; then
           files=$(echo "$files" | grep -v -E '${{ inputs.exclude-pattern }}')
