@@ -54,13 +54,20 @@ jobs:
         id: idempotency
         run: |
           # Check for successful deployment instead of just release existence
+          # Resolve tag to commit SHA for consistent deployment lookup across all triggers
+          TAG_COMMIT=$(gh api repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }} --jq '.object.sha' 2>/dev/null)
+          if [ -z "$TAG_COMMIT" ] || [ "$TAG_COMMIT" = "null" ]; then
+            echo "already_deployed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           # Query GitHub Deployments API for successful deployment in production-vps
-          DEPLOYMENTS=$(gh api repos/${{ github.repository }}/deployments --jq '.[] | select(.environment=="production-vps" and .ref=="${{ github.sha }}")' 2>/dev/null)
+          DEPLOYMENTS=$(gh api repos/${{ github.repository }}/deployments --jq '.[] | select(.environment=="production-vps" and .ref=="'"$TAG_COMMIT"'")' 2>/dev/null)
           if [ -n "$DEPLOYMENTS" ]; then
-            # Get the latest deployment status
+            # Get the latest deployment ID (most recent first)
             DEPLOYMENT_ID=$(echo "$DEPLOYMENTS" | jq -r '.id' | head -1)
             if [ -n "$DEPLOYMENT_ID" ] && [ "$DEPLOYMENT_ID" != "null" ]; then
-              STATUS=$(gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses --jq '.[0].state' 2>/dev/null)
+              # Get latest status (sort by created_at, take last)
+              STATUS=$(gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses --jq 'sort_by(.created_at) | last | .state' 2>/dev/null)
               if [ "$STATUS" = "success" ]; then
                 echo "already_deployed=true" >> $GITHUB_OUTPUT
                 echo "Deployment already successful — skipping"
@@ -91,7 +98,12 @@ jobs:
           # the active color is blue → deploy to green.
           # Empty RESULT from grep (first deploy) is OK — treated as blue.
           COLOR="blue"
-          RESULT=$(ssh "root@${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" || RESULT="")
+          # Use explicit error sentinel to distinguish SSH failure from empty result
+          RESULT=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "root@${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" 2>/dev/null || RESULT="__ERROR__")
+          if [ "$RESULT" = "__ERROR__" ]; then
+            echo "::error::Failed to query active color via SSH"
+            exit 1
+          fi
           if [ "$RESULT" = "green" ]; then
             COLOR="blue"
           elif [ "$RESULT" = "blue" ] || [ -z "$RESULT" ]; then

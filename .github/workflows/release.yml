@@ -50,7 +50,7 @@ jobs:
           git add backend/package.json frontend/package.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
-            git push origin HEAD:main || { echo "::error::Failed to push version sync commit"; exit 1; }
+            git push origin HEAD:main 2>&1 | tee /tmp/push.log || { echo "::error::Failed to push version sync commit: $(cat /tmp/push.log)"; exit 1; }
           else
             echo "No version changes to commit"
           fi

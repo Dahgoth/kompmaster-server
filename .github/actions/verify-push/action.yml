@@ -31,11 +31,17 @@ runs:
         echo "Verifying push to origin/$BRANCH (max $MAX_RETRIES retries, base interval ${BASE_INTERVAL}s)"
 
         for i in $(seq 1 $MAX_RETRIES); do
-          # Suppress stderr to handle branch-not-found (exit code 2) gracefully
-          if git ls-remote --exit-code origin $BRANCH 2>/dev/null | grep -q "$(git rev-parse HEAD)"; then
+          # Check exit code explicitly: 0=found, 2=branch not found, other=error
+          LS_REMOTE_OUT=$(git ls-remote --exit-code origin $BRANCH 2>&1)
+          LS_REMOTE_EXIT=$?
+          if [ $LS_REMOTE_EXIT -eq 0 ] && echo "$LS_REMOTE_OUT" | grep -q "$(git rev-parse HEAD)"; then
             echo "Push verified on attempt $i"
             echo "success=true" >> $GITHUB_OUTPUT
             exit 0
+          elif [ $LS_REMOTE_EXIT -eq 2 ]; then
+            echo "Branch $BRANCH not found on origin (attempt $i), retrying..."
+          else
+            echo "::warning::git ls-remote failed (exit $LS_REMOTE_EXIT): $LS_REMOTE_OUT"
           fi
           SLEEP=$((BASE_INTERVAL * i))
           echo "Attempt $i/$MAX_RETRIES: commit not yet visible, waiting ${SLEEP}s..."
@@ -43,7 +49,9 @@ runs:
         done
 
         # Final check
-        if git ls-remote --exit-code origin $BRANCH 2>/dev/null | grep -q "$(git rev-parse HEAD)"; then
+        LS_REMOTE_OUT=$(git ls-remote --exit-code origin $BRANCH 2>&1)
+        LS_REMOTE_EXIT=$?
+        if [ $LS_REMOTE_EXIT -eq 0 ] && echo "$LS_REMOTE_OUT" | grep -q "$(git rev-parse HEAD)"; then
           echo "Push verified on final check"
           echo "success=true" >> $GITHUB_OUTPUT
           exit 0
