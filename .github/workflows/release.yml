@@ -14,7 +14,7 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -57,6 +57,11 @@ jobs:
               fi
               sleep 2
             done
+            # Fail if commit never became visible
+            if ! git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then
+              echo "::error::Version sync commit not visible on origin/main after 20s"
+              exit 1
+            fi
           else
             echo "No version changes to commit"
           fi

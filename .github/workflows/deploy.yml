@@ -44,13 +44,11 @@ jobs:
           # For release event: github.event.release.tag_name
           # For workflow_call: inputs.tag
           # For workflow_dispatch: inputs.tag
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG="${{ github.event.release.tag_name }}"
-          elif [ "${{ github.event_name }}" = "workflow_call" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${{ github.ref_name }}"
-          fi
+          case "${{ github.event_name }}" in
+            release) TAG="${{ github.event.release.tag_name }}" ;;
+            workflow_call|workflow_dispatch) TAG="${{ inputs.tag }}" ;;
+            *) TAG="${{ github.ref_name }}" ;;
+          esac
           if [ -z "$TAG" ]; then
             echo "::error::Tag is required" >&2
             exit 1
