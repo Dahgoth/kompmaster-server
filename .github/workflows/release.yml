@@ -64,9 +64,9 @@ jobs:
           max-retries: '10'
           base-interval: '2'
 
-      - name: Trigger deploy workflow
+      - name: Trigger deploy workflow (workflow_call)
         if: steps.release.outputs.release_created == 'true'
-        run: |
-          gh workflow run deploy.yml --ref main -f tag="${{ steps.release.outputs.tag_name }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ./.github/workflows/deploy.yml
+        with:
+          tag: ${{ steps.release.outputs.tag_name }}
+        secrets: inherit
