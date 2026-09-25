@@ -31,9 +31,9 @@ runs:
         echo "base: $base"
         # Use git diff with error handling (don't suppress git errors)
         files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>/dev/null |
-          grep -E '${{ inputs.pattern }}')
+          grep -E '${{ inputs.pattern }}' || true)
         if [ -n "${{ inputs.exclude-pattern }}" ] && [ -n "$files" ]; then
-          files=$(echo "$files" | grep -v -E '${{ inputs.exclude-pattern }}' || true)
+          files=$(echo "$files" | grep -v -E '${{ inputs.exclude-pattern }}')
         fi
         if [ -n "$files" ]; then
           echo "${{ inputs.output-name }}=true" >> $GITHUB_OUTPUT
