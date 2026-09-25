@@ -1,6 +1,6 @@
 {
   "name": "kompmaster-frontend",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "KompMaster storefront — self-hosted Next.js SSR/ISR storefront (ADR 006/007)",
   "private": true,
   "type": "module",
