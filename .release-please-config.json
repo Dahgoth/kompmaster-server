@@ -1,4 +1,5 @@
 {
+  "_comment": "changelog-types intentionally duplicated per package; JSON doesn't support inheritance. Keep in sync across all three packages.",
   "versioning-strategy": "default",
   "release-type": "node",
   "include-component-in-tag": true,
