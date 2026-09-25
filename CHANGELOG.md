@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://github.com/Dahgoth/kompmaster-server/compare/v2.0.1...v2.1.0) (2026-09-25)
+
+
+### Features
+
+* **release:** re-enable release-please workflow ([#50](https://github.com/Dahgoth/kompmaster-server/issues/50)) ([fb01907](https://github.com/Dahgoth/kompmaster-server/commit/fb01907cfb7b8ac468cb3e6ca2ca048cfdb116b5))
+
+
+### Bug Fixes
+
+* **ci:** pin all actions to full commit SHAs; inline changelog-types in release.yml ([c3ae254](https://github.com/Dahgoth/kompmaster-server/commit/c3ae2542667b04db1c077dcf60d4610a19cfcdde))
+* **deploy:** remove --skip-build (keep PR [#47](https://github.com/Dahgoth/kompmaster-server/issues/47) fix for VPS build) ([603544d](https://github.com/Dahgoth/kompmaster-server/commit/603544d96be118bbe36103658900a3e00313ef5d))
+* **deploy:** restore ternary tag logic for push+workflow_call triggers; refine Worktree & Branch Protection rule ([a0a922b](https://github.com/Dahgoth/kompmaster-server/commit/a0a922b44395b7115cae95c6ba4b903ee1d92dce))
+* **release:** fix changelog-types.json format for file() function (lesson from PR [#48](https://github.com/Dahgoth/kompmaster-server/issues/48)) ([76df8d5](https://github.com/Dahgoth/kompmaster-server/commit/76df8d5f39c24cb4163144c847970be2eb77e063))
+* **release:** remove unnecessary Setup Node (lesson learned from PR [#51](https://github.com/Dahgoth/kompmaster-server/issues/51)) ([e06b7cd](https://github.com/Dahgoth/kompmaster-server/commit/e06b7cd8a645f4ce9105d04ba0968fa82639ac03))
+
+
+### Reverts
+
+* **ci:** restore PR [#36](https://github.com/Dahgoth/kompmaster-server/issues/36) workflow state + add Worktree & Branch Protection rule ([b710079](https://github.com/Dahgoth/kompmaster-server/commit/b710079583d26fb8747f1b1e4b8df21f8e43d2f6))
+
 ## [Unreleased]
 
 ### Fixed
