@@ -1,6 +1,6 @@
 {
   "name": "kompmaster-server",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "private": true,
   "description": "Backend API for KompMaster store (products, orders, users, reviews, price import/export, notifications)",
   "main": "src/index.js",

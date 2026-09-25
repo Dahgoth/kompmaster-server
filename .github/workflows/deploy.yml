@@ -5,6 +5,12 @@ on:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g., v2.0.0)'
+        required: true
+        type: string
   workflow_call:
     inputs:
       tag:
@@ -22,7 +28,7 @@ jobs:
     # Custom GitHub Environment for VPS production deploy (not Vercel's "Production")
     # Create in GitHub Settings → Environments → production-vps
     # Add secrets: STOREFRONT_SSH_KEY, STOREFRONT_SSH_HOST, STOREFRONT_ROOT
-    # Protection rules: required reviewers (1), wait timer (5 min)
+    # Protection rules: required reviewers (1), wait timer: 0 (removed - health gates handle safety)
     environment: production-vps
     runs-on: self-hosted
     timeout-minutes: 30
@@ -32,30 +38,46 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify tag format
+      - name: Extract and validate tag
+        uses: ./.github/actions/extract-tag
+        id: extract
+        with:
+          tag: ${{ inputs.tag }}
+
+      - name: Generate correlation ID
         run: |
-          # For tag push: github.ref_name (e.g., "v2.0.0")
-          # For release event: github.event.release.tag_name
-          # For workflow_call: inputs.tag
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG="${{ github.event.release.tag_name }}"
-          elif [ "${{ github.event_name }}" = "workflow_call" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${{ github.ref_name }}"
+          echo "DEPLOYMENT_ID=$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:8}" >> $GITHUB_ENV
+          echo "DEPLOY_START_TIME=$(date +%s)" >> $GITHUB_ENV
+          echo "::notice title=Deploy Started::deployment_id=${{ env.DEPLOYMENT_ID }} tag=${{ steps.extract.outputs.tag }} runner=${{ runner.name }}"
+
+      - name: Check if already deployed (idempotency guard)
+        id: idempotency
+        run: |
+          # Check for successful deployment instead of just release existence
+          # Resolve tag to commit SHA for consistent deployment lookup across all triggers
+          TAG_COMMIT=$(gh api repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }} --jq '.object.sha' 2>&1) || { echo "::error::Failed to resolve tag commit SHA"; exit 1; }
+          # Query GitHub Deployments API for successful deployment in production-vps
+          DEPLOYMENTS=$(gh api repos/${{ github.repository }}/deployments --jq '.[] | select(.environment=="production-vps" and .ref=="'"$TAG_COMMIT"'")' 2>/dev/null)
+          if [ -n "$DEPLOYMENTS" ]; then
+            # Get the latest deployment ID (most recent first)
+            DEPLOYMENT_ID=$(echo "$DEPLOYMENTS" | jq -r '.id' | head -1)
+            if [ -n "$DEPLOYMENT_ID" ] && [ "$DEPLOYMENT_ID" != "null" ]; then
+              # Get latest status (sort by created_at, take last)
+              STATUS=$(gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses --jq 'sort_by(.created_at) | last | .state' 2>/dev/null)
+              if [ "$STATUS" = "success" ]; then
+                echo "already_deployed=true" >> $GITHUB_OUTPUT
+                echo "Deployment already successful — skipping"
+                exit 0
+              fi
+            fi
           fi
-          if [ -z "$TAG" ]; then
-            echo "::error::Tag is required" >&2
-            exit 1
-          fi
-          if ! [[ "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
-            echo "::error::Tag $TAG does not match semantic version format vX.Y.Z" >&2
-            exit 1
-          fi
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "Deploying version: $TAG"
+          echo "already_deployed=false" >> $GITHUB_OUTPUT
+          echo "TAG_COMMIT=$TAG_COMMIT" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup SSH key
+        if: steps.idempotency.outputs.already_deployed != 'true'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.STOREFRONT_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -63,6 +85,7 @@ jobs:
           ssh-keyscan -H "${{ secrets.STOREFRONT_SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Detect inactive color
+        if: steps.idempotency.outputs.already_deployed != 'true'
         id: color
         run: |
           # Query the intended active color from /etc/default/caddy on the VPS
@@ -72,7 +95,12 @@ jobs:
           # the active color is blue → deploy to green.
           # Empty RESULT from grep (first deploy) is OK — treated as blue.
           COLOR="blue"
-          RESULT=$(ssh "root@${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" || RESULT="")
+          # Use explicit error sentinel to distinguish SSH failure from empty result
+          RESULT=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "root@${{ secrets.STOREFRONT_SSH_HOST }}" "grep '^STOREFRONT_ACTIVE_COLOR=' /etc/default/caddy 2>/dev/null | cut -d= -f2" 2>/dev/null || RESULT="__ERROR__")
+          if [ "$RESULT" = "__ERROR__" ]; then
+            echo "::error::Failed to query active color via SSH"
+            exit 1
+          fi
           if [ "$RESULT" = "green" ]; then
             COLOR="blue"
           elif [ "$RESULT" = "blue" ] || [ -z "$RESULT" ]; then
@@ -85,6 +113,7 @@ jobs:
           echo "Deploying to inactive color: $COLOR"
 
       - name: Deploy storefront to VPS
+        if: steps.idempotency.outputs.already_deployed != 'true'
         run: |
           STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
           STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
@@ -94,7 +123,7 @@ jobs:
           SITE_URL: https://www.compmasone.ru
 
       - name: Create GitHub Release
-        if: github.event_name != 'release'
+        if: github.event_name != 'release' && steps.idempotency.outputs.already_deployed != 'true'
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ env.TAG }}
@@ -105,31 +134,44 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Deployment (production)
+        if: steps.idempotency.outputs.already_deployed != 'true'
         uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production-vps
-          ref: ${{ github.sha }}
+          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
           auto-merge: false
 
       - name: Update Deployment Status (success)
-        if: success()
+        if: success() && steps.idempotency.outputs.already_deployed != 'true'
         uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production-vps
-          ref: ${{ github.sha }}
+          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
           status: success
           deployment-url: https://www.compmasone.ru
 
       - name: Update Deployment Status (failure)
-        if: failure()
+        if: failure() && steps.idempotency.outputs.already_deployed != 'true'
         uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production-vps
-          ref: ${{ github.sha }}
+          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
           status: failure
+
+      - name: Emit deployment metric
+        if: always() && steps.idempotency.outputs.already_deployed != 'true'
+        run: |
+          STATUS="${{ job.status }}"
+          START_TIME=${DEPLOY_START_TIME}
+          if [ -z "$START_TIME" ]; then
+            echo "::warning::DEPLOY_START_TIME not set, cannot calculate duration"
+            START_TIME=$(date +%s)
+          fi
+          DURATION=$(( $(date +%s) - START_TIME ))
+          echo "::notice title=Deploy Finished::deployment_id=${{ env.DEPLOYMENT_ID }} status=$STATUS duration_seconds=$DURATION"
