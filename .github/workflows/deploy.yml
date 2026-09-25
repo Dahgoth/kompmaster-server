@@ -3,6 +3,8 @@ name: Deploy Production
 on:
   push:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
+  release:
+    types: [published]
   workflow_call:
     inputs:
       tag:
@@ -33,8 +35,15 @@ jobs:
       - name: Verify tag format
         run: |
           # For tag push: github.ref_name (e.g., "v2.0.0")
+          # For release event: github.event.release.tag_name
           # For workflow_call: inputs.tag
-          TAG="${{ github.event_name == 'workflow_call' && inputs.tag || github.ref_name }}"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          elif [ "${{ github.event_name }}" = "workflow_call" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
           if [ -z "$TAG" ]; then
             echo "::error::Tag is required" >&2
             exit 1
