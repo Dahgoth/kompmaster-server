@@ -13,7 +13,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   deployments: write
   id-token: write
 
@@ -94,6 +94,7 @@ jobs:
           SITE_URL: https://www.compmasone.ru
 
       - name: Create GitHub Release
+        if: github.event_name != 'release'
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ env.TAG }}
