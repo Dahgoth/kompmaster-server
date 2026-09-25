@@ -28,7 +28,7 @@ jobs:
     # Custom GitHub Environment for VPS production deploy (not Vercel's "Production")
     # Create in GitHub Settings → Environments → production-vps
     # Add secrets: STOREFRONT_SSH_KEY, STOREFRONT_SSH_HOST, STOREFRONT_ROOT
-    # Protection rules: required reviewers (1), wait timer (5 min)
+    # Protection rules: required reviewers (1), wait timer: 0 (removed - health gates handle safety)
     environment: production-vps
     runs-on: self-hosted
     timeout-minutes: 30
@@ -38,29 +38,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify tag format
+      - name: Generate correlation ID
         run: |
-          # For tag push: github.ref_name (e.g., "v2.0.0")
-          # For release event: github.event.release.tag_name
-          # For workflow_call: inputs.tag
-          # For workflow_dispatch: inputs.tag
-          case "${{ github.event_name }}" in
-            release) TAG="${{ github.event.release.tag_name }}" ;;
-            workflow_call|workflow_dispatch) TAG="${{ inputs.tag }}" ;;
-            *) TAG="${{ github.ref_name }}" ;;
-          esac
-          if [ -z "$TAG" ]; then
-            echo "::error::Tag is required" >&2
-            exit 1
+          echo "DEPLOYMENT_ID=$(date -u +%Y%m%d-%H%M%S)-${{ github.sha::8 }}" >> $GITHUB_ENV
+          echo "::notice title=Deploy Started::deployment_id=${{ env.DEPLOYMENT_ID }} tag=${{ github.ref_name }} runner=${{ runner.name }}"
+
+      - name: Extract and validate tag
+        uses: ./.github/actions/extract-tag
+        id: extract
+        with:
+          tag: ${{ inputs.tag }}
+
+      - name: Check if already deployed (idempotency guard)
+        id: idempotency
+        run: |
+          # Check if release exists and is published on main branch
+          if gh release view "${{ env.TAG }}" --json isDraft,targetCommitish -q '.isDraft == false and .targetCommitish == "main"' >/dev/null 2>&1; then
+            echo "already_deployed=true" >> $GITHUB_OUTPUT
+            echo "Release ${{ env.TAG }} already deployed on main — skipping"
+          else
+            echo "already_deployed=false" >> $GITHUB_OUTPUT
           fi
-          if ! [[ "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
-            echo "::error::Tag $TAG does not match semantic version format vX.Y.Z" >&2
-            exit 1
-          fi
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "Deploying version: $TAG"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.extract.outputs.tag }}
 
       - name: Setup SSH key
+        if: steps.idempotency.outputs.already_deployed != 'true'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.STOREFRONT_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -68,6 +72,7 @@ jobs:
           ssh-keyscan -H "${{ secrets.STOREFRONT_SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Detect inactive color
+        if: steps.idempotency.outputs.already_deployed != 'true'
         id: color
         run: |
           # Query the intended active color from /etc/default/caddy on the VPS
@@ -90,6 +95,7 @@ jobs:
           echo "Deploying to inactive color: $COLOR"
 
       - name: Deploy storefront to VPS
+        if: steps.idempotency.outputs.already_deployed != 'true'
         run: |
           STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
           STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
@@ -99,7 +105,7 @@ jobs:
           SITE_URL: https://www.compmasone.ru
 
       - name: Create GitHub Release
-        if: github.event_name != 'release'
+        if: github.event_name != 'release' && steps.idempotency.outputs.already_deployed != 'true'
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ env.TAG }}
@@ -110,6 +116,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Deployment (production)
+        if: steps.idempotency.outputs.already_deployed != 'true'
         uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: start
@@ -119,7 +126,7 @@ jobs:
           auto-merge: false
 
       - name: Update Deployment Status (success)
-        if: success()
+        if: success() && steps.idempotency.outputs.already_deployed != 'true'
         uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: finish
@@ -130,7 +137,7 @@ jobs:
           deployment-url: https://www.compmasone.ru
 
       - name: Update Deployment Status (failure)
-        if: failure()
+        if: failure() && steps.idempotency.outputs.already_deployed != 'true'
         uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
         with:
           step: finish
@@ -138,3 +145,10 @@ jobs:
           env: production-vps
           ref: ${{ github.sha }}
           status: failure
+
+      - name: Emit deployment metric
+        if: always() && steps.idempotency.outputs.already_deployed != 'true'
+        run: |
+          STATUS="${{ job.status }}"
+          DURATION=$SECONDS
+          echo "::notice title=Deploy Finished::deployment_id=${{ env.DEPLOYMENT_ID }} status=$STATUS duration_seconds=$DURATION"

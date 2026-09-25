@@ -50,22 +50,23 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
             git push origin HEAD:main || { echo "::error::Failed to push version sync commit"; exit 1; }
-            # Verify push propagated before triggering deploy
-            for i in {1..10}; do
-              if git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then
-                break
-              fi
-              sleep 2
-            done
-            # Fail if commit never became visible
-            if ! git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then
-              echo "::error::Version sync commit not visible on origin/main after 20s"
-              exit 1
-            fi
           else
             echo "No version changes to commit"
           fi
-          TAG="${{ steps.release.outputs.tag_name }}"
-          gh workflow run deploy.yml --ref main -f tag="$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify push propagated
+        if: steps.release.outputs.release_created == 'true'
+        uses: ./.github/actions/verify-push
+        with:
+          branch: main
+          max-retries: '10'
+          base-interval: '2'
+
+      - name: Trigger deploy workflow
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          gh workflow run deploy.yml --ref main -f tag="${{ steps.release.outputs.tag_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

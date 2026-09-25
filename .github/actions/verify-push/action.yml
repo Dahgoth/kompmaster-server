@@ -1,0 +1,53 @@
+name: 'Verify Push Propagation'
+description: 'Verify git push has propagated to origin with exponential backoff'
+inputs:
+  branch:
+    description: 'Branch to verify'
+    required: false
+    default: 'main'
+  max-retries:
+    description: 'Maximum number of retries'
+    required: false
+    default: '10'
+  base-interval:
+    description: 'Base interval in seconds for exponential backoff'
+    required: false
+    default: '2'
+outputs:
+  success:
+    description: 'Whether verification succeeded'
+    value: ${{ steps.verify.outputs.success }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Verify push propagated
+      id: verify
+      shell: bash
+      run: |
+        MAX_RETRIES=${{ inputs.max-retries }}
+        BASE_INTERVAL=${{ inputs.base-interval }}
+        BRANCH=${{ inputs.branch }}
+
+        echo "Verifying push to origin/$BRANCH (max $MAX_RETRIES retries, base interval ${BASE_INTERVAL}s)"
+
+        for i in $(seq 1 $MAX_RETRIES); do
+          if git ls-remote --exit-code origin $BRANCH | grep -q "$(git rev-parse HEAD)"; then
+            echo "Push verified on attempt $i"
+            echo "success=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          SLEEP=$((BASE_INTERVAL ** i))
+          echo "Attempt $i/$MAX_RETRIES: commit not yet visible, waiting ${SLEEP}s..."
+          sleep $SLEEP
+        done
+
+        # Final check
+        if git ls-remote --exit-code origin $BRANCH | grep -q "$(git rev-parse HEAD)"; then
+          echo "Push verified on final check"
+          echo "success=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        echo "::error::Commit not visible on origin/$BRANCH after $MAX_RETRIES retries"
+        echo "success=false" >> $GITHUB_OUTPUT
+        exit 1

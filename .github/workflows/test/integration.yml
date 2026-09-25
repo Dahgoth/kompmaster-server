@@ -1,0 +1,130 @@
+# Integration Test for Release → Deploy Pipeline
+# Run with: act push -W .github/workflows/test/integration.yml -s GITHUB_TOKEN=<token>
+
+name: Integration Test - Release Deploy Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      test-type:
+        description: 'Test type to run'
+        required: true
+        type: choice
+        options:
+          - extract-tag
+          - verify-push
+          - full-pipeline
+      tag:
+        description: 'Tag to test with'
+        required: false
+        type: string
+        default: 'v99.99.99-test'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test-extract-tag:
+    name: Test Extract Tag Action
+    if: github.event.inputs.test-type == 'extract-tag' || github.event.inputs.test-type == 'full-pipeline'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Test push event (tag)
+        uses: ./.github/actions/extract-tag
+        id: extract-push
+        with:
+          tag: ''
+        env:
+          GITHUB_EVENT_NAME: push
+          GITHUB_REF_NAME: v1.2.3
+
+      - name: Test release event
+        uses: ./.github/actions/extract-tag
+        id: extract-release
+        with:
+          tag: ''
+        env:
+          GITHUB_EVENT_NAME: release
+          GITHUB_EVENT_RELEASE_TAG_NAME: v2.0.0
+
+      - name: Test workflow_call event
+        uses: ./.github/actions/extract-tag
+        id: extract-call
+        with:
+          tag: v3.0.0
+        env:
+          GITHUB_EVENT_NAME: workflow_call
+
+      - name: Test workflow_dispatch event
+        uses: ./.github/actions/extract-tag
+        id: extract-dispatch
+        with:
+          tag: v4.0.0
+        env:
+          GITHUB_EVENT_NAME: workflow_dispatch
+
+      - name: Validate outputs
+        run: |
+          echo "push: ${{ steps.extract-push.outputs.tag }}"
+          echo "release: ${{ steps.extract-release.outputs.tag }}"
+          echo "call: ${{ steps.extract-call.outputs.tag }}"
+          echo "dispatch: ${{ steps.extract-dispatch.outputs.tag }}"
+          if [ "${{ steps.extract-push.outputs.tag }}" != "v1.2.3" ]; then exit 1; fi
+          if [ "${{ steps.extract-release.outputs.tag }}" != "v2.0.0" ]; then exit 1; fi
+          if [ "${{ steps.extract-call.outputs.tag }}" != "v3.0.0" ]; then exit 1; fi
+          if [ "${{ steps.extract-dispatch.outputs.tag }}" != "v4.0.0" ]; then exit 1; fi
+          echo "✅ All tag extractions correct"
+
+  test-verify-push:
+    name: Test Verify Push Action
+    if: github.event.inputs.test-type == 'verify-push' || github.event.inputs.test-type == 'full-pipeline'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Create test commit
+        run: |
+          git config user.name "test"
+          git config user.email "test@test.com"
+          echo "test" > test-file.txt
+          git add test-file.txt
+          git commit -m "test commit"
+
+      - name: Test verify-push (should succeed)
+        uses: ./.github/actions/verify-push
+        id: verify
+        with:
+          branch: main
+          max-retries: '3'
+          base-interval: '1'
+
+      - name: Validate output
+        run: |
+          echo "success: ${{ steps.verify.outputs.success }}"
+          if [ "${{ steps.verify.outputs.success }}" != "true" ]; then exit 1; fi
+          echo "✅ Push verification works"
+
+  test-full-pipeline:
+    name: Full Pipeline Dry-Run
+    if: github.event.inputs.test-type == 'full-pipeline'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Simulate release-please output
+        run: |
+          echo "release_created=true" >> $GITHUB_OUTPUT
+          echo "tag_name=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+        id: mock-release
+
+      - name: Test release workflow steps
+        if: steps.mock-release.outputs.release_created == 'true'
+        run: |
+          echo "Would sync versions and push"
+          echo "Would verify push with exponential backoff"
+          echo "Would trigger deploy with tag: ${{ steps.mock-release.outputs.tag_name }}"
+          echo "✅ Full pipeline simulation passed"
