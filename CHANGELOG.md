@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1](https://github.com/Dahgoth/kompmaster-server/compare/v2.1.0...v2.1.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **ci:** add corepack enable pnpm to all jobs needing pnpm ([f5d9176](https://github.com/Dahgoth/kompmaster-server/commit/f5d91760dc035ae4756233635d15ca3b6fbc8fd0))
+* **ci:** add fetch-depth: 0 to compose job checkout ([02a7351](https://github.com/Dahgoth/kompmaster-server/commit/02a7351ef8351dad7d2ca14ddd61a9768fce9cf6))
+* **ci:** extract change detection to composite action; fix ERE regex patterns ([fa34132](https://github.com/Dahgoth/kompmaster-server/commit/fa34132225fc02579d674a3b24fb0c39010cbbd2))
+* **ci:** fix composite action error handling; add exclude-pattern for terraform ([089f14f](https://github.com/Dahgoth/kompmaster-server/commit/089f14f7bd03c60feef2dcb95485539a9cf18561))
+* **ci:** handle grep exit codes properly - fail on error (2), allow no-match (1) ([1212087](https://github.com/Dahgoth/kompmaster-server/commit/12120877f92bf45f1adf590391ae3ef5df1fdd38))
+* **ci:** handle no-match in detect-changes action ([a56f85d](https://github.com/Dahgoth/kompmaster-server/commit/a56f85d697d431b157fffbb355a1bc2a84db5f06))
+* **ci:** remove 2&gt;/dev/null from git diff to surface errors ([2261927](https://github.com/Dahgoth/kompmaster-server/commit/2261927eff82676ed82127ac12431e6ec303a050))
+* **ci:** remove cache: pnpm from setup-node; enable pnpm via corepack after setup-node ([ad43d6d](https://github.com/Dahgoth/kompmaster-server/commit/ad43d6dba5e90de4992764dd68a4f6150bc6bcfe))
+* **ci:** replace third-party actions with GitHub built-ins (pnpm cache + inline diff) ([8040b7a](https://github.com/Dahgoth/kompmaster-server/commit/8040b7ac0177caa52e5fa95ae2fd97aae01db9be))
+* **ci:** replace third-party actions with GitHub built-ins + fix action pinning ([#58](https://github.com/Dahgoth/kompmaster-server/issues/58)) ([e9769e3](https://github.com/Dahgoth/kompmaster-server/commit/e9769e390146f6eda41e18648050232cf74535fe))
+* **ci:** skip docs-sync, versions, commitlint on release-please PRs ([#61](https://github.com/Dahgoth/kompmaster-server/issues/61)) ([396a242](https://github.com/Dahgoth/kompmaster-server/commit/396a2422faa61ac1566d81bb64420f9f6ac3df48))
+* **ci:** skip docs-sync, versions, commitlint on release-please PRs (github.actor) ([362373e](https://github.com/Dahgoth/kompmaster-server/commit/362373e9233bf64a4a7c1181106a04e5eb6e7d45))
+* **ci:** skip release-please PRs in CI; add version:sync to release workflow ([c1e2b3d](https://github.com/Dahgoth/kompmaster-server/commit/c1e2b3de42b103453f65ed0cdabfc5af92474b6c))
+* **ci:** skip release-please PRs in CI; add version:sync to release workflow; update branch protection ([#60](https://github.com/Dahgoth/kompmaster-server/issues/60)) ([2c57658](https://github.com/Dahgoth/kompmaster-server/commit/2c57658e9b6d81c8c15a35a63545bfd2747d5c35))
+* **ci:** skip release-please PRs in docs-sync/versions/commitlint; update DEVELOPMENT.md ([dd24671](https://github.com/Dahgoth/kompmaster-server/commit/dd2467123ad9df91ea70a5a64e0713808568a8bc))
+* **release:** add setup-node+corepack; fix squash-merge comment; drop ruleset ID ([e9b37f7](https://github.com/Dahgoth/kompmaster-server/commit/e9b37f70c5c6d6de2d53849c946b0c052f8001f2))
+
 ## [2.1.0](https://github.com/Dahgoth/kompmaster-server/compare/v2.0.1...v2.1.0) (2026-09-25)
 
 

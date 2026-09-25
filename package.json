@@ -1,6 +1,6 @@
 {
   "name": "kompmaster",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "description": "KompMaster monorepo — backend API and self-hosted Next.js SSR/ISR storefront",
   "license": "MIT",
