@@ -1,0 +1,38 @@
+name: "Detect Changes"
+description: "Detect changed files matching a pattern since the merge-base with main"
+inputs:
+  pattern:
+    description: "ERE regex pattern to match changed files (e.g., '^backend/|^scripts/')"
+    required: true
+  output-name:
+    description: "Name of the output variable (e.g., 'backend', 'frontend')"
+    required: false
+    default: "changes"
+runs:
+  using: "composite"
+  steps:
+    - name: Detect changes
+      id: detect
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          base="${{ github.event.pull_request.base.sha }}"
+        else
+          base=$(git merge-base HEAD origin/main 2>/dev/null || echo "")
+          if [ -z "$base" ]; then
+            git fetch --no-tags origin main
+            base=$(git merge-base HEAD origin/main)
+          fi
+        fi
+        echo "base: $base"
+        # Use git diff with error handling (don't suppress git errors)
+        files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>&1 |
+          grep -E '${{ inputs.pattern }}' || true)
+        if [ -n "$files" ]; then
+          echo "${{ inputs.output-name }}=true" >> $GITHUB_OUTPUT
+          echo "${{ inputs.output-name }} changes detected:"
+          echo "$files"
+        else
+          echo "${{ inputs.output-name }}=false" >> $GITHUB_OUTPUT
+          echo "No ${{ inputs.output-name }} changes"
+        fi
