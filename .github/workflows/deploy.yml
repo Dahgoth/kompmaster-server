@@ -32,11 +32,9 @@ jobs:
 
       - name: Verify tag format
         run: |
-          # For tag push: github.ref_name (e.g., "v2.0.0")
-          # For workflow_call: inputs.tag
-          TAG="${{ github.event_name == 'workflow_call' && inputs.tag || github.ref_name }}"
+          TAG="${{ inputs.tag }}"
           if [ -z "$TAG" ]; then
-            echo "::error::Tag is required" >&2
+            echo "::error::Tag input is required for workflow_call trigger" >&2
             exit 1
           fi
           if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
@@ -79,7 +77,7 @@ jobs:
         run: |
           STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
           STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
-          ./backend/scripts/deploy-storefront.sh --color=${{ steps.color.outputs.color }} --promote
+          ./backend/scripts/deploy-storefront.sh --skip-build --color=${{ steps.color.outputs.color }} --promote
         env:
           API_BASE: https://api.compmasone.ru/api
           SITE_URL: https://www.compmasone.ru
