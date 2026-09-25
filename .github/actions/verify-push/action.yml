@@ -1,5 +1,5 @@
 name: 'Verify Push Propagation'
-description: 'Verify git push has propagated to origin with exponential backoff'
+description: 'Verify git push has propagated to origin with linear backoff'
 inputs:
   branch:
     description: 'Branch to verify'
@@ -10,7 +10,7 @@ inputs:
     required: false
     default: '10'
   base-interval:
-    description: 'Base interval in seconds for exponential backoff'
+    description: 'Base interval in seconds for linear backoff'
     required: false
     default: '2'
 outputs:
@@ -36,7 +36,7 @@ runs:
             echo "success=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          SLEEP=$((BASE_INTERVAL ** i))
+          SLEEP=$((BASE_INTERVAL * i))
           echo "Attempt $i/$MAX_RETRIES: commit not yet visible, waiting ${SLEEP}s..."
           sleep $SLEEP
         done

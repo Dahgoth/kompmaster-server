@@ -40,7 +40,8 @@ jobs:
 
       - name: Generate correlation ID
         run: |
-          echo "DEPLOYMENT_ID=$(date -u +%Y%m%d-%H%M%S)-${{ github.sha::8 }}" >> $GITHUB_ENV
+          echo "DEPLOYMENT_ID=$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:8}" >> $GITHUB_ENV
+          echo "DEPLOY_START_TIME=$SECONDS" >> $GITHUB_ENV
           echo "::notice title=Deploy Started::deployment_id=${{ env.DEPLOYMENT_ID }} tag=${{ github.ref_name }} runner=${{ runner.name }}"
 
       - name: Extract and validate tag
@@ -150,5 +151,6 @@ jobs:
         if: always() && steps.idempotency.outputs.already_deployed != 'true'
         run: |
           STATUS="${{ job.status }}"
-          DURATION=$SECONDS
+          START_TIME=${DEPLOY_START_TIME:-$SECONDS}
+          DURATION=$((SECONDS - START_TIME))
           echo "::notice title=Deploy Finished::deployment_id=${{ env.DEPLOYMENT_ID }} status=$STATUS duration_seconds=$DURATION"
