@@ -31,7 +31,12 @@ runs:
         echo "base: $base"
         # Use git diff; let errors surface so failures don't silently become "no changes"
         files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD |
-          grep -E '${{ inputs.pattern }}' || true)
+          grep -E '${{ inputs.pattern }}'; grep_exit=$?)
+        if [ $grep_exit -eq 2 ]; then
+          echo "::error::grep failed with invalid pattern or error" >&2
+          exit 1
+        fi
+        # grep_exit 0 = matches found, 1 = no matches (normal), both OK
         if [ -n "${{ inputs.exclude-pattern }}" ] && [ -n "$files" ]; then
           files=$(echo "$files" | grep -v -E '${{ inputs.exclude-pattern }}')
         fi
