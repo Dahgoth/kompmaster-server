@@ -426,9 +426,9 @@ changes:
 
 | Job        | Trigger (any file under)                                 | Steps                                    |
 | ---------- | -------------------------------------------------------- | ---------------------------------------- |
-| `docs-sync` | *always*                                                 | `node scripts/check-docs.js --base …`    |
-| `versions`  | *always*                                                 | `node scripts/check-versions.js`         |
-| `commitlint`| *PRs only*                                               | `pnpm run lint:commit`                   |
+| `docs-sync` | *always* (skipped on release-please PRs)                 | `node scripts/check-docs.js --base …`    |
+| `versions`  | *always* (skipped on release-please PRs)                 | `node scripts/check-versions.js`         |
+| `commitlint`| *PRs only* (skipped on release-please PRs)               | `pnpm run lint:commit`                   |
 | `backend`   | `backend/**`, `scripts/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `docker-compose.yml`, `Caddyfile`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → syntax-check → test |
 | `frontend`  | `frontend/**` (excl. `frontend/terraform/**`), `DESIGN.md`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → typecheck → test → build |
 | `e2e`       | union of `backend` + `frontend` + `scripts` + `docker-compose.yml` + config files | Postgres service → checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → Playwright install → migrate → seed → build & run Tier A matrix (chromium + WebKit mobile) |
@@ -441,9 +441,26 @@ Marketplace creators. pnpm is installed via `corepack enable pnpm` after
 `dorny/paths-filter` action was replaced with the `detect-changes` composite
 action using POSIX ERE regex patterns.
 
+**Release-please PRs** (created by `github-actions[bot]`) skip `docs-sync`,
+`versions`, and `commitlint` jobs to avoid false failures — release-please
+manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
+version but doesn't run project-specific hooks (`version:sync`, docs sync).
+The release workflow (`.github/workflows/release.yml`) now runs `pnpm run version:sync`
+when a release is created so the release PR has synced versions across all
+packages.
+
 Run `pnpm test` and `pnpm run lint` locally before pushing; the Husky
 `pre-push` hook runs only the suites whose area changed plus the docs-in-sync
 and version checks.
+
+## Branch Protection
+
+Main branch is protected via a GitHub Ruleset (`main`, ID 22609208) with:
+- Required status checks: all 8 CI jobs (`docs-sync`, `versions`, `commitlint`, `backend`, `frontend`, `e2e`, `terraform`, `compose`)
+- Strict required status checks (branches must be up-to-date)
+- Linear history enforced via **merge commit** (not squash) — release-please PRs require merge commits to preserve manifest history
+- `release-please--*` branches excluded from all rules
+- 0 required approvals (solo dev), thread resolution required, CodeQL + code quality gates
 
 ## Entry points
 
