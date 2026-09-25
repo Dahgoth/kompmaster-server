@@ -40,9 +40,7 @@ jobs:
 
       - name: Sync versions
         if: steps.release.outputs.release_created == 'true'
-        run: |
-          pnpm install --frozen-lockfile --ignore-scripts
-          pnpm run version:sync
+        run: pnpm run version:sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

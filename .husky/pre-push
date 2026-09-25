@@ -1,3 +1,4 @@
+#!/bin/sh
 # Block direct pushes to main. All changes must go through a pull request.
 #
 # git feeds "<local_ref> <local_sha> <remote_ref> <remote_sha>" lines on
