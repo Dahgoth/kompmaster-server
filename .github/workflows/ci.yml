@@ -17,7 +17,7 @@ jobs:
   # costs ~1s and never needs path filters.
   docs-sync:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -50,7 +50,7 @@ jobs:
   # of truth and both apps must match it (ADR 003). Pure Node — no install.
   versions:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -61,7 +61,7 @@ jobs:
 
   commitlint:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'github-actions[bot]'
+    if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
