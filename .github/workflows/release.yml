@@ -38,28 +38,22 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Sync versions
+      - name: Sync versions and trigger deploy
         if: steps.release.outputs.release_created == 'true'
         run: |
           pnpm run version:sync
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/package.json frontend/package.json
-          git commit -m "chore: sync backend/frontend versions to ${{ steps.release.outputs.tag_name }}"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
+            git push || { echo "::error::Failed to push version sync commit"; exit 1; }
+          else
+            echo "No version changes to commit"
+          fi
+          # Wait for push propagation before triggering deploy
+          sleep 5
+          TAG="${{ steps.release.outputs.tag_name }}"
+          gh workflow run deploy.yml --ref main -f tag="$TAG"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Trigger deploy workflow
-        if: steps.release.outputs.release_created == 'true'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
-        with:
-          script: |
-            const tag = '${{ steps.release.outputs.tag_name }}';
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy.yml',
-              ref: 'main',
-              inputs: { tag }
-            });
