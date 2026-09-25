@@ -55,11 +55,7 @@ jobs:
         run: |
           # Check for successful deployment instead of just release existence
           # Resolve tag to commit SHA for consistent deployment lookup across all triggers
-          TAG_COMMIT=$(gh api repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }} --jq '.object.sha' 2>/dev/null)
-          if [ -z "$TAG_COMMIT" ] || [ "$TAG_COMMIT" = "null" ]; then
-            echo "already_deployed=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          TAG_COMMIT=$(gh api repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }} --jq '.object.sha' 2>&1) || { echo "::error::Failed to resolve tag commit SHA"; exit 1; }
           # Query GitHub Deployments API for successful deployment in production-vps
           DEPLOYMENTS=$(gh api repos/${{ github.repository }}/deployments --jq '.[] | select(.environment=="production-vps" and .ref=="'"$TAG_COMMIT"'")' 2>/dev/null)
           if [ -n "$DEPLOYMENTS" ]; then
@@ -76,6 +72,7 @@ jobs:
             fi
           fi
           echo "already_deployed=false" >> $GITHUB_OUTPUT
+          echo "TAG_COMMIT=$TAG_COMMIT" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -143,7 +140,7 @@ jobs:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production-vps
-          ref: ${{ github.sha }}
+          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
           auto-merge: false
 
       - name: Update Deployment Status (success)
@@ -153,7 +150,7 @@ jobs:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production-vps
-          ref: ${{ github.sha }}
+          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
           status: success
           deployment-url: https://www.compmasone.ru
 
@@ -164,13 +161,17 @@ jobs:
           step: finish
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production-vps
-          ref: ${{ github.sha }}
+          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
           status: failure
 
       - name: Emit deployment metric
         if: always() && steps.idempotency.outputs.already_deployed != 'true'
         run: |
           STATUS="${{ job.status }}"
-          START_TIME=${DEPLOY_START_TIME:-$(date +%s)}
+          START_TIME=${DEPLOY_START_TIME}
+          if [ -z "$START_TIME" ]; then
+            echo "::warning::DEPLOY_START_TIME not set, cannot calculate duration"
+            START_TIME=$(date +%s)
+          fi
           DURATION=$(( $(date +%s) - START_TIME ))
           echo "::notice title=Deploy Finished::deployment_id=${{ env.DEPLOYMENT_ID }} status=$STATUS duration_seconds=$DURATION"

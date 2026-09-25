@@ -46,10 +46,11 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         with:
           script: |
+            const auditOutput = ${{ toJson(steps.audit.outputs.audit_output) }};
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: '🔒 Security Audit Failed: High/Critical Vulnerabilities Found',
-              body: 'Daily security audit detected vulnerabilities:\n\n```\n' + '${{ steps.audit.outputs.audit_output }}' + '\n```\n\nCheck the workflow run for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              body: 'Daily security audit detected vulnerabilities:\n\n```\n' + auditOutput + '\n```\n\nCheck the workflow run for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
               labels: ['security', 'automated']
             })
