@@ -27,6 +27,15 @@ surface, and setup.
 - `CHANGELOG.md` — Keep a Changelog.
 - `README.md` — index of all of the above plus the API surface.
 
+## Worktree & Branch Protection
+
+**NEVER destroy git worktrees or branches.** Worktrees and branches are developer workspaces — not disposable. You MUST NOT delete, remove, prune, or otherwise destroy any worktree or branch unless:
+- The user EXPLICITLY requests it in writing, AND
+- A verified backup/snapshot strategy exists that guarantees FULL restoration (git reflog, stash, bundle, or explicit copy) BEFORE the destructive action.
+- Even with explicit user consent, destruction without a verified, tested restoration path is FORBIDDEN.
+- Default to working within the existing worktree rather than the repository root.
+Violating this rule destroys developer state, review history, and CI context — it is a cardinal error.
+
 ## Ground rules
 
 1. **Never commit directly to `main`.** All changes go through a branch and a
