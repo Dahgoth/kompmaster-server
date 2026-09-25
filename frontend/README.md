@@ -219,3 +219,4 @@ frontend/
   e2e/                    — Playwright Tier A matrix (fixtures.ts, mocks.ts, specs/)
   playwright.config.ts    — chromium + mobile projects, E2E_STORE_URL baseURL
 ```
+
