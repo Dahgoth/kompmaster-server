@@ -163,8 +163,9 @@ commit SHAs.
 `versions`, and `commitlint` jobs to avoid false failures — release-please
 manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
 version but doesn't run project-specific hooks. The release workflow
-(`.github/workflows/release.yml`) runs `pnpm run version:sync` when a release
-is created so the release PR has synced versions across all packages.
+(`.github/workflows/release.yml`) uses `googleapis/release-please-action@v5`
+with a config file (`.release-please-config.json`) and runs `pnpm run version:sync`
+when a release is created so the release PR has synced versions across all packages.
 
 Run locally before pushing:
 ```bash

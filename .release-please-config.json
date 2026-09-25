@@ -1,0 +1,56 @@
+{
+  "_comment": "changelog-types intentionally duplicated per package; JSON doesn't support inheritance. Keep in sync across all three packages.",
+  "versioning-strategy": "default",
+  "release-type": "node",
+  "include-component-in-tag": true,
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "kompmaster",
+      "changelog-types": [
+        {"type": "feat", "section": "Features", "hidden": false},
+        {"type": "fix", "section": "Bug Fixes", "hidden": false},
+        {"type": "docs", "section": "Documentation", "hidden": false},
+        {"type": "refactor", "section": "Refactors", "hidden": false},
+        {"type": "perf", "section": "Performance", "hidden": false},
+        {"type": "test", "section": "Tests", "hidden": false},
+        {"type": "build", "section": "Build System", "hidden": false},
+        {"type": "ci", "section": "CI", "hidden": false},
+        {"type": "chore", "section": "Chores", "hidden": true},
+        {"type": "revert", "section": "Reverts", "hidden": false}
+      ]
+    },
+    "backend": {
+      "release-type": "node",
+      "package-name": "kompmaster-server",
+      "changelog-types": [
+        {"type": "feat", "section": "Features", "hidden": false},
+        {"type": "fix", "section": "Bug Fixes", "hidden": false},
+        {"type": "docs", "section": "Documentation", "hidden": false},
+        {"type": "refactor", "section": "Refactors", "hidden": false},
+        {"type": "perf", "section": "Performance", "hidden": false},
+        {"type": "test", "section": "Tests", "hidden": false},
+        {"type": "build", "section": "Build System", "hidden": false},
+        {"type": "ci", "section": "CI", "hidden": false},
+        {"type": "chore", "section": "Chores", "hidden": true},
+        {"type": "revert", "section": "Reverts", "hidden": false}
+      ]
+    },
+    "frontend": {
+      "release-type": "node",
+      "package-name": "kompmaster-frontend",
+      "changelog-types": [
+        {"type": "feat", "section": "Features", "hidden": false},
+        {"type": "fix", "section": "Bug Fixes", "hidden": false},
+        {"type": "docs", "section": "Documentation", "hidden": false},
+        {"type": "refactor", "section": "Refactors", "hidden": false},
+        {"type": "perf", "section": "Performance", "hidden": false},
+        {"type": "test", "section": "Tests", "hidden": false},
+        {"type": "build", "section": "Build System", "hidden": false},
+        {"type": "ci", "section": "CI", "hidden": false},
+        {"type": "chore", "section": "Chores", "hidden": true},
+        {"type": "revert", "section": "Reverts", "hidden": false}
+      ]
+    }
+  }
+}

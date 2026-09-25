@@ -19,38 +19,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Release Please
-        id: release
-        uses: google-github-actions/release-please-action@a017ec70c7f1401744d60197f7577a0c51c8c1cf
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: node
-          package-name: kompmaster
-          manifest-file: .release-please-manifest.json
-          changelog-types: |
-            [
-              {"type": "feat", "section": "Features", "hidden": false},
-              {"type": "fix", "section": "Bug Fixes", "hidden": false},
-              {"type": "docs", "section": "Documentation", "hidden": false},
-              {"type": "refactor", "section": "Refactors", "hidden": false},
-              {"type": "perf", "section": "Performance", "hidden": false},
-              {"type": "test", "section": "Tests", "hidden": false},
-              {"type": "build", "section": "Build System", "hidden": false},
-              {"type": "ci", "section": "CI", "hidden": false},
-              {"type": "chore", "section": "Chores", "hidden": true},
-              {"type": "revert", "section": "Reverts", "hidden": false}
-            ]
-
       - name: Setup Node
-        if: steps.release.outputs.release_created == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
           cache: 'pnpm'
 
-      - name: Enable pnpm
-        if: steps.release.outputs.release_created == 'true'
-        run: corepack enable pnpm
+      - name: Release Please
+        id: release
+        uses: googleapis/release-please-action@0dfd8538845b8e92600d271a895a5372865d4062
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
 
       - name: Sync versions
         if: steps.release.outputs.release_created == 'true'
