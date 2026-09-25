@@ -41,6 +41,17 @@ jobs:
               {"type": "revert", "section": "Reverts", "hidden": false}
             ]
 
+      - name: Setup Node
+        if: steps.release.outputs.release_created == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Enable pnpm
+        if: steps.release.outputs.release_created == 'true'
+        run: corepack enable pnpm
+
       - name: Sync versions
         if: steps.release.outputs.release_created == 'true'
         run: |
@@ -51,8 +62,8 @@ jobs:
 
 # release-please with monorepo manifest manages version for all three packages:
 # root (kompmaster), backend (kompmaster-server), frontend (kompmaster-frontend)
-# When Release PR is merged (squash-merge), it creates GitHub Release + tag + version bumps in manifest.
+# When Release PR is merged (merge commit), it creates GitHub Release + tag + version bumps in manifest.
 #
 # The Release PR contains version bumps for all packages in the manifest.
-# When merged (squash-merge), it creates the GitHub Release + tag.
+# When merged (merge commit), it creates the GitHub Release + tag.
 # The tag push triggers deploy.yml naturally via its `on: push: tags` trigger.

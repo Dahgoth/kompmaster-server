@@ -455,7 +455,7 @@ and version checks.
 
 ## Branch Protection
 
-Main branch is protected via a GitHub Ruleset (`main`, ID 22609208) with:
+Main branch is protected via a GitHub Ruleset (`main`) with:
 - Required status checks: all 8 CI jobs (`docs-sync`, `versions`, `commitlint`, `backend`, `frontend`, `e2e`, `terraform`, `compose`)
 - Strict required status checks (branches must be up-to-date)
 - Linear history enforced via **merge commit** (not squash) — release-please PRs require merge commits to preserve manifest history
