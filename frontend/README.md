@@ -133,6 +133,37 @@ STOREFRONT_ROOT=/opt/compmaster/storefront \
 See `../DEPLOY.md` §8 and `../terraform/RUNBOOK.md` §4.4 for full details,
 Caddy config, DNS cutover, and RAM headroom formula.
 
+## CI (GitHub Actions)
+
+Frontend CI lives in the root `.github/workflows/ci.yml` and is path-filtered
+via inline `git diff`. The `frontend` job runs on any `frontend/**` change
+(excluding `frontend/terraform/**`), `DESIGN.md`, or shared config files
+(`eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig`).
+
+Steps:
+1. `actions/checkout` (pinned SHA)
+2. `actions/setup-node` Node 24 (pinned SHA)
+3. `corepack enable pnpm` (no `pnpm/action-setup` — not GitHub-verified)
+4. `pnpm install --frozen-lockfile`
+5. `pnpm run lint:frontend` (ESLint over `frontend/**`)
+6. `pnpm --filter kompmaster-frontend run typecheck` (`tsc --noEmit`)
+7. `pnpm --filter kompmaster-frontend test` (Vitest)
+8. `pnpm --filter kompmaster-frontend run build` (`next build` standalone)
+
+The `e2e` job runs the Playwright Tier A matrix (chromium + WebKit mobile)
+when `frontend/**` or `backend/**` changes — it provisions a throwaway
+Postgres, seeds fixtures, builds the storefront against the API, and runs 20
+specs. CI uses only GitHub or verified-Marketplace actions pinned to full
+commit SHAs.
+
+Run locally before pushing:
+```bash
+pnpm run lint:frontend
+pnpm --filter kompmaster-frontend typecheck
+pnpm --filter kompmaster-frontend test
+pnpm --filter kompmaster-frontend run build
+```
+
 ## Project Structure
 
 ```

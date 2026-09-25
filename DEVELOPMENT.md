@@ -416,47 +416,30 @@ this section is the detailed reference.
   (`git mv` renames are excluded). See
   [`docs/adr/003-monorepo-workspace-and-versioning.md`](docs/adr/003-monorepo-workspace-and-versioning.md).
 
-## Docs-in-sync enforcement
+## CI (GitHub Actions)
 
-`scripts/check-docs.js` encodes the CONTRIBUTING docs table as path rules and
-fails when a required doc is missing from the change set:
+CI is defined in `.github/workflows/ci.yml` and runs on every push and PR.
+The workflow is **path-filtered** via inline `git diff` (no third-party actions)
+so each job runs only when its area changes:
 
-```bash
-node scripts/check-docs.js --staged      # what the pre-push hook checks
-node scripts/check-docs.js --base main   # what CI checks on a PR branch
-node scripts/check-docs.js <files...>    # ad-hoc check
-```
+| Job        | Trigger (any file under)                                 | Steps                                    |
+| ---------- | -------------------------------------------------------- | ---------------------------------------- |
+| `docs-sync` | *always*                                                 | `node scripts/check-docs.js --base …`    |
+| `versions`  | *always*                                                 | `node scripts/check-versions.js`         |
+| `commitlint`| *PRs only*                                               | `pnpm run lint:commit`                   |
+| `backend`   | `backend/**`, `scripts/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `docker-compose.yml`, `Caddyfile`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → syntax-check → test |
+| `frontend`  | `frontend/**` (excl. `frontend/terraform/**`), `DESIGN.md`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → typecheck → test → build |
+| `e2e`       | union of `backend` + `frontend` + `scripts` + `docker-compose.yml` + config files | Postgres service → checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → Playwright install → migrate → seed → build & run Tier A matrix (chromium + WebKit mobile) |
+| `compose`   | `docker-compose.yml`                                     | checkout → docker compose config/pull    |
+| `terraform` | `terraform/**`, `frontend/terraform/**`                  | checkout → setup-terraform (pinned 1.9.8) → fmt/validate |
 
-Rule summary: env/config surface → `ENVIRONMENT.md`; workflow/tooling or any
-code change → `DEVELOPMENT.md`; visual surface (frontend
-styles/components/pages, content defaults) → `DESIGN.md`; route/page
-changes → `CHANGELOG.md` (`[Unreleased]` must be non-empty); any
-`frontend/**` change → `frontend/README.md`; any `terraform/**` change →
-`terraform/README.md`. Editing a required doc satisfies its own rule.
+All actions are pinned to full commit SHAs and are from GitHub or verified
+Marketplace creators. pnpm is installed via `corepack enable pnpm` after
+`actions/setup-node` (no `pnpm/action-setup`; not GitHub-verified).
 
-### Scope: PR-scoped, not commit-scoped
-
-The rule says "update the doc **in the same pull request**", so both
-enforcement points diff the **whole branch against `origin/main`**
-(merge-base), never just the latest commit:
-
-- **CI `docs-sync` job** — on `pull_request` events it uses the PR base SHA;
-  on `push` events it computes `git merge-base HEAD origin/main`. It must
-  *not* use `github.event.before`, which only covers the most recent push and
-  would re-demand docs an earlier commit on the same branch already updated.
-- **Husky `pre-push`** — buffers the ref lines git passes on stdin into a
-  temp file, then diffs every non-main ref against the merge-base with
-  `origin/main` (same PR scope as CI). If a range cannot be resolved it
-  falls back to the full branch diff, then to all tracked files — i.e. it
-  fails safe by running *everything*, never by skipping.
-
-> **History (bug fixed 2026-09-16):** the first `pre-push` revision consumed
-> stdin in its main-branch guard loop, so the range-resolution loop read
-> nothing, `changed` came out empty, and the hook silently reported
-> "docs-only change" while skipping **every** suite and the docs check. If a
-> hook ever prints that it found no changes on a real code push, suspect stdin
-> consumption. CI had the mirror-image bug: it scoped to `github.event.before`
-> and flagged already-updated docs as missing.
+Run `pnpm test` and `pnpm run lint` locally before pushing; the Husky
+`pre-push` hook runs only the suites whose area changed plus the docs-in-sync
+and version checks.
 
 ## Entry points
 
