@@ -604,17 +604,31 @@ Main branch is protected via a GitHub Ruleset (`main`) with:
 
 **CodeQL is not a required check, and that is deliberate for now.** It sat in
 `startup_failure` on every run from the day it was added, reporting `NEUTRAL`
-and blocking nothing — a broken security gate that looked fine. Two causes, both
-now addressed or flagged:
+and blocking nothing — a broken security gate that looked fine. Code scanning
+itself *was* enabled the whole time; the failure was in the workflow:
 
-- The matrix requested `javascript` and `typescript` separately. They are a
-  single CodeQL extractor, so it asked for the same language twice. The matrix
-  is now `javascript-typescript`, and the unnecessary `autobuild` step is gone.
-- Code scanning must also be **enabled** in *Settings → Code security and
-  protection → Code scanning*. The API reports no `code_scanning` key in
-  `security_and_analysis` and `PATCH`-ing it to `enabled` is accepted but
-  silently dropped, so this has to be confirmed in the UI. Until CodeQL has
-  completed one successful run, treat the security gate as absent.
+- The matrix requested `javascript` and `typescript` separately. They are
+  documented *alternative identifiers* for the single `javascript-typescript`
+  extractor, so it asked for the same language twice. The matrix is now
+  `[javascript-typescript, actions]`, and the unnecessary `autobuild` step is
+  gone.
+- No `queries:` key, so the default high-precision `security` suite runs.
+  `security-extended` and `security-and-quality` trade signal for volume,
+  which is the wrong trade for one reviewer.
+
+The repo uses **advanced setup** (checked-in YAML is authoritative) rather than
+GitHub's default setup, so CodeQL config changes go through review like any
+other change.
+
+Two notes if you ever open the CodeQL setup page in the UI:
+
+- **Threat model** is inert for this repository. It is public preview and
+  supported only for Java/Kotlin and C# analysis; this codebase is
+  JavaScript/TypeScript. Choosing either option changes nothing.
+- `GET /repos/:owner/:repo/code-scanning` returns 404 to a `gh` token without
+  the `security_events` scope, and `security_and_analysis.code_scanning` is
+  likewise absent. That is a **token-scope blind spot, not evidence the
+  feature is off** — do not read it as a signal.
 
 To stop a future failure being invisible, add `CodeQL / Analyze` to the ruleset's
 required status checks **after** confirming a green run.
