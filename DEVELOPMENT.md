@@ -483,26 +483,39 @@ suite of checks including docs-in-sync and version alignment.
 a pnpm workspace with a single root `pnpm-lock.yaml`, so per-package entries
 would emit conflicting lockfile PRs that can never both merge.
 
-**Auto-merge gate.** There is **no `auto-merge` key in the `dependabot.yml`
-schema** — adding one fails Dependabot's config validation with
-*"contains additional properties [`auto-merge`] outside of the schema"*. Gating
-is done entirely with the `version-update:semver-*` labels:
+**Auto-merge gate.** Two facts that are easy to get wrong, both verified against
+live Dependabot PRs (#88–#93):
+
+1. There is **no `auto-merge` key in the `dependabot.yml` schema**. Adding one
+   fails config validation with *"contains additional properties [`auto-merge`]
+   outside of the schema when none are allowed"*.
+2. The `version-update:semver-*` entries under `labels:` **do not gate
+   anything**. Dependabot does not attach those labels to its PRs — every one
+   of #88–#93 carried only `dependencies`, majors included. Listing them
+   creates a false sense of a gate that is not there.
+
+The real gate is `.github/workflows/dependabot-automerge.yml`, which reads the
+update class off the PR with `dependabot/fetch-metadata` and calls
+`gh pr merge --auto` only when `update-type` is `version-update:semver-patch`
+or `version-update:semver-minor`:
 
 ```yaml
-labels:
-  - "version-update:semver-patch"
-  - "version-update:semver-minor"
+if: contains(
+  fromJSON('["version-update:semver-patch","version-update:semver-minor"]'),
+  steps.metadata.outputs.update-type
+)
+run: gh pr merge --auto --merge "$PR_URL"
 ```
 
-Dependabot auto-merges its own PRs when the repository has **Allow auto-merge**
-enabled (*Settings → General → Pull Requests*) **and** the PR carries one of the
-labels listed above. A major bump is labelled `version-update:semver-major`,
-which is deliberately absent, so **majors always require a human**.
+Anything else — a major, or an unrecognised/empty value such as a group holding
+mixed severities — fails the check and stays for a human. That is why the
+severity `groups` below must not be merged across severities: a mixed group
+reports a mixed update class and falls through the gate.
 
-This gate only works because majors are isolated in their own `groups` entry — a
-group mixing a patch and a major would carry both labels, and the presence of
-the semver-patch label would auto-merge the major riding along with it. Do not
-merge groups across severities.
+**Order of operations matters.** `gh pr merge --auto` is inert until
+**Settings → General → Pull Requests → Allow auto-merge** is enabled. That
+setting is a *precondition*, not the gate — with the gate absent, enabling it
+merges majors unattended. The workflow must be in place first.
 
 The `.github/dependabot.yml` check is a required status check, so a schema
 violation blocks every Dependabot PR on the branch.
@@ -525,6 +538,12 @@ specific one is dead config.
 
 The `github-actions` groups carry no `dependency-type` because actions have no
 dev/prod split — `update-types` is the only axis available there.
+
+**All npm groups rewrite `pnpm-lock.yaml`**, so npm PRs still serialise: only
+one can merge at a time and each merge invalidates the rest, requiring a rebase
+before the next. That is inherent to a single-lockfile pnpm monorepo, not
+something `groups` can fix. `open-pull-requests-limit` (5 npm / 3 actions) is
+what stops that queue from growing without bound.
 
 `@tanstack/*` is a glob covering the scope as it grows (today only
 `@tanstack/react-query` is installed). If it ever stopped matching, the
