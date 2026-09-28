@@ -23,16 +23,18 @@ jobs:
   # majors always reach a human, who then decides whether a doc update is
   # warranted.
   #
-  # Two different actors are being excluded, so they are keyed differently:
-  #   - the version-sync commit is a PUSH by `github-actions[bot]` -> `actor`
-  #   - a Dependabot update is a PR whose AUTHOR is `dependabot[bot]` -> author
-  # Keying the second on `actor` meant the waiver evaporated the moment a human
-  # closed and reopened the PR to re-trigger the auto-merge workflow, and
-  # docs-sync then failed against package.json + pnpm-lock.yaml.
+  # Three cases, and the actor alone is not enough to catch them:
+  #   - the version-sync commit is a PUSH by `github-actions[bot]`
+  #   - a Dependabot rebase is a PUSH to its own branch by `dependabot[bot]`
+  #   - a Dependabot update is a PR whose AUTHOR is `dependabot[bot]`
+  # #96 covered only the third, so every `@dependabot rebase` re-ran
+  # docs-sync against package.json + pnpm-lock.yaml and failed. The failing
+  # check then pinned the branch and blocked the PR.
   docs-sync:
     runs-on: ubuntu-latest
     if: >-
       github.actor != 'github-actions[bot]' &&
+      github.actor != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.user.login != 'dependabot[bot]')
     steps:

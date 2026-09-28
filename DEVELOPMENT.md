@@ -446,19 +446,31 @@ action using POSIX ERE regex patterns.
 manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
 version but doesn't run project-specific hooks (docs sync). **Dependabot PRs**
 skip `docs-sync` only, for the same reason: a machine-authored bump has no prose
-to write, and requiring `DEVELOPMENT.md` makes the rule unenforceable. The two
-skips are keyed differently, because they are different things:
+to write, and requiring `DEVELOPMENT.md` makes the rule unenforceable. Three
+cases are excluded, and no single key catches all of them:
 
-| Excluded | How it is keyed | Applies to |
-|----------|-----------------|------------|
-| Version-sync commit | `github.actor != 'github-actions[bot]'` | `docs-sync`, `versions`, `commitlint` |
-| Dependabot update | `github.event.pull_request.user.login != 'dependabot[bot]'` | `docs-sync` only |
+| Excluded | Event | How it is keyed | Applies to |
+|----------|-------|-----------------|------------|
+| Version-sync commit | `push` by `github-actions[bot]` | `actor` | `docs-sync`, `versions`, `commitlint` |
+| Dependabot rebase | `push` to its own branch by `dependabot[bot]` | `actor` | `docs-sync` |
+| Dependabot update | `pull_request` authored by `dependabot[bot]` | PR author | `docs-sync` only |
 
-Keying the Dependabot case on `actor` instead of the PR author is wrong: the
-actor is whoever fired the event, so the moment a human closed and reopened a
-Dependabot PR to re-trigger the auto-merge workflow, the waiver disappeared and
-`docs-sync` failed against `package.json` + `pnpm-lock.yaml`. The
-`versions` and `commitlint` guards are left strict on purpose, since a
+```yaml
+if: >-
+  github.actor != 'github-actions[bot]' &&
+  github.actor != 'dependabot[bot]' &&
+  (github.event_name != 'pull_request' ||
+   github.event.pull_request.user.login != 'dependabot[bot]')
+```
+
+Both keys are needed, and getting it wrong fails in both directions. Keying
+only on `actor` meant the waiver evaporated the moment a human closed and
+reopened a Dependabot PR; keying only on the PR author missed the
+`@dependabot rebase` **push**, which re-ran docs-sync against `package.json` +
+`pnpm-lock.yaml` and failed on every rebase. A failing required check pins the
+branch, so the PR then could not merge at all.
+
+The `versions` and `commitlint` guards are left strict on purpose, since a
 Dependabot PR that breaks commitlint or version alignment is a real signal.
 The release workflow (`.github/workflows/release.yml`) uses
 `googleapis/release-please-action@v5` with a config file
