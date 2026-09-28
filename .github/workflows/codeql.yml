@@ -18,26 +18,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
+      actions: read
       contents: read
       security-events: write
     strategy:
       fail-fast: false
       matrix:
-        language: [javascript, typescript]
+        # `javascript` and `typescript` are ONE CodeQL extractor, not two.
+        # Listing them separately made the matrix request the same language
+        # twice, and every run since this workflow was added failed at
+        # startup (`startup_failure`, "likely failed because of a workflow
+        # file issue"). The combined identifier is what the extractor expects.
+        language: [javascript-typescript]
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
+      # No `autobuild`: it exists for compiled languages, and this is pure
+      # JavaScript/TypeScript with no build step to infer.
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           category: "/language:${{ matrix.language }}"
