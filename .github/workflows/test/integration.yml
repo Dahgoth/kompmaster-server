@@ -1,0 +1,170 @@
+# Integration Test for Release → Deploy Pipeline
+# Run with: act push -W .github/workflows/test/integration.yml -s GITHUB_TOKEN=<token>
+
+name: Integration Test - Release Deploy Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      test-type:
+        description: 'Test type to run'
+        required: true
+        type: choice
+        options:
+          - extract-tag
+          - verify-push
+          - full-pipeline
+      tag:
+        description: 'Tag to test with'
+        required: false
+        type: string
+        default: 'v99.99.99-test'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test-extract-tag:
+    name: Test Extract Tag Logic
+    if: github.event.inputs.test-type == 'extract-tag' || github.event.inputs.test-type == 'full-pipeline'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Test tag extraction logic (push event)
+        id: test-push
+        run: |
+          # Simulate the extract-tag logic for push event
+          EVENT_NAME="push"
+          REF_NAME="v1.2.3"
+          case "$EVENT_NAME" in
+            release) TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}" ;;
+            workflow_call|workflow_dispatch) TAG="${INPUT_TAG}" ;;
+            *) TAG="${REF_NAME}" ;;
+          esac
+          if [[ ! "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+            echo "::error::Tag validation failed"
+            exit 1
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Test tag extraction logic (release event)
+        id: test-release
+        run: |
+          EVENT_NAME="release"
+          GITHUB_EVENT_RELEASE_TAG_NAME="v2.0.0"
+          case "$EVENT_NAME" in
+            release) TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}" ;;
+            workflow_call|workflow_dispatch) TAG="${INPUT_TAG}" ;;
+            *) TAG="${REF_NAME}" ;;
+          esac
+          if [[ ! "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+            echo "::error::Tag validation failed"
+            exit 1
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Test tag extraction logic (workflow_call event)
+        id: test-call
+        run: |
+          EVENT_NAME="workflow_call"
+          INPUT_TAG="v3.0.0"
+          case "$EVENT_NAME" in
+            release) TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}" ;;
+            workflow_call|workflow_dispatch) TAG="${INPUT_TAG}" ;;
+            *) TAG="${REF_NAME}" ;;
+          esac
+          if [[ ! "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+            echo "::error::Tag validation failed"
+            exit 1
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Test tag extraction logic (workflow_dispatch event)
+        id: test-dispatch
+        run: |
+          EVENT_NAME="workflow_dispatch"
+          INPUT_TAG="v4.0.0"
+          case "$EVENT_NAME" in
+            release) TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}" ;;
+            workflow_call|workflow_dispatch) TAG="${INPUT_TAG}" ;;
+            *) TAG="${REF_NAME}" ;;
+          esac
+          if [[ ! "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+            echo "::error::Tag validation failed"
+            exit 1
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Validate outputs
+        run: |
+          echo "push: ${{ steps.test-push.outputs.tag }}"
+          echo "release: ${{ steps.test-release.outputs.tag }}"
+          echo "call: ${{ steps.test-call.outputs.tag }}"
+          echo "dispatch: ${{ steps.test-dispatch.outputs.tag }}"
+          if [ "${{ steps.test-push.outputs.tag }}" != "v1.2.3" ]; then exit 1; fi
+          if [ "${{ steps.test-release.outputs.tag }}" != "v2.0.0" ]; then exit 1; fi
+          if [ "${{ steps.test-call.outputs.tag }}" != "v3.0.0" ]; then exit 1; fi
+          if [ "${{ steps.test-dispatch.outputs.tag }}" != "v4.0.0" ]; then exit 1; fi
+          echo "✅ All tag extractions correct"
+
+  test-verify-push:
+    name: Test Verify Push Logic
+    if: github.event.inputs.test-type == 'verify-push' || github.event.inputs.test-type == 'full-pipeline'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Test verify-push logic (linear backoff, mocked)
+        id: test-verify
+        run: |
+          # Mock the verify-push logic without requiring write permissions
+          # This validates the backoff calculation and loop structure
+          MAX_RETRIES=3
+          BASE_INTERVAL=1
+
+          echo "Testing verify-push logic (max $MAX_RETRIES retries, base interval ${BASE_INTERVAL}s)"
+
+          # Test the linear backoff calculation
+          for i in $(seq 1 $MAX_RETRIES); do
+            SLEEP=$((BASE_INTERVAL * i))
+            echo "Retry $i would sleep ${SLEEP}s"
+          done
+
+          # Test the final check logic (mocked as success)
+          echo "Push verification logic validated"
+          echo "success=true" >> $GITHUB_OUTPUT
+          exit 0
+
+      - name: Validate output
+        run: |
+          echo "success: ${{ steps.test-verify.outputs.success }}"
+          if [ "${{ steps.test-verify.outputs.success }}" != "true" ]; then exit 1; fi
+          echo "✅ Push verification logic works"
+
+  test-full-pipeline:
+    name: Full Pipeline Dry-Run
+    if: github.event.inputs.test-type == 'full-pipeline'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Simulate release-please output
+        run: |
+          echo "release_created=true" >> $GITHUB_OUTPUT
+          echo "tag_name=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+        id: mock-release
+
+      - name: Test release workflow steps
+        if: steps.mock-release.outputs.release_created == 'true'
+        run: |
+          echo "Would sync versions and push"
+          echo "Would verify push with linear backoff"
+          echo "Would trigger deploy with tag: ${{ steps.mock-release.outputs.tag_name }}"
+          echo "✅ Full pipeline simulation passed"

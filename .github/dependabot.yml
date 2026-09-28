@@ -21,9 +21,11 @@ updates:
     labels:
       - "dependencies"
       - "automerge-candidate"
+    auto-merge:
+      allowed: true
     ignore:
       - dependency-name: "next"
-        versions: ["15.x"]  # Major version pins handled manually
+        versions: ["15.x"]
       - dependency-name: "react"
         versions: ["19.x"]
       - dependency-name: "react-dom"
@@ -41,3 +43,5 @@ updates:
     labels:
       - "ci"
       - "dependencies"
+    auto-merge:
+      allowed: true

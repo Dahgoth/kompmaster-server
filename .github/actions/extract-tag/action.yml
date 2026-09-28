@@ -1,0 +1,38 @@
+name: 'Extract Tag'
+description: 'Extract and validate tag from GitHub event context'
+inputs:
+  tag:
+    description: 'Tag input for workflow_call/workflow_dispatch'
+    required: false
+    default: ''
+outputs:
+  tag:
+    description: 'Validated tag name'
+    value: ${{ steps.extract.outputs.tag }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract and validate tag
+      id: extract
+      shell: bash
+      run: |
+        # For tag push: github.ref_name (e.g., "v2.0.0")
+        # For release event: github.event.release.tag_name
+        # For workflow_call: inputs.tag
+        # For workflow_dispatch: inputs.tag
+        case "${{ github.event_name }}" in
+          release) TAG="${{ github.event.release.tag_name }}" ;;
+          workflow_call|workflow_dispatch) TAG="${{ inputs.tag }}" ;;
+          *) TAG="${{ github.ref_name }}" ;;
+        esac
+        if [ -z "$TAG" ]; then
+          echo "::error::Tag is required" >&2
+          exit 1
+        fi
+        if ! [[ "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+          echo "::error::Tag $TAG does not match semantic version format vX.Y.Z" >&2
+          exit 1
+        fi
+        echo "TAG=$TAG" >> $GITHUB_ENV
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Extracted tag: $TAG"

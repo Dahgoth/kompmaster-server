@@ -459,9 +459,13 @@ tags that match the deploy workflow trigger.
 
 **Deploy workflow** (`.github/workflows/deploy.yml`) triggers on both
 `v*.*.*` and `kompmaster-v*.*.*` tags for backward compatibility, and on
-`release.published` events (for release-please API-created tags). New releases
-will use clean `v*.*.*` tags since `include-component-in-tag: false` is set
-in the release-please config.
+`release.published` events (for release-please API-created tags). Additionally,
+the release workflow explicitly triggers the deploy workflow via `workflow_dispatch`
+after release-please creates a release, since GitHub doesn't trigger workflows
+for bot-created events. The release workflow also commits and pushes the version
+sync changes (backend/frontend package.json) after release-please bumps the root
+version. New releases will use clean `v*.*.*` tags since
+`include-component-in-tag: false` is set in the release-please config.
 
 **Pre-commit hook** runs `pnpm run format:check` (Prettier) to prevent
 formatting errors from being committed. The `pre-push` hook runs the full

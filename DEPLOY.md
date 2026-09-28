@@ -384,110 +384,173 @@ Add `--color` flag to `deploy-storefront.sh`:
 
 ## 10. Automated GitHub Deployment + Vercel Staging (Phase 9)
 
-### 10.1 GitHub Environments — Use Vercel's Built-In Environments
+### 10.1 GitHub Environments — Custom `production-vps` + Vercel Preview
 
-**Do not create custom `staging`/`production` environments.** Vercel's GitHub integration automatically creates and manages two environments:
+**Production uses a custom `production-vps` environment** (not Vercel's `Production`). This environment protects the VPS deploy with:
+- Required reviewers: 1 (self-approval via GitHub UI)
+- Wait timer: 0 minutes (removed — deploy script has health gates + rollback)
+- Secrets: `STOREFRONT_SSH_KEY`, `STOREFRONT_SSH_HOST`, `STOREFRONT_ROOT`
 
-| Vercel Environment | GitHub Environment Name | Purpose |
-|---|---|---|
-| Preview | `Preview` (auto-created) | Every PR and push to `main` gets a unique preview URL |
-| Production | `Production` (auto-created) | Only triggered by tagged releases (`v*.*.*`) |
+**Staging (Preview) is fully automated by Vercel** — every push to any branch creates a Preview deployment automatically. Vercel's GitHub integration manages the `Preview` environment.
 
-These environments appear in GitHub Settings → Environments and are managed by Vercel. They provide:
-- Deployment status on PRs/commits (green checkmarks)
-- Automatic deployment URLs in PR conversation
-- Protection rules enforced by Vercel (not GitHub)
+| Environment | Purpose | Created By | Protection |
+|-------------|---------|------------|------------|
+| `Preview` | PR/commit preview URLs | Vercel GitHub App | Vercel-managed |
+| `production-vps` | VPS production deploy | Manual (Settings → Environments) | 1 reviewer, 0 min wait |
 
-**Required GitHub secrets for Vercel integration** (already configured if Vercel is connected):
-- `VERCEL_TOKEN` — Vercel access token
-- `VERCEL_ORG_ID` — Organization ID
-- `VERCEL_PROJECT_ID` — Project ID
+**Required GitHub secrets for `production-vps`**:
+- `STOREFRONT_SSH_KEY` — ed25519 private key for `root@api.compmasone.ru`
+- `STOREFRONT_SSH_HOST` — `api.compmasone.ru` (or IP)
+- `STOREFRONT_ROOT` — `/opt/compmaster/storefront`
 
-### 10.2 Deploy Workflow — Only Production Needs a Workflow
+---
 
-**Staging (Preview) is fully automated by Vercel** — no GitHub Actions workflow needed. Every push to any branch creates a Preview deployment automatically.
+### 10.2 Deploy Workflow (`.github/workflows/deploy.yml`)
 
-**Only production deploy needs a workflow** (`.github/workflows/deploy.yml`):
+**Triggers** (multiple entry points, all converge to same deploy job):
+1. `push: tags` — manual tag push (`git push origin v2.3.0`)
+2. `release: published` — GitHub Release created (including by `release-please`)
+3. `workflow_dispatch` — manual re-deploy via GitHub UI or `gh workflow run`
+4. `workflow_call` — called by release workflow after version sync
 
 ```yaml
 name: Deploy Production
 
 on:
   push:
-    tags: ['v*.*.*']
+    tags: ['v*.*.*', 'kompmaster-v*.*.*']
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g., v2.0.0)'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g., v2.0.0)'
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  contents: write
   deployments: write
   id-token: write
 
 jobs:
   deploy-production:
-    environment: Production  # Uses Vercel's auto-created Production environment
-    runs-on: self-hosted     # VPS runner with SSH access
+    environment: production-vps
+    runs-on: self-hosted
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
 
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.STOREFRONT_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.STOREFRONT_SSH_HOST }}" >> ~/.ssh/known_hosts
+      - name: Verify tag format
+        # Handles all 4 event types via case statement
 
-      - name: Deploy storefront to VPS
-        run: |
-          STOREFRONT_SSH="root@${{ secrets.STOREFRONT_SSH_HOST }}" \
-          STOREFRONT_ROOT="${{ secrets.STOREFRONT_ROOT }}" \
-          ./backend/scripts/deploy-storefront.sh --skip-build
-        env:
-          API_BASE: https://api.compmasone.ru/api
-          SITE_URL: https://www.compmasone.ru
+      - name: Check if already deployed (idempotency guard)
+        # Uses `gh release view` to check if release exists on main
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Setup SSH key / Detect color / Deploy / Create Release / Deployments
+        # All skipped if already_deployed=true
+```
+
+**Key features**:
+- **Idempotency guard**: `gh release view` checks if release already exists on `main` — skips entire deploy if true
+- **Blue/Green**: `--color=blue|green` + `--promote` flag handles inactive color detection, health gate, Caddy traffic flip
+- **Health gates + auto-rollback**: boot-verify on build machine (port 3199), health gate on VPS (port 3000/3001), auto-rollback on failure
+- **No fixed wait timer** — removed 5-min environment wait; deploy script provides health gates
+
+---
+
+### 10.3 Release Workflow (`.github/workflows/release.yml`)
+
+Runs on push to `main` (after merge):
+
+```yaml
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    # Skip [skip ci] commits (version sync commits from previous run)
+    if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: { node-version: '24' }
+      - run: corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts
+      - name: Release Please
+        id: release
+        uses: googleapis/release-please-action@0dfd8538845b8e92600d271a895a5372865d4062
         with:
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Sync versions and trigger deploy
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          pnpm run version:sync
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/package.json frontend/package.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
+            git push origin HEAD:main
+            # Verify push propagated (max 20s)
+            for i in {1..10}; do
+              if git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then break; fi
+              sleep 2
+            done
+            if ! git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then
+              echo "::error::Version sync commit not visible on origin/main after 20s"
+              exit 1
+            fi
+          else
+            echo "No version changes to commit"
+          fi
+          gh workflow run deploy.yml --ref main -f tag="${{ steps.release.outputs.tag_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Deployment (production)
-        uses: bobheadxi/deployments@v1
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: Production
-          ref: ${{ github.sha }}
-          auto-merge: false
-
-      - name: Update Deployment Status (success)
-        if: success()
-        uses: bobheadxi/deployments@v1
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: Production
-          ref: ${{ github.sha }}
-          status: success
-          deployment-url: https://www.compmasone.ru
-
-      - name: Update Deployment Status (failure)
-        if: failure()
-        uses: bobheadxi/deployments@v1
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: Production
-          ref: ${{ github.sha }}
-          status: failure
 ```
+
+**Flow**:
+1. `release-please` creates Release PR → on merge (merge commit), creates GitHub Release + tag + bumps manifest
+2. Release workflow runs on push to main → syncs backend/frontend versions to root version (commits + pushes `[skip ci]`)
+3. Push verified via `git ls-remote` (max 20s retry loop, explicit failure if not visible)
+4. `gh workflow run deploy.yml` triggers production deploy with tag input
+
+---
+
+### 10.4 Release Cycle Summary
+
+| Event | Trigger | Actions |
+|-------|---------|---------|
+| PR merged to `main` | `push` to `main` | Release workflow → version sync → deploy workflow |
+| Manual tag push | `git push origin v2.3.0` | Deploy workflow (tag push trigger) |
+| GitHub Release created | `release.published` | Deploy workflow (release trigger) |
+| Manual re-deploy | `gh workflow run deploy.yml -f tag=v2.3.0` | Deploy workflow (workflow_dispatch) |
+| Release PR merge | `release-please` PR merged | Release workflow (via push to main) |
+
+**Branch protection**: `main` has ruleset with required checks (8 CI jobs), linear history enforced via **merge commit** (not squash) for release-please PRs to preserve manifest history. `release-please--*` branches excluded from rules.
 
 ### 10.3 Vercel Integration — Correct Configuration for Monorepo
 
@@ -731,14 +794,14 @@ Since you're the sole reviewer, adjust rules pragmatically:
 - Require status checks to pass before merging
   - Required checks: `lint`, `test:backend`, `test:frontend`, `e2e`, `docs-sync`, `versions`
 - Require branches to be up to date before merging: Yes
-- Require linear history: Yes (enforces squash-merge, no merge commits)
+- Require linear history: Yes (enforces **merge commit** for release-please, squash for others)
 - Do not allow force pushes: Yes
 - Do not allow deletions: Yes
 ```
 
-**Linear history + squash-merge**: Yes, "Require linear history" forces squash-merge (or rebase) — no merge commits. This is what `release-please` expects and works well with solo development.
+**Linear history + merge commit for release-please**: "Require linear history" allows merge commits (not just squash). Release-please PRs use **merge commit** to preserve manifest history; regular PRs use squash-merge. `release-please--*` branches are excluded from all rules.
 
-**Self-review workflow**: Create PR → CI passes → Click "Approve" on your own PR → Squash-merge → Release PR auto-created → Merge Release PR → Tag + deploy.
+**Self-review workflow**: Create PR → CI passes → Click "Approve" on your own PR → Merge commit (release-please) or Squash-merge (regular) → Release PR auto-created → Merge Release PR → Tag + deploy.
 
 ### 11.6 Changelog Automation
 
