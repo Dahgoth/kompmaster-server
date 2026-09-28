@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
       - name: Cache pnpm store
@@ -67,7 +67,7 @@ jobs:
     if: github.actor != 'github-actions[bot]' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
       - name: Shared version guard
@@ -80,7 +80,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
       - name: Cache pnpm store
@@ -107,7 +107,7 @@ jobs:
         with:
           pattern: '^(backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|Caddyfile$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
           output-name: backend
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.changes.outputs.backend == 'true'
         with:
           node-version: 24
@@ -169,7 +169,7 @@ jobs:
           pattern: '^(frontend/([^/]+/)*[^/]+|DESIGN\.md$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
           exclude-pattern: '^frontend/terraform/'
           output-name: frontend
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.changes.outputs.frontend == 'true'
         with:
           node-version: 24
@@ -250,7 +250,7 @@ jobs:
           pattern: '^(frontend/([^/]+/)*[^/]+|backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
           exclude-pattern: '^frontend/terraform/'
           output-name: e2e
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.changes.outputs.e2e == 'true'
         with:
           node-version: 24
