@@ -18,21 +18,18 @@ updates:
       prefix: "chore(deps)"
       prefix-development: "chore(deps:dev)"
       include: "scope"
-    # The semver labels ARE the auto-merge gate — there is no `auto-merge` key
-    # in the dependabot.yml schema (one is rejected outright as an additional
-    # property). Dependabot auto-merges its own PRs when the repository has
-    # "Allow auto-merge" enabled under Settings → General → Pull Requests AND
-    # the PR carries one of the labels listed here. A major bump is labelled
-    # `version-update:semver-major`, which is deliberately absent, so majors
-    # always require a human.
+    # NOTE: these labels do NOT gate auto-merge. Dependabot does not attach
+    # `version-update:semver-*` labels to its PRs, so `dependencies` ends up on
+    # every PR — majors included — and enabling the repository's "Allow
+    # auto-merge" setting would merge majors unattended. Verified on PRs
+    # #88-#93, which carried only `dependencies`.
     #
-    # This only holds BECAUSE majors are isolated in their own group below — a
-    # mixed group would carry both a semver-patch and a semver-major label, and
-    # the presence of the former would auto-merge the latter.
+    # The real gate is `.github/workflows/dependabot-automerge.yml`, which reads
+    # the update class via `dependabot/fetch-metadata` and calls
+    # `gh pr merge --auto` only for patch/minor. Keep this list as labelling
+    # only, and do not read it as a safety control.
     labels:
       - "dependencies"
-      - "version-update:semver-patch"
-      - "version-update:semver-minor"
     groups:
       # Auto-merge-eligible: routine tooling, low blast radius.
       dev-routine:
@@ -62,7 +59,9 @@ updates:
         dependency-type: "production"
         update-types: ["major"]
       # Majors isolated so they arrive as their own reviewable PR and never
-      # ride along with a patch.
+      # ride along with a patch. Isolation is also what makes the
+      # fetch-metadata gate in dependabot-automerge.yml unambiguous: a group
+      # holding both a patch and a major reports a mixed update class.
       dev-major:
         dependency-type: "development"
         update-types: ["major"]
@@ -70,9 +69,8 @@ updates:
     # `next: ["15.x"]`) does not pin a major — it only hides 15.x patches while
     # still proposing 16.x, which is how next 15.5.25 → 16.3.6 reached a PR
     # unlabelled as a major. The severity groups above now do that job
-    # explicitly: a major bump surfaces as its own PR with no auto-merge label.
-    # To hold a major line indefinitely, constrain the range in the relevant
-    # package.json instead (e.g. `~15.5.25`), not here.
+    # explicitly. To hold a major line indefinitely, constrain the range in the
+    # relevant package.json instead (e.g. `~15.5.25`), not here.
 
   # ── GitHub Actions ─────────────────────────────────────────────────────
   - package-ecosystem: "github-actions"
@@ -90,19 +88,16 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: "chore(ci)"
-    # Same semver gate as npm — and the same schema constraint: no
-    # `auto-merge` key, gating is via these labels plus the repository-level
-    # "Allow auto-merge" setting. Majors stay manual, patches merge unattended.
+    # Same caveat as the npm entry: these labels are cosmetic. The auto-merge
+    # gate is dependabot-automerge.yml (fetch-metadata), not this list.
     labels:
       - "ci"
       - "dependencies"
-      - "version-update:semver-patch"
-      - "version-update:semver-minor"
     groups:
       # Split by update-type so a major action bump never shares a PR with a
-      # patch (which would hand the major an auto-merge label). No
-      # `dependency-type` here: GitHub Actions have no dev/prod split, so
-      # `update-types` is the only available axis.
+      # patch, which would give the group a mixed update class and make the
+      # fetch-metadata gate ambiguous. No `dependency-type` here: GitHub
+      # Actions have no dev/prod split, so `update-types` is the only axis.
       actions-routine:
         patterns: ["*"]
         update-types: ["patch", "minor"]

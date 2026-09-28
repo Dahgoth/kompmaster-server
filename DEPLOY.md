@@ -733,18 +733,23 @@ and `ignore` semantics are documented in [DEVELOPMENT.md](./DEVELOPMENT.md#depen
 
 **How the auto-merge gate works:**
 
-1. Dependabot labels each PR with its SemVer class — `version-update:semver-patch`,
-   `semver-minor`, or `semver-major`.
-2. Only `semver-patch` and `semver-minor` appear in `labels:`, so **Dependabot
-   auto-merges those and not majors**. This is the actual mechanism — an
-   `automerge-candidate` label by itself gates nothing.
-3. Because the gate is per-PR, a group mixing a patch with a major would carry
-   both labels and auto-merge. Grouping by severity is what makes the gate hold.
-4. Requires the repo setting **Settings → General → Pull Requests → Allow
-   auto-merge** = enabled. It is currently **off**, so every Dependabot PR waits
-   for a manual merge. Note there is no `auto-merge` key in `dependabot.yml` —
-   one is rejected as an out-of-schema property; the labels plus this repo
-   setting are the whole mechanism.
+1. `.github/workflows/dependabot-automerge.yml` reads the PR's real update
+   class with `dependabot/fetch-metadata` and calls `gh pr merge --auto` only
+   when `update-type` is `version-update:semver-patch` or `semver-minor`.
+2. **Majors, and anything the gate cannot classify, stay manual.** A grouped PR
+   with mixed severities reports a mixed class and falls through to review —
+   which is why the severity `groups` must not be merged across severities.
+3. Requires the repo setting **Settings → General → Pull Requests → Allow
+   auto-merge** = enabled. It is currently **off**. That setting is a
+   *precondition*, not the gate: with the workflow absent, enabling it merges
+   majors unattended. Merge the workflow first.
+4. **Two things that do *not* gate anything**, both verified against PRs
+   #88–#93, which carried only the `dependencies` label and no
+   `version-update:semver-*` labels at all:
+   - the `version-update:semver-*` entries under `labels:` — Dependabot does not
+     attach them, so that list is cosmetic labelling only;
+   - an `auto-merge` key in `dependabot.yml` — it does not exist in the schema
+     and is rejected outright during config validation.
 5. CI must pass first. Dependabot PRs skip the `docs-sync` job only (a machine
    bump has no prose to write); `versions` and `commitlint` still run on them,
    because a dependency change that breaks commitlint or version alignment is a

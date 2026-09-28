@@ -1,0 +1,72 @@
+name: Dependabot Auto-Merge
+
+# Gates Dependabot's auto-merge to patch/minor updates.
+#
+# Why this exists: `dependabot.yml` has no `auto-merge` key (it is rejected as
+# an out-of-schema property), and the `version-update:semver-*` entries under
+# `labels:` do NOT gate anything — Dependabot does not attach those labels to
+# its PRs, so the configured `dependencies` label is present on every PR,
+# majors included. Enabling the repository's "Allow auto-merge" setting on that
+# basis would merge majors unattended.
+#
+# The reliable discriminator is `dependabot/fetch-metadata`, which reads the
+# real update class off the PR. Anything other than patch/minor — including an
+# empty or unrecognised value, e.g. a grouped PR with mixed severities — fails
+# this check and is left for a human.
+
+on:
+  pull_request:
+    # opened:   first evaluation after the PR is created
+    # reopened: re-evaluate if it was closed and reopened
+    # synchronize: new commits pushed to the PR branch
+    types: [opened, reopened, synchronize]
+
+permissions:
+  # Required for `gh pr merge --auto` and for fetch-metadata to read the PR.
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    # Dependabot PRs only. Dependabot is a first-party app, so these run with
+    # the write permissions above rather than a fork's read-only token.
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # No `actions/checkout` on purpose: nothing here needs the PR's code, and
+      # running third-party actions against untrusted PR content is the main
+      # hazard of write-scoped workflows. fetch-metadata reads the API only.
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge (patch and minor only)
+        if: >-
+          contains(
+            fromJSON('["version-update:semver-patch","version-update:semver-minor"]'),
+            steps.metadata.outputs.update-type
+          )
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Report hold (no auto-merge)
+        if: >-
+          !contains(
+            fromJSON('["version-update:semver-patch","version-update:semver-minor"]'),
+            steps.metadata.outputs.update-type
+          )
+        run: |
+          {
+            echo "### Auto-merge withheld"
+            echo ""
+            echo "- Dependency: \`${{ steps.metadata.outputs.dependency-names }}\`"
+            echo "- Update type: \`${{ steps.metadata.outputs.update-type || 'unrecognised' }}\`"
+            echo ""
+            echo "Only \`version-update:semver-patch\` and \`version-update:semver-minor\`"
+            echo "auto-merge. This PR needs manual review."
+          } >> "$GITHUB_STEP_SUMMARY"
