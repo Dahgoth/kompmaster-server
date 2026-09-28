@@ -446,9 +446,18 @@ action using POSIX ERE regex patterns.
 manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
 version but doesn't run project-specific hooks (docs sync). **Dependabot PRs**
 skip `docs-sync` only, for the same reason: a machine-authored bump has no prose
-to write, and requiring `DEVELOPMENT.md` makes the rule unenforceable. The
-skips are implemented via `if: github.actor != 'github-actions[bot]'` (all three
-jobs) and `&& github.actor != 'dependabot[bot]'` (`docs-sync` only) — the
+to write, and requiring `DEVELOPMENT.md` makes the rule unenforceable. The two
+skips are keyed differently, because they are different things:
+
+| Excluded | How it is keyed | Applies to |
+|----------|-----------------|------------|
+| Version-sync commit | `github.actor != 'github-actions[bot]'` | `docs-sync`, `versions`, `commitlint` |
+| Dependabot update | `github.event.pull_request.user.login != 'dependabot[bot]'` | `docs-sync` only |
+
+Keying the Dependabot case on `actor` instead of the PR author is wrong: the
+actor is whoever fired the event, so the moment a human closed and reopened a
+Dependabot PR to re-trigger the auto-merge workflow, the waiver disappeared and
+`docs-sync` failed against `package.json` + `pnpm-lock.yaml`. The
 `versions` and `commitlint` guards are left strict on purpose, since a
 Dependabot PR that breaks commitlint or version alignment is a real signal.
 The release workflow (`.github/workflows/release.yml`) uses
@@ -520,21 +529,31 @@ merges majors unattended. The workflow must be in place first.
 The `.github/dependabot.yml` check is a required status check, so a schema
 violation blocks every Dependabot PR on the branch.
 
-| Group | Order | Scope | Auto-merges? |
-| ----- | ----- | ----- | ------------ |
-| `dev-routine` | 1 | dev deps, patch + minor | yes |
-| `prod-routine` | 2 | production deps, patch + minor | yes |
-| `prod-major-frontend` | 3 | `next`, `react`, `react-dom`, `@tanstack/*` major | no |
-| `prod-major-runtime` | 4 | all other production deps, major | no |
-| `dev-major` | 5 | dev deps, major | no |
-| `actions-routine` | — | GitHub Actions, patch + minor | yes |
-| `actions-major` | — | GitHub Actions, major | no |
+| Group | Scope | Auto-merges? |
+| ----- | ----- | ------------ |
+| `dev-routine` | dev deps, patch + minor | yes |
+| `prod-routine` | production deps, patch + minor | yes |
+| `prod-major-frontend` | `next`, `react`, `react-dom`, `@tanstack/*` major | no |
+| `prod-major-runtime` | other production deps, major (explicitly excludes the above) | no |
+| `dev-major` | dev deps, major | no |
+| `actions-routine` | GitHub Actions, patch + minor | yes |
+| `actions-major` | GitHub Actions, major | no |
 
-**Group order matters.** A group without `patterns` matches every dependency of
-its `dependency-type`, and Dependabot assigns each dependency to the *first*
-group that matches. `prod-major-frontend` must therefore be declared **before**
-`prod-major-runtime`, or the general group swallows `next`/`react` and the
-specific one is dead config.
+**Routing is enforced by `exclude-patterns`, not by declaration order.** An
+earlier version relied on first-match-wins ordering to keep `next` out of
+`prod-major-runtime`. That did not hold: on 2026-09-28 `next` 15.5.25 → 16.3.6
+landed in `prod-major-runtime` (PR #95) alongside express/helmet/nodemailer, and
+no `prod-major-frontend` PR was produced at all. `prod-major-runtime` now
+carries `exclude-patterns` for the same four patterns, so the split does not
+depend on evaluation order.
+
+The practical benefit is a *visible* failure mode. If `prod-major-frontend`
+ever stops matching, `next` lands as an ungrouped single-package PR rather than
+being silently batched with unrelated runtime majors — where it is easy to
+merge without noticing.
+
+`@tanstack/*` is a glob covering the scope as it grows; today only
+`@tanstack/react-query` is installed.
 
 The `github-actions` groups carry no `dependency-type` because actions have no
 dev/prod split — `update-types` is the only axis available there.
@@ -582,6 +601,37 @@ Main branch is protected via a GitHub Ruleset (`main`) with:
 - Linear history enforced via **merge commit** (not squash) — release-please PRs require merge commits to preserve manifest history
 - `release-please--*` branches excluded from all rules
 - 0 required approvals (solo dev), thread resolution required, CodeQL + code quality gates
+
+**CodeQL is not a required check, and that is deliberate for now.** It sat in
+`startup_failure` on every run from the day it was added, reporting `NEUTRAL`
+and blocking nothing — a broken security gate that looked fine. Code scanning
+itself *was* enabled the whole time; the failure was in the workflow:
+
+- The matrix requested `javascript` and `typescript` separately. They are
+  documented *alternative identifiers* for the single `javascript-typescript`
+  extractor, so it asked for the same language twice. The matrix is now
+  `[javascript-typescript, actions]`, and the unnecessary `autobuild` step is
+  gone.
+- No `queries:` key, so the default high-precision `security` suite runs.
+  `security-extended` and `security-and-quality` trade signal for volume,
+  which is the wrong trade for one reviewer.
+
+The repo uses **advanced setup** (checked-in YAML is authoritative) rather than
+GitHub's default setup, so CodeQL config changes go through review like any
+other change.
+
+Two notes if you ever open the CodeQL setup page in the UI:
+
+- **Threat model** is inert for this repository. It is public preview and
+  supported only for Java/Kotlin and C# analysis; this codebase is
+  JavaScript/TypeScript. Choosing either option changes nothing.
+- `GET /repos/:owner/:repo/code-scanning` returns 404 to a `gh` token without
+  the `security_events` scope, and `security_and_analysis.code_scanning` is
+  likewise absent. That is a **token-scope blind spot, not evidence the
+  feature is off** — do not read it as a signal.
+
+To stop a future failure being invisible, add `CodeQL / Analyze` to the ruleset's
+required status checks **after** confirming a green run.
 
 ## Entry points
 

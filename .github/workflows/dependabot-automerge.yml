@@ -28,9 +28,12 @@ permissions:
 
 jobs:
   automerge:
-    # Dependabot PRs only. Dependabot is a first-party app, so these run with
-    # the write permissions above rather than a fork's read-only token.
-    if: github.actor == 'dependabot[bot]'
+    # Keyed on the PR AUTHOR, not the actor. `github.actor` is whoever fired
+    # the event, so a human closing and reopening a Dependabot PR to re-trigger
+    # this workflow made the job skip — the gate could never be re-run on
+    # demand. Dependabot is a first-party app, so its PRs still run with the
+    # write permissions above rather than a fork's read-only token.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

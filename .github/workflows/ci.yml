@@ -18,13 +18,23 @@ jobs:
   #
   # Exempt from bots: a machine-authored PR has no prose to write, so
   # demanding DEVELOPMENT.md / frontend/README.md makes the rule
-  # unenforceable and trains people into `--no-verify`. Dependabot is safe
-  # to exempt because dependabot.yml only auto-merges patch/minor updates
-  # (see the version-update:semver-* labels); majors always reach a human,
-  # who then decides whether a doc update is warranted.
+  # unenforceable and trains people into `--no-verify`. Safe to exempt
+  # because dependabot-automerge.yml only auto-merges patch/minor updates;
+  # majors always reach a human, who then decides whether a doc update is
+  # warranted.
+  #
+  # Two different actors are being excluded, so they are keyed differently:
+  #   - the version-sync commit is a PUSH by `github-actions[bot]` -> `actor`
+  #   - a Dependabot update is a PR whose AUTHOR is `dependabot[bot]` -> author
+  # Keying the second on `actor` meant the waiver evaporated the moment a human
+  # closed and reopened the PR to re-trigger the auto-merge workflow, and
+  # docs-sync then failed against package.json + pnpm-lock.yaml.
   docs-sync:
     runs-on: ubuntu-latest
-    if: github.actor != 'github-actions[bot]' && github.actor != 'dependabot[bot]'
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.user.login != 'dependabot[bot]')
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:

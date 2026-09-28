@@ -38,26 +38,23 @@ updates:
       prod-routine:
         dependency-type: "production"
         update-types: ["patch", "minor"]
-      # Frontend majors first: a group without `patterns` matches every
-      # dependency of its type, and Dependabot assigns a dependency to the
-      # FIRST group that matches. `prod-major-frontend` must therefore be
-      # declared before `prod-major-runtime`, or the general group swallows
-      # next/react and this one is dead config.
-      #
-      # A Next.js major bump touches build output, routing and the deploy
-      # contract, so it is worth seeing on its own.
-      #
-      # `@tanstack/*` is a glob covering the scope as it grows; today only
-      # @tanstack/react-query is installed. If the glob ever stopped matching,
-      # the fallback is benign — the bump moves to `prod-major-runtime`, which
-      # is also manual-review, so the auto-merge gate still holds.
+      # Frontend majors get their own PR: a Next.js major bump touches build
+      # output, routing and the deploy contract, so it is worth reading alone.
       prod-major-frontend:
         dependency-type: "production"
         update-types: ["major"]
         patterns: ["next", "react", "react-dom", "@tanstack/*"]
+      # ...and the general group explicitly excludes them, so routing does not
+      # depend on group evaluation order. Observed on 2026-09-28: `next`
+      # 15.5.25 -> 16.3.6 landed in prod-major-runtime (PR #95) despite being
+      # listed in prod-major-frontend, and no prod-major-frontend PR was
+      # produced. With the exclusion, `next` either gets its own PR or falls
+      # through ungrouped as a single-package PR — both visible, instead of
+      # being silently batched with express/helmet/nodemailer.
       prod-major-runtime:
         dependency-type: "production"
         update-types: ["major"]
+        exclude-patterns: ["next", "react", "react-dom", "@tanstack/*"]
       # Majors isolated so they arrive as their own reviewable PR and never
       # ride along with a patch. Isolation is also what makes the
       # fetch-metadata gate in dependabot-automerge.yml unambiguous: a group
