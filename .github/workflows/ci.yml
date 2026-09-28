@@ -38,14 +38,14 @@ jobs:
       (github.event_name != 'pull_request' ||
        github.event.pull_request.user.login != 'dependabot[bot]')
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
       - name: Cache pnpm store
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
@@ -78,8 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor != 'github-actions[bot]' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
       - name: Shared version guard
@@ -89,14 +89,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
       - name: Cache pnpm store
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
@@ -110,7 +110,7 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
       - name: Detect backend changes
@@ -119,13 +119,13 @@ jobs:
         with:
           pattern: '^(backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|Caddyfile$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
           output-name: backend
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.changes.outputs.backend == 'true'
         with:
           node-version: 24
       - name: Cache pnpm store
         if: steps.changes.outputs.backend == 'true'
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
@@ -170,7 +170,7 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
       - name: Detect frontend changes
@@ -181,13 +181,13 @@ jobs:
           pattern: '^(frontend/([^/]+/)*[^/]+|DESIGN\.md$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
           exclude-pattern: '^frontend/terraform/'
           output-name: frontend
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.changes.outputs.frontend == 'true'
         with:
           node-version: 24
       - name: Cache pnpm store
         if: steps.changes.outputs.frontend == 'true'
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
@@ -195,7 +195,7 @@ jobs:
             ${{ runner.os }}-pnpm-
       - name: Cache Next.js build
         if: steps.changes.outputs.frontend == 'true'
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: frontend/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('frontend/**') }}
@@ -251,7 +251,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
       - name: Detect e2e changes
@@ -262,13 +262,13 @@ jobs:
           pattern: '^(frontend/([^/]+/)*[^/]+|backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
           exclude-pattern: '^frontend/terraform/'
           output-name: e2e
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.changes.outputs.e2e == 'true'
         with:
           node-version: 24
       - name: Cache pnpm store
         if: steps.changes.outputs.e2e == 'true'
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
@@ -329,7 +329,7 @@ jobs:
   compose:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
       - name: Detect compose changes
@@ -348,7 +348,7 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
       - name: Detect terraform changes
@@ -358,7 +358,7 @@ jobs:
           pattern: '^(terraform/|frontend/terraform/)'
           output-name: terraform
       # Pinned CLI (repo pins node/pnpm the same way); required_version is >= 1.5.
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e
         if: steps.changes.outputs.terraform == 'true'
         with:
           terraform_version: 1.9.8
