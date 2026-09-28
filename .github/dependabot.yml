@@ -50,7 +50,7 @@ updates:
       # listed in prod-major-frontend, and no prod-major-frontend PR was
       # produced. With the exclusion, `next` either gets its own PR or falls
       # through ungrouped as a single-package PR — both visible, instead of
-      # being silently batched with express/helmet/nodemail.
+      # being silently batched with express/helmet/nodemailer.
       prod-major-runtime:
         dependency-type: "production"
         update-types: ["major"]

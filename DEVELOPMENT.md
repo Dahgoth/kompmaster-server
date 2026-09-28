@@ -542,7 +542,7 @@ violation blocks every Dependabot PR on the branch.
 **Routing is enforced by `exclude-patterns`, not by declaration order.** An
 earlier version relied on first-match-wins ordering to keep `next` out of
 `prod-major-runtime`. That did not hold: on 2026-09-28 `next` 15.5.25 → 16.3.6
-landed in `prod-major-runtime` (PR #95) alongside express/helmet/nodemail, and
+landed in `prod-major-runtime` (PR #95) alongside express/helmet/nodemailer, and
 no `prod-major-frontend` PR was produced at all. `prod-major-runtime` now
 carries `exclude-patterns` for the same four patterns, so the split does not
 depend on evaluation order.
