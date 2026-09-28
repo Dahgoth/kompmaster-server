@@ -426,7 +426,7 @@ changes:
 
 | Job        | Trigger (any file under)                                 | Steps                                    |
 | ---------- | -------------------------------------------------------- | ---------------------------------------- |
-| `docs-sync` | *always* (skipped on release-please PRs)                 | `node scripts/check-docs.js --base …`    |
+| `docs-sync` | *always* (skipped on bot-authored PRs)                  | `node scripts/check-docs.js --base …`    |
 | `versions`  | *always* (skipped on release-please PRs)                 | `node scripts/check-versions.js`         |
 | `commitlint`| *PRs only* (skipped on release-please PRs)               | `pnpm run lint:commit`                   |
 | `backend`   | `backend/**`, `scripts/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `docker-compose.yml`, `Caddyfile`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → syntax-check → test |
@@ -444,9 +444,14 @@ action using POSIX ERE regex patterns.
 **Release-please PRs** (created by `github-actions[bot]`) skip `docs-sync`,
 `versions`, and `commitlint` jobs to avoid false failures — release-please
 manages `CHANGELOG.md`, `.release-please-manifest.json`, and root `package.json`
-version but doesn't run project-specific hooks (docs sync). The skip is
-implemented via `if: github.actor != 'github-actions[bot]'` on those three
-jobs. The release workflow (`.github/workflows/release.yml`) uses
+version but doesn't run project-specific hooks (docs sync). **Dependabot PRs**
+skip `docs-sync` only, for the same reason: a machine-authored bump has no prose
+to write, and requiring `DEVELOPMENT.md` makes the rule unenforceable. The
+skips are implemented via `if: github.actor != 'github-actions[bot]'` (all three
+jobs) and `&& github.actor != 'dependabot[bot]'` (`docs-sync` only) — the
+`versions` and `commitlint` guards are left strict on purpose, since a
+Dependabot PR that breaks commitlint or version alignment is a real signal.
+The release workflow (`.github/workflows/release.yml`) uses
 `googleapis/release-please-action@v5` with a config file
 (`.release-please-config.json`) for a **single root package** (`.`) producing a
 single root `CHANGELOG.md`. This matches the ADR 003 deployment model where
@@ -470,6 +475,62 @@ version. New releases will use clean `v*.*.*` tags since
 **Pre-commit hook** runs `pnpm run format:check` (Prettier) to prevent
 formatting errors from being committed. The `pre-push` hook runs the full
 suite of checks including docs-in-sync and version alignment.
+
+## Dependency Updates (Dependabot)
+
+`.github/dependabot.yml` runs weekly (Mondays 09:00 Europe/Moscow) for both the
+`npm` and `github-actions` ecosystems, always against `directory: "/"` — this is
+a pnpm workspace with a single root `pnpm-lock.yaml`, so per-package entries
+would emit conflicting lockfile PRs that can never both merge.
+
+**Auto-merge gate.** Dependabot only enables auto-merge when the PR carries one
+of the labels listed under `labels:`, which are:
+
+```yaml
+labels:
+  - "version-update:semver-patch"
+  - "version-update:semver-minor"
+```
+
+A major bump is labelled `version-update:semver-major`, which is deliberately
+absent, so **majors always require a human**. This gate only works because
+majors are isolated in their own `groups` entry — a group mixing a patch and a
+major would carry both labels and auto-merge. Do not merge groups across
+severities.
+
+| Group | Scope | Auto-merges? |
+| ----- | ----- | ------------ |
+| `dev-routine` | dev deps, patch + minor | yes |
+| `prod-routine` | production deps, patch + minor | yes |
+| `prod-major-frontend` | `next`, `react`, `react-dom`, `@tanstack/*` major | no |
+| `prod-major-runtime` | all other production deps, major | no |
+| `dev-major` | dev deps, major | no |
+| `actions-routine` | GitHub Actions, patch + minor | yes |
+| `actions-major` | GitHub Actions, major | no |
+
+**Group order matters.** A group without `patterns` matches every dependency of
+its `dependency-type`, and Dependabot assigns each dependency to the *first*
+group that matches. `prod-major-frontend` must therefore be declared **before**
+`prod-major-runtime`, or the general group swallows `next`/`react` and the
+specific one is dead config.
+
+Grouping actions by severity also removes a class of self-conflict: action SHAs
+are pinned across five workflow files, so `actions/checkout` and
+`actions/setup-node` each appear in `ci.yml`, `codeql.yml`, `deploy.yml`,
+`release.yml`, and `security-audit.yml`. Ungrouped, Dependabot opened five PRs
+that collided on the same lines; one group per severity removes the conflicts
+rather than resolving them pairwise.
+
+**Why there is no `ignore` block.** `ignore.versions` filters the *target*
+version, not the currently-installed major. The previous `next: ["15.x"]`
+therefore hid only 15.x patches while still proposing 16.x — which is exactly
+how `next 15.5.25 → 16.3.6` reached a PR without being treated as a major. The
+severity groups now do that job explicitly: a major bump surfaces as its own PR
+with no auto-merge label. To hold a major line indefinitely, constrain the range
+in the relevant `package.json` (e.g. `~15.5.25`) — not in `dependabot.yml`.
+
+`open-pull-requests-limit` (5 for npm, 3 for actions) caps the Monday flood;
+queued updates are deferred to the next run rather than dropped.
 
 ## Branch Protection
 

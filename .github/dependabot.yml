@@ -1,5 +1,9 @@
 version: 2
 updates:
+  # ── npm ────────────────────────────────────────────────────────────────
+  # Single directory "/": this is a pnpm workspace with ONE root lockfile
+  # (pnpm-lock.yaml). Splitting into /backend and /frontend would emit
+  # conflicting lockfile PRs that can never both merge.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -7,30 +11,61 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Europe/Moscow"
+    # Cap the Monday flood: extra updates are queued, not dropped.
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps:dev)"
       include: "scope"
-    groups:
-      dev-dependencies:
-        patterns: ["*"]
-        dependency-type: "development"
-      production-dependencies:
-        patterns: ["*"]
-        dependency-type: "production"
+    # The semver labels are the auto-merge gate: Dependabot only enables
+    # auto-merge when the PR carries one of these. A major bump is labelled
+    # `version-update:semver-major`, which is deliberately absent, so majors
+    # always require a human. This only works BECAUSE majors are isolated in
+    # their own group below — a mixed group would carry both labels and merge.
     labels:
       - "dependencies"
-      - "automerge-candidate"
+      - "version-update:semver-patch"
+      - "version-update:semver-minor"
+    groups:
+      # Auto-merge-eligible: routine tooling, low blast radius.
+      dev-routine:
+        dependency-type: "development"
+        update-types: ["patch", "minor"]
+      prod-routine:
+        dependency-type: "production"
+        update-types: ["patch", "minor"]
+      # Frontend majors first: a group without `patterns` matches every
+      # dependency of its type, and Dependabot assigns a dependency to the
+      # FIRST group that matches. `prod-major-frontend` must therefore be
+      # declared before `prod-major-runtime`, or the general group swallows
+      # next/react and this one is dead config.
+      #
+      # A Next.js major bump touches build output, routing and the deploy
+      # contract, so it is worth seeing on its own.
+      prod-major-frontend:
+        dependency-type: "production"
+        update-types: ["major"]
+        patterns: ["next", "react", "react-dom", "@tanstack/*"]
+      prod-major-runtime:
+        dependency-type: "production"
+        update-types: ["major"]
+      # Majors isolated so they arrive as their own reviewable PR and never
+      # ride along with a patch.
+      dev-major:
+        dependency-type: "development"
+        update-types: ["major"]
     auto-merge:
       allowed: true
-    ignore:
-      - dependency-name: "next"
-        versions: ["15.x"]
-      - dependency-name: "react"
-        versions: ["19.x"]
-      - dependency-name: "react-dom"
-        versions: ["19.x"]
+    # No `ignore` block on purpose. Suppressing a target version (the old
+    # `next: ["15.x"]`) does not pin a major — it only hides 15.x patches while
+    # still proposing 16.x, which is how next 15.5.25 → 16.3.6 reached a PR
+    # unlabelled as a major. The severity groups above now do that job
+    # explicitly: a major bump surfaces as its own PR with no auto-merge label.
+    # To hold a major line indefinitely, constrain the range in the relevant
+    # package.json instead (e.g. `~15.5.25`), not here.
 
+
+  # ── GitHub Actions ─────────────────────────────────────────────────────
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -38,10 +73,28 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Europe/Moscow"
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "chore(ci)"
+    # Same semver gate as npm: majors stay manual, patches merge unattended.
     labels:
       - "ci"
       - "dependencies"
+      - "version-update:semver-patch"
+      - "version-update:semver-minor"
+    groups:
+      # Split by update-type so a major action bump never shares a PR with a
+      # patch (which would hand the major an auto-merge label).
+      actions-routine:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+      # Actions are pinned to SHAs spread across five workflow files, so
+      # ungrouped Dependabot opens 3-5 PRs that conflict with each other on
+      # the same line — checkout and setup-node both appear in
+      # security-audit.yml and release.yml. One group per severity removes
+      # the conflicts instead of resolving them pairwise.
+      actions-major:
+        patterns: ["*"]
+        update-types: ["major"]
     auto-merge:
       allowed: true
