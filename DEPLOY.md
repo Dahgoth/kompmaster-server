@@ -717,68 +717,43 @@ jobs:
 
 **No Staging VPS needed** — Vercel Preview URLs are the staging environment.
 
-### 11.4 Dependabot — Auto-Merge for Patch Updates Only
+### 11.4 Dependabot — Grouped Updates, Auto-Merge for Patch/Minor Only
 
-**Purpose**: Automate dependency updates without manual PR review for safe updates.
+**Purpose**: Automate routine dependency updates without manual review, while
+keeping breaking changes behind a human.
 
-**Configuration** (`.github/dependabot.yml`):
+Configuration lives in `.github/dependabot.yml`; the full rationale, group table
+and `ignore` semantics are documented in [DEVELOPMENT.md](./DEVELOPMENT.md#dependency-updates-dependabot). Summary:
 
-```yaml
-version: 2
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Europe/Moscow"
-    commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(deps:dev)"
-      include: "scope"
-    groups:
-      dev-dependencies:
-        patterns: ["*"]
-        dependency-type: "development"
-      production-dependencies:
-        patterns: ["*"]
-        dependency-type: "production"
-    labels:
-      - "dependencies"
-      - "automerge-candidate"
-    auto-merge:
-      allowed: true
-    ignore:
-      - dependency-name: "next"
-        versions: ["15.x"]
-      - dependency-name: "react"
-        versions: ["19.x"]
-      - dependency-name: "react-dom"
-        versions: ["19.x"]
+- Weekly (Mondays 09:00 Europe/Moscow) for `npm` and `github-actions`, both
+  against `directory: "/"` (single root `pnpm-lock.yaml`).
+- Updates are grouped by **severity**, so a major never shares a PR with a patch.
+- `open-pull-requests-limit` caps the Monday flood (5 npm / 3 actions); the
+  remainder queue for the next run.
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Europe/Moscow"
-    commit-message:
-      prefix: "chore(ci)"
-    labels:
-      - "ci"
-      - "dependencies"
-```
+**How the auto-merge gate works:**
 
-**How auto-merge works:**
-1. Dependabot creates PR with `automerge-candidate` label
-2. **Only patch updates** (per SemVer) are auto-merged — minor/major require manual review
-3. Requires GitHub repo setting: **Settings → General → Pull Requests → Allow auto-merge** = enabled
-4. Branch protection must allow auto-merge to bypass required reviews for labeled PRs
-5. CI must pass on the Dependabot PR before merge
+1. Dependabot labels each PR with its SemVer class — `version-update:semver-patch`,
+   `semver-minor`, or `semver-major`.
+2. Only `semver-patch` and `semver-minor` appear in `labels:`, so **Dependabot
+   auto-merges those and not majors**. This is the actual mechanism — an
+   `automerge-candidate` label by itself gates nothing.
+3. Because the gate is per-PR, a group mixing a patch with a major would carry
+   both labels and auto-merge. Grouping by severity is what makes the gate hold.
+4. Requires the repo setting **Settings → General → Pull Requests → Allow
+   auto-merge** = enabled. It is currently **off**, so every Dependabot PR waits
+   for a manual merge. Note there is no `auto-merge` key in `dependabot.yml` —
+   one is rejected as an out-of-schema property; the labels plus this repo
+   setting are the whole mechanism.
+5. CI must pass first. Dependabot PRs skip the `docs-sync` job only (a machine
+   bump has no prose to write); `versions` and `commitlint` still run on them,
+   because a dependency change that breaks commitlint or version alignment is a
+   real signal.
 
-**Why this is useful for solo dev:** Patch updates (security fixes, bug fixes) merge automatically overnight; you only review minor/major updates.
+**Why this is useful for solo dev:** routine patch and minor updates merge on
+their own once the repo setting is enabled; you only review majors — which are
+exactly the ones worth reviewing (Express 4→5, Next.js 15→16, TypeScript 5→7).
+
 
 ### 11.5 Branch Protection Rules (Solo Dev Adaptation)
 

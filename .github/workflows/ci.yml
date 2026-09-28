@@ -15,9 +15,16 @@ jobs:
   # Always runs: cheap guard that the docs-in-sync hard rule holds for the
   # pushed change set (AGENTS.md §6). Scopes itself via `git diff`, so it
   # costs ~1s and never needs path filters.
+  #
+  # Exempt from bots: a machine-authored PR has no prose to write, so
+  # demanding DEVELOPMENT.md / frontend/README.md makes the rule
+  # unenforceable and trains people into `--no-verify`. Dependabot is safe
+  # to exempt because dependabot.yml only auto-merges patch/minor updates
+  # (see the version-update:semver-* labels); majors always reach a human,
+  # who then decides whether a doc update is warranted.
   docs-sync:
     runs-on: ubuntu-latest
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && github.actor != 'dependabot[bot]'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
