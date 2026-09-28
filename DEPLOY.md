@@ -736,13 +736,15 @@ and `ignore` semantics are documented in [DEVELOPMENT.md](./DEVELOPMENT.md#depen
 1. Dependabot labels each PR with its SemVer class — `version-update:semver-patch`,
    `semver-minor`, or `semver-major`.
 2. Only `semver-patch` and `semver-minor` appear in `labels:`, so **Dependabot
-   enables auto-merge for those and not for majors**. This is the actual
-   mechanism — an `automerge-candidate` label by itself gates nothing.
+   auto-merges those and not majors**. This is the actual mechanism — an
+   `automerge-candidate` label by itself gates nothing.
 3. Because the gate is per-PR, a group mixing a patch with a major would carry
    both labels and auto-merge. Grouping by severity is what makes the gate hold.
 4. Requires the repo setting **Settings → General → Pull Requests → Allow
-   auto-merge** = enabled. While that is off, the `auto-merge` block in
-   `dependabot.yml` is inert and every PR waits for a manual merge.
+   auto-merge** = enabled. It is currently **off**, so every Dependabot PR waits
+   for a manual merge. Note there is no `auto-merge` key in `dependabot.yml` —
+   one is rejected as an out-of-schema property; the labels plus this repo
+   setting are the whole mechanism.
 5. CI must pass first. Dependabot PRs skip the `docs-sync` job only (a machine
    bump has no prose to write); `versions` and `commitlint` still run on them,
    because a dependency change that breaks commitlint or version alignment is a

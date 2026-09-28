@@ -483,8 +483,10 @@ suite of checks including docs-in-sync and version alignment.
 a pnpm workspace with a single root `pnpm-lock.yaml`, so per-package entries
 would emit conflicting lockfile PRs that can never both merge.
 
-**Auto-merge gate.** Dependabot only enables auto-merge when the PR carries one
-of the labels listed under `labels:`, which are:
+**Auto-merge gate.** There is **no `auto-merge` key in the `dependabot.yml`
+schema** — adding one fails Dependabot's config validation with
+*"contains additional properties [`auto-merge`] outside of the schema"*. Gating
+is done entirely with the `version-update:semver-*` labels:
 
 ```yaml
 labels:
@@ -492,11 +494,18 @@ labels:
   - "version-update:semver-minor"
 ```
 
-A major bump is labelled `version-update:semver-major`, which is deliberately
-absent, so **majors always require a human**. This gate only works because
-majors are isolated in their own `groups` entry — a group mixing a patch and a
-major would carry both labels and auto-merge. Do not merge groups across
-severities.
+Dependabot auto-merges its own PRs when the repository has **Allow auto-merge**
+enabled (*Settings → General → Pull Requests*) **and** the PR carries one of the
+labels listed above. A major bump is labelled `version-update:semver-major`,
+which is deliberately absent, so **majors always require a human**.
+
+This gate only works because majors are isolated in their own `groups` entry — a
+group mixing a patch and a major would carry both labels, and the presence of
+the semver-patch label would auto-merge the major riding along with it. Do not
+merge groups across severities.
+
+The `.github/dependabot.yml` check is a required status check, so a schema
+violation blocks every Dependabot PR on the branch.
 
 | Group | Order | Scope | Auto-merges? |
 | ----- | ----- | ----- | ------------ |
