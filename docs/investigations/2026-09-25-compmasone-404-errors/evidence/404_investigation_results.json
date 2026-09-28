@@ -1,0 +1,760 @@
+{
+  "url": "https://www.compmasone.ru/",
+  "timestamp": "2026-09-25 19:18:17",
+  "network_errors": [
+    {
+      "url": "https://www.compmasone.ru/_next/static/css/f9a044ef0959b98d.css",
+      "method": "GET",
+      "resource_type": "stylesheet",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3131-a6dcb222db41fb9c.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.092,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.34,
+        "responseStart": 535.108,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3131-a6dcb222db41fb9c.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/webpack-d4f6c7a0c16fb497.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691423.866,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.517,
+        "responseStart": 533.708,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/webpack-d4f6c7a0c16fb497.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/c7879cf7-ce6cc72fe8fad416.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.268,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.382,
+        "responseStart": 534.724,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/c7879cf7-ce6cc72fe8fad416.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3085-d3f0cb7191be6918.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.402,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.125,
+        "responseStart": 535.286,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3085-d3f0cb7191be6918.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/7238-4ea8582c6088f05d.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.5168,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.041,
+        "responseStart": 535.601,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/7238-4ea8582c6088f05d.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3044-635aee3011db4c9a.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.667,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.909,
+        "responseStart": 535.905,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3044-635aee3011db4c9a.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/1667-c17de8a4e7946170.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.8892,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.702,
+        "responseStart": 536.131,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/1667-c17de8a4e7946170.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/main-app-b2a032a298d4503c.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.206,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.256,
+        "responseStart": 537.321,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/main-app-b2a032a298d4503c.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/8197-f05fdd869613ec30.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691424.297,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 1.197,
+        "responseStart": 537.657,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/8197-f05fdd869613ec30.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/app/layout-d8c030cabcb2cbc5.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691425.024,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.584,
+        "responseStart": 537.367,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/app/layout-d8c030cabcb2cbc5.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/4234-2b8e26c2abb40512.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691425.169,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.486,
+        "responseStart": 537.631,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/4234-2b8e26c2abb40512.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/app/page-a400b68518bd4d82.js",
+      "status": 404,
+      "method": "GET",
+      "resource_type": "script",
+      "headers": {
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "cache-control": "public, max-age=31536000, immutable, private, no-cache, no-store, max-age=0, must-revalidate",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://assets.compmasone.ru https://mc.yandex.ru; font-src 'self' data:; connect-src 'self' https://mc.yandex.ru; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+        "via": "1.1 Caddy",
+        "x-content-type-options": "nosniff",
+        "alt-svc": "h3=\":443\"; ma=2592000",
+        "date": "Fri, 25 Sep 2026 22:18:11 GMT",
+        "content-type": "text/plain; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "x-frame-options": "SAMEORIGIN"
+      },
+      "timing": {
+        "startTime": 1790374691425.263,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.422,
+        "responseStart": 537.964,
+        "responseEnd": -1
+      }
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/app/page-a400b68518bd4d82.js",
+      "method": "GET",
+      "resource_type": "script",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Refused to apply style from 'https://www.compmasone.ru/_next/static/css/f9a044ef0959b98d.css' because its MIME type ('text/plain') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/3131-a6dcb222db41fb9c.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/3131-a6dcb222db41fb9c.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/webpack-d4f6c7a0c16fb497.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/webpack-d4f6c7a0c16fb497.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/c7879cf7-ce6cc72fe8fad416.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/c7879cf7-ce6cc72fe8fad416.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/3085-d3f0cb7191be6918.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/3085-d3f0cb7191be6918.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/7238-4ea8582c6088f05d.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/7238-4ea8582c6088f05d.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/3044-635aee3011db4c9a.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/3044-635aee3011db4c9a.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/1667-c17de8a4e7946170.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/1667-c17de8a4e7946170.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/main-app-b2a032a298d4503c.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/main-app-b2a032a298d4503c.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/8197-f05fdd869613ec30.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/8197-f05fdd869613ec30.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/app/layout-d8c030cabcb2cbc5.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/app/layout-d8c030cabcb2cbc5.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/4234-2b8e26c2abb40512.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/4234-2b8e26c2abb40512.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://www.compmasone.ru/_next/static/chunks/app/page-a400b68518bd4d82.js",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Refused to execute script from 'https://www.compmasone.ru/_next/static/chunks/app/page-a400b68518bd4d82.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+      "location": {
+        "url": "https://www.compmasone.ru/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "all_requests_summary": [
+    {
+      "url": "https://www.compmasone.ru/",
+      "status": 200,
+      "method": "GET",
+      "type": "document"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3131-a6dcb222db41fb9c.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/webpack-d4f6c7a0c16fb497.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/c7879cf7-ce6cc72fe8fad416.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3085-d3f0cb7191be6918.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/7238-4ea8582c6088f05d.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/3044-635aee3011db4c9a.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/1667-c17de8a4e7946170.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/main-app-b2a032a298d4503c.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/8197-f05fdd869613ec30.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/app/layout-d8c030cabcb2cbc5.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/4234-2b8e26c2abb40512.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    },
+    {
+      "url": "https://www.compmasone.ru/_next/static/chunks/app/page-a400b68518bd4d82.js",
+      "status": 404,
+      "method": "GET",
+      "type": "script"
+    }
+  ],
+  "stats": {
+    "total_requests": 13,
+    "network_errors_count": 25,
+    "console_errors_count": 25,
+    "status_codes": {
+      "200": 1,
+      "404": 12
+    }
+  }
+}

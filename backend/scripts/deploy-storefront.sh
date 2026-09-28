@@ -109,8 +109,8 @@ mkdir -p "$artifact/.next"
 rsync -a frontend/.next/standalone/frontend/ "$artifact/"
 rsync -a frontend/.next/standalone/node_modules/ "$artifact/node_modules/"
 # Frontend static assets (hashed, immutable) and public folder
-rsync -a frontend/.next/static "$artifact/.next/static"
-rsync -a frontend/public "$artifact/public"
+rsync -a frontend/.next/static/ "$artifact/.next/static/"
+rsync -a frontend/public/ "$artifact/public/"
 
 # --- boot-verify before shipping --------------------------------------------
 # Catches a broken artifact (missing runtime package, bad build) on the build
