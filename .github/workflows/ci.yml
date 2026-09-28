@@ -150,8 +150,20 @@ jobs:
           # package is CommonJS and a few pre-existing legacy files use ESM
           # syntax (ADR 001 legacy quarantine), which `node --check` rejects
           # even though this change did not touch their content.
+          #
+          # `grep` exits 1 when it matches nothing, and GitHub runs `run:`
+          # steps under `bash -e`. An assignment takes the status of its
+          # command substitution, so an unguarded `files=$(... | grep ...)`
+          # aborts the step with exit 1 and no output the moment a PR touches
+          # no backend JS files. `|| grep_exit=$?` turns that into a compound
+          # command so errexit does not fire, and we still distinguish "no
+          # match" (1, normal) from "bad pattern" (2, real error).
           files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>/dev/null |
-            grep -E '^backend/(src|tests|scripts)/.*\.js$')
+            grep -E '^backend/(src|tests|scripts)/.*\.js$') || grep_exit=$?
+          if [ "${grep_exit:-0}" -eq 2 ]; then
+            echo "::error::grep failed with invalid pattern or error" >&2
+            exit 1
+          fi
           if [ -n "$files" ]; then
             for f in $files; do node --check "$f"; done
           else

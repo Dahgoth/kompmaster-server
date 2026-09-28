@@ -202,9 +202,51 @@ periodic canary later; not done here.
 
 ---
 
-## 7. Follow-up
+## 7. Second defect found by the same fix
 
-- Re-verify the 23 unverified PRs (§8 of this document's companion task).
+Restoring the `backend` job immediately surfaced a **latent bug that the guard
+had been hiding**, in its `Syntax check (backend JS files in this change set)`
+step:
+
+```yaml
+files=$(git diff ... | grep -E '^backend/(src|tests|scripts)/.*\.js$')
+if [ -n "$files" ]; then ... else echo "no backend JS content changes to check."; fi
+```
+
+`grep` exits 1 when it matches nothing, and GitHub executes `run:` steps under
+`bash -e`. An assignment takes the exit status of its command substitution, so
+the unguarded pipeline aborted the step with **exit 1 and no output** the moment
+a PR touched no backend JS files — the `else` branch was unreachable.
+
+It only reproduces on changes that touch **no** backend JS, which is why it was
+invisible: the whole job was skipping anyway, and every PR since #58 that would
+have tripped it was a CI/docs change.
+
+Reproduced locally before fixing:
+
+```console
+$ bash -e step.sh          # no matching files
+exit=1                     # no output at all
+```
+
+Fixed with `|| grep_exit=$?`, which makes it a compound command so `errexit`
+does not fire, while still separating "no match" (1, normal) from "bad pattern"
+(2, real error). Verified across three cases:
+
+| Case | Result |
+|------|--------|
+| No backend JS changed | prints the explanatory line, exit 0 |
+| Backend JS changed, valid | exit 0 |
+| Backend JS changed, **invalid syntax** | exit 1 with the error — the check still works |
+
+This is the same class of defect as the one above it: an unguarded command
+whose "nothing to do" exit code is indistinguishable from an error. It was
+introduced before `fa34132` and is unrelated to it; the path-filter bug is only
+what kept it from being noticed.
+
+## 8. Follow-up
+
+- Re-verify the 23 unverified PRs (§4 of this document).
 - Do **not** merge Dependabot major PRs until the restored jobs are green —
   #93 (`typescript` 5→7) and #98 (`release-please-action` v4→v5, node24) were
   both queued with verification switched off.
