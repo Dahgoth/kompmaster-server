@@ -498,21 +498,35 @@ majors are isolated in their own `groups` entry — a group mixing a patch and a
 major would carry both labels and auto-merge. Do not merge groups across
 severities.
 
-| Group | Scope | Auto-merges? |
-| ----- | ----- | ------------ |
-| `dev-routine` | dev deps, patch + minor | yes |
-| `prod-routine` | production deps, patch + minor | yes |
-| `prod-major-frontend` | `next`, `react`, `react-dom`, `@tanstack/*` major | no |
-| `prod-major-runtime` | all other production deps, major | no |
-| `dev-major` | dev deps, major | no |
-| `actions-routine` | GitHub Actions, patch + minor | yes |
-| `actions-major` | GitHub Actions, major | no |
+| Group | Order | Scope | Auto-merges? |
+| ----- | ----- | ----- | ------------ |
+| `dev-routine` | 1 | dev deps, patch + minor | yes |
+| `prod-routine` | 2 | production deps, patch + minor | yes |
+| `prod-major-frontend` | 3 | `next`, `react`, `react-dom`, `@tanstack/*` major | no |
+| `prod-major-runtime` | 4 | all other production deps, major | no |
+| `dev-major` | 5 | dev deps, major | no |
+| `actions-routine` | — | GitHub Actions, patch + minor | yes |
+| `actions-major` | — | GitHub Actions, major | no |
 
 **Group order matters.** A group without `patterns` matches every dependency of
 its `dependency-type`, and Dependabot assigns each dependency to the *first*
 group that matches. `prod-major-frontend` must therefore be declared **before**
 `prod-major-runtime`, or the general group swallows `next`/`react` and the
 specific one is dead config.
+
+The `github-actions` groups carry no `dependency-type` because actions have no
+dev/prod split — `update-types` is the only axis available there.
+
+`@tanstack/*` is a glob covering the scope as it grows (today only
+`@tanstack/react-query` is installed). If it ever stopped matching, the
+fallback is benign: the bump moves to `prod-major-runtime`, which is also
+manual-review, so the auto-merge gate still holds.
+
+`open-pull-requests-limit` (5 for npm, 3 for actions) caps the simultaneously
+open PRs per ecosystem; the remainder queue for the next run rather than being
+dropped. 5 of 7 npm groups is deliberate — steady state is 2–4 PRs, and a major
+deferred behind routine patches costs a week on something that is already
+manual-review.
 
 Grouping actions by severity also removes a class of self-conflict: action SHAs
 are pinned across five workflow files, so `actions/checkout` and
