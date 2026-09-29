@@ -198,30 +198,27 @@ sudo certbot --nginx -d api.ваш-домен.ru
 
 | Setting | Value | Why |
 |---------|-------|-----|
-| **Root Directory** | `.` (repo root) | Monorepo needs hoisted `pnpm-lock.yaml` at workspace root |
-| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` before custom commands |
-| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root |
-| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
-| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Enable corepack FIRST |
+| **Root Directory** | `frontend` | The Next.js app lives here. Vercel still installs from the repo root, where `pnpm-lock.yaml` is. |
+| **Framework Preset** | `Next.js` | Vercel builds and deploys it as a real Next.js app, so SSR and server routes work. |
+| **Build Command** | *default* | Vercel's Next.js build. |
+| **Output Directory** | *default* | Vercel deploys the serverless functions itself. |
+| **Install Command** | *default* | Vercel runs `pnpm install` at the workspace root; the `pnpm@12.4.2` pin comes from `packageManager`. |
 
-**Vercel config** (`frontend/vercel.json`):
-```json
-{
-  "buildCommand": "pnpm --filter kompmaster-frontend build",
-  "outputDirectory": "frontend/.next/standalone",
-  "framework": "nextjs",
-  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
-  "devCommand": "pnpm --filter kompmaster-frontend dev"
-}
-```
+**There is no `vercel.json`.** That is deliberate. The one this repo used to
+carry lived in `frontend/` while Root Directory was `.`, so Vercel never read
+it: the build fell through to `npm run build` (no such script) and the output
+resolved to the repo root. Every build 404'd while the Vercel check still
+reported `Ready`. Pointing `outputDirectory` at `.next/standalone` could not
+have worked either — that is a Node server bundle, not a static export, so SSR
+routes and `api/revalidate` would break.
 
 **Critical footguns:**
-1. **Framework Preset = Next.js** → Auto-detection runs `pnpm install` before custom commands → pnpm wrapper missing error. **Fix: Framework = Other**.
-2. **Root Directory = `frontend/`** → Can't access repo-root `pnpm-lock.yaml`. **Fix: Root = `.`**.
-3. **Install in `buildCommand`** → Defeats Vercel caching. **Fix: Install in `installCommand`**.
-4. **Corepack not enabled** → Vercel's pnpm v12.4.2 wrapper missing. **Fix: `corepack enable pnpm` in `installCommand`**.
+1. **A green Vercel check does not mean the preview works** — it reports on the deployment, not on whether a route resolves. Fetch the preview URL and check a real route.
+2. **`vercel.json` placement is tied to Root Directory.** Put it anywhere else and its settings are silently inert, with no error.
+3. **Never point `outputDirectory` at a standalone Next.js server.** Use the Next.js preset's default output.
+4. **Root Directory = `frontend` does not break a pnpm monorepo.** This was previously documented as a footgun and was the direct cause of the 404s. What makes hoisted deps resolve is `outputFileTracingRoot` in `frontend/next.config.ts`, which is already set.
 
-See `DEPLOY.md` §10.3 and §12 for full footguns list and lessons learned.
+See `DEPLOY.md` §10.3 and §12 for the full footgun list.
 
 ### Environments
 - **Preview** (auto): Every PR/push → unique URL

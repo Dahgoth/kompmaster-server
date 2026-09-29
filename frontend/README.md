@@ -123,6 +123,15 @@ CI runs `lint:frontend`, `typecheck`, tests, and `next build` in the
   deploy via `backend/scripts/deploy-storefront.sh` (rsync + PM2 + health gate).
 - Vercel hosts PR previews and staging; production personal data never
   touches Vercel (ADR 001 152-FZ, review R6/C-1).
+- Vercel builds this app **as a Next.js project**: Root Directory `frontend`,
+  Framework Preset `Next.js`, all build/output/install commands at their
+  defaults. There is **no `vercel.json`** — the one this app used to carry sat
+  in `frontend/` while Root Directory was the repo root, so Vercel never read
+  it, fell back to a `npm run build` script that does not exist, and served the
+  repo root: every build 404'd while the Vercel check still reported `Ready`.
+  Pointing `outputDirectory` at `.next/standalone` could not have worked either
+  — that is a Node server bundle, and the app has SSR routes plus
+  `api/revalidate`. Full reasoning in `DEPLOY.md` §10.3.
 
 Deploy (from repository root or worktree):
 ```bash

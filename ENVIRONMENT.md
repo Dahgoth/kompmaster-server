@@ -188,41 +188,31 @@ Caddy `www` block uses `{$STOREFRONT_PORT:3000}`.
 
 ## Vercel Deployment Configuration (Phase 9)
 
-The Vercel project must be configured for monorepo deployment with pnpm hoisting:
+The Vercel project is configured for monorepo deployment with pnpm hoisting:
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| **Root Directory** | `.` (repo root) | Monorepo needs access to hoisted `pnpm-lock.yaml` and `node_modules` at workspace root |
-| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` BEFORE custom commands, causing pnpm wrapper missing error |
-| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root with hoisted deps available |
-| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
-| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Must enable corepack FIRST to install correct pnpm version |
+| **Root Directory** | `frontend` | The Next.js app lives here. Vercel resolves the pnpm workspace and still installs from the repo root, where `pnpm-lock.yaml` is. |
+| **Framework Preset** | `Next.js` | Vercel builds and deploys the app as a real Next.js application, so SSR and server routes work. |
+| **Build Command** | *default* | Vercel's Next.js build. |
+| **Output Directory** | *default* | Vercel deploys the serverless functions itself. |
+| **Install Command** | *default* | Vercel runs `pnpm install` at the workspace root; the `pnpm@12.4.2` pin comes from `packageManager`. |
 
-**Vercel config file** (`frontend/vercel.json`):
-```json
-{
-  "buildCommand": "pnpm --filter kompmaster-frontend build",
-  "outputDirectory": "frontend/.next/standalone",
-  "framework": "nextjs",
-  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
-  "devCommand": "pnpm --filter kompmaster-frontend dev"
-}
-```
+**There is no `vercel.json`, by design.** The previous one lived in
+`frontend/` while Root Directory was `.`, so Vercel never read it. The build
+fell through to the default `npm run build` — a script that does not exist in
+the root `package.json` — and the output directory resolved to `.` (the repo
+root, which has no app). Every build 404'd while the Vercel check still
+reported `Ready`, because the deployment itself succeeded.
 
 ### Vercel Footguns (Critical)
 
-1. **Framework Preset = Next.js** → Vercel auto-detection runs `pnpm install` BEFORE custom commands, using its own pnpm wrapper which fails with "pnpm wrapper missing" error. **Fix: Framework Preset = `Other`**.
-
-2. **Root Directory = `frontend/`** → Can't access repo-root `pnpm-lock.yaml` and hoisted `node_modules`. **Fix: Root Directory = `.` (repo root)**.
-
-3. **Install in `buildCommand`** → Defeats Vercel build caching (every deploy does fresh install). **Fix: Keep install in `installCommand`**.
-
-4. **`vercel-build` script in root `package.json`** → Dead code when `vercel.json` has explicit `buildCommand`. **Fix: Remove or use consistently**.
-
-5. **Corepack not enabled** → Vercel's pnpm v12.4.2 wrapper missing. **Fix: `corepack enable pnpm` in `installCommand`**.
+1. **A green Vercel check does not mean the preview works.** The check reports on the *deployment*, not on whether a route resolves. A build producing no servable output still deploys successfully and 404s at request time. Verify by fetching a real route.
+2. **`vercel.json` placement is tied to Root Directory.** Vercel reads it from the Root Directory. Anywhere else and its settings are silently inert, with no error to signal it.
+3. **Never point `outputDirectory` at a standalone Next.js server.** `output: "standalone"` produces a Node server bundle, not a static export; serving it statically breaks the dynamic `product/[id]` routes and the `api/revalidate` server route.
+4. **Root Directory = `frontend` does not break a pnpm monorepo.** This was previously documented as a footgun and following it is what produced the 404s. The claim was a misdiagnosis: Vercel installs from the workspace root regardless, and what makes hoisted dependencies resolve at build time is `outputFileTracingRoot` in `frontend/next.config.ts`, which is already set.
 
 ### Monorepo pnpm Hoisting Requirements
 - `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
-- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
-- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
-- Build MUST run from repo root (`Root Directory = .`)
+- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps. **This is the setting that makes Root Directory `frontend` work.**
+- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`. Consumed by the **VPS** deploy under PM2, not by Vercel.
