@@ -5,7 +5,7 @@ const config = require("../config");
 const s3 = new S3Client({
   endpoint: config.s3.endpoint,
   region: config.s3.region,
-  forcePathStyle: true, // нужно для MinIO/Selectel, для R2 тоже не мешает
+  forcePathStyle: true, // нужно для SeaweedFS/Selectel, для R2 тоже не мешает
   credentials: {
     accessKeyId: config.s3.accessKey,
     secretAccessKey: config.s3.secretKey,

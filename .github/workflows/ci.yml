@@ -307,11 +307,6 @@ jobs:
           echo "===== backend ====="; cat /tmp/e2e-backend.log || true
           echo "===== storefront ====="; cat /tmp/e2e-store.log || true
 
-  # Runs on every PR: validates the compose file schema and verifies every
-  # pinned image actually resolves on its registry. Exists because a dead image
-  # reference (`minio/minio` after MinIO removed its Docker Hub org, 2025-06)
-  # shipped and survived — nothing ever pulled the compose images before a
-  # developer ran `docker compose up`. Cheap enough to always run.
   compose:
     runs-on: ubuntu-latest
     steps:

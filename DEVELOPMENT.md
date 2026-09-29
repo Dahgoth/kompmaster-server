@@ -20,8 +20,8 @@ entry point is `backend/src/index.js` (see [Entry points](#entry-points)).
 | Node.js        | 24 LTS or newer                                                    |
 | pnpm           | 12.x — enabled via Corepack (`corepack enable pnpm`)               |
 | PostgreSQL     | 16 (see `docker-compose.yml`)                                      |
-| S3-compatible  | MinIO (via Docker), or Selectel Object Storage / Cloudflare R2      |
-| Docker         | optional — for `docker compose`-managed Postgres and MinIO only (not the app) |
+| S3-compatible  | SeaweedFS (via Docker), or Selectel Object Storage / Cloudflare R2    |
+| Docker         | optional — for `docker compose`-managed Postgres and SeaweedFS only (not the app) |
 
 ## Getting started
 
@@ -55,7 +55,7 @@ full list and per-variable guidance. At minimum you need `DATABASE_URL` and
 Either use the bundled Docker services:
 
 ```bash
-docker compose up -d postgres minio
+docker compose up -d postgres seaweedfs
 ```
 
 or point `DATABASE_URL` at an existing PostgreSQL instance and set the `S3_*`
@@ -141,7 +141,7 @@ standalone, boots on scratch port, runs 4 rounds × 14 routes, samples RSS
 every 0.2s, reports min/avg/peak vs `RAM_BUDGET_MB` (default 512 MB). Local
 baseline: **80 MB peak** (PASS). Run on VPS against staging API for real numbers.
 
-> **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
+> **Docker decision:** Docker is used only for local dev databases (Postgres + SeaweedFS).
 > Production app deployment uses PM2. See
 > [docs/archive/DOCKER_EVALUATION.md](docs/archive/DOCKER_EVALUATION.md)
 > for the full rationale.
@@ -270,7 +270,7 @@ formatting errors.
 | `pnpm run lint:commit`  | Validate the most recent commit message          |
 | `pnpm --filter kompmaster-server <script>`  | Run a backend script                             |
 | `pnpm --filter kompmaster-frontend <script>`| Run a frontend script                            |
-| `docker compose up -d postgres minio` | Start local Postgres + MinIO only; app runs via PM2 (`pnpm start`) |
+| `docker compose up -d postgres seaweedfs` | Start local Postgres + SeaweedFS only; app runs via PM2 (`pnpm start`) |
 
 ## Testing
 
@@ -688,42 +688,60 @@ is part of a request body; never let the value reach the query unchecked.
 
 ## Docker-based setup (databases only)
 
-`docker-compose.yml` provides PostgreSQL 16.15 (`postgres`) and MinIO
-(`minio`) with local volumes. Both are **dev-only** — production object
+`docker-compose.yml` provides PostgreSQL 16.15 (`postgres`) and SeaweedFS
+(`seaweedfs`) with local volumes. Both are **dev-only** — production object
 storage is Timeweb S3 (ADR 002) and production Postgres is the managed/VPS
 instance. Both images are **pinned to exact versions** (see the upgrade
 procedure below).
 
-The MinIO image is pinned to `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z`:
+The SeaweedFS image is pinned by digest to
+`sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d`:
 
-- **Registry.** MinIO removed its Docker Hub organization, so `minio/minio`
-  fails every pull with `pull access denied / repository does not exist`. The
-  official distribution is Quay.io. Do not revert to the Docker Hub tag.
-- **Why it broke here.** The dead `minio/minio` reference entered the repo in
-  the first backend commit (`db67caa`, 2026-09-08) — *before* any ADR existed
-  — as a stale convention, and survived because nothing exercised the compose
-  stack: CI only path-filtered on `docker-compose.yml` without pulling images,
-  no test touches S3 uploads, and local dev commonly uses a host Postgres.
-  The `compose` CI job now pulls the stack whenever the compose file changes.
-- **Why pinned, not `latest`.** An unpinned tag makes the dev stack
-  non-reproducible and can break `docker compose up` with no repo change.
+- **Why not MinIO.** Every MinIO image is now unresolvable from every public
+  registry — `quay.io/minio/minio`, `docker.io/minio/minio`, `ghcr.io/minio`
+  and `bitnami/minio` all return *unauthorized / repository does not exist*,
+  including `:latest` and every `RELEASE.*` tag. Reproduced locally, so it is
+  not a registry rate limit. See ADR 001's dev-stack amendment.
+- **Why SeaweedFS.** It is the one S3-compatible server that honours the
+  `ACL: public-read` that `backend/src/utils/storage.js` sends on every
+  upload. Garage implements **no** ACL endpoints at all (`PutObjectAcl`,
+  `GetObjectAcl`, `PutBucketAcl`, `GetBucketAcl` are all absent from its own
+  compatibility table), so uploads would silently stop being publicly
+  readable and the storefront would 404 on product images. LocalStack and
+  s3mock do support ACLs but are test emulators, not a dev object store.
+- **Verified, not assumed.** The real `uploadBuffer` was run against the
+  compose stack, then the returned URL was fetched **with no credentials**
+  (what a browser does): HTTP 200 with the expected bytes.
+- **Credentials.** `docker/seaweedfs-s3.json` pre-seeds the S3 identity
+  (`kompmaster` / `kompmaster123`, role `admin`) so the previous MinIO dev
+  credentials keep working. SeaweedFS has no `MINIO_ROOT_USER` equivalent and
+  starts with no identities otherwise, rejecting every request.
+- **The bucket still needs creating once**, same as with MinIO — SeaweedFS does
+  not auto-create it. `CreateBucket` via the AWS SDK, or:
+  `docker compose exec seaweedfs sh -c 'weed shell -master=localhost:9333 -c "s3.bucket.create -name kompmaster"'`
+- **Published port is unchanged (9000).** SeaweedFS's native S3 port is 8333;
+  compose maps `9000:8333` so every existing `S3_ENDPOINT`, `.env.example`
+  and doc reference stays valid. Master/cluster status is on `9334:9333`.
 
 **Upgrade procedure (verify-then-bump, applies to both images):**
 
-1. Pull the candidate tag (`RELEASE.*` from Quay for MinIO,
-   `postgres:<version>-alpine` from Docker Hub for Postgres).
-2. `docker compose up -d` and verify: MinIO — `curl -sf
-   localhost:9000/minio/health/live` returns 200 and the console answers on
-   `:9001`; Postgres — `SHOW server_version` matches the pinned tag and the
-   `pgdata` volume still serves the seeded data.
-3. Only then bump the tag in `docker-compose.yml` and in this section, in the
+1. Pull the candidate image (by digest for SeaweedFS, `postgres:<version>-alpine`
+   for Postgres).
+2. `docker compose up -d` and verify: SeaweedFS — `curl -sf localhost:9334/`
+   returns 200, then create the bucket and confirm an upload is anonymously
+   readable at its `S3_PUBLIC_URL`; Postgres — `SHOW server_version` matches the
+   pinned tag and the `pgdata` volume still serves the seeded data.
+3. Only then bump the pin in `docker-compose.yml` and in this section, in the
    same commit.
 
-Current pins: MinIO `RELEASE.2025-09-07T16-13-09Z`, Postgres `16.15-alpine`.
+Current pins: SeaweedFS
+`sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d`,
+Postgres `16.15-alpine`.
 
 - Postgres: `localhost:5432`, user/db `kompmaster`, password `kompmaster`
   (dev-only defaults — change before any real deployment).
-- MinIO: S3 API on `localhost:9000`, web console on `localhost:9001`.
+- SeaweedFS: S3 API on `localhost:9000`, master/status on `localhost:9334`.
+  No web console — SeaweedFS has no MinIO-style UI.
 
 ## Terraform (PoC infrastructure)
 

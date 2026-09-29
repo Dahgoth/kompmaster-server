@@ -35,6 +35,42 @@ Vercel Functions + Supabase Postgres     Timeweb Node container/process
 
 **Amendment 5000 WAU HA (2026-09-13 20:00 UTC):** Target raised 5000 WAU (from 1000) with HA from day one, cheapest HA. Gateway set expanded to Tinkoff/Alfa-Bank/CloudPayments/Robokassa (+YooKassa alt) with Atol 80%/CloudKassir 20% + PayKeeper cheques. §11 recomputed for 5k WAU cheapest HA.
 
+**Amendment dev-stack images (2026-09-28):** The local development stack in
+`docker-compose.yml` (Postgres 16-alpine + **SeaweedFS**) is part of the
+canonical contract. This supersedes the 2026-09-23 amendment in one respect:
+**MinIO is gone entirely.** Every MinIO image now fails to resolve from every
+public registry — `quay.io/minio/minio`, `docker.io/minio/minio`,
+`ghcr.io/minio` and `bitnami/minio` all return *unauthorized / repository does
+not exist*, including `:latest` and every `RELEASE.*` tag. This was reproduced
+locally, so it is upstream removing the images, not a registry rate limit.
+
+SeaweedFS was selected on a hard constraint: `backend/src/utils/storage.js`
+sends `ACL: public-read` on **every** upload so product images are readable at
+`S3_PUBLIC_URL` without credentials. The replacement must honour it. Verified
+against the real `uploadBuffer` on the compose stack, then fetching the
+returned URL anonymously (HTTP 200). Garage was rejected because it implements
+no ACL endpoints at all; LocalStack and s3mock support ACLs but are test
+emulators rather than a dev object store.
+
+Published port stays `9000` (SeaweedFS's native S3 port is 8333, mapped
+`9000:8333`) so existing `S3_ENDPOINT` values and doc references stay valid.
+Dev credentials are unchanged (`kompmaster`/`kompmaster123`), pre-seeded via
+`docker/seaweedfs-s3.json` because SeaweedFS has no `MINIO_ROOT_USER`
+equivalent and starts with no identities otherwise. The bucket is still created
+once by the developer, as with MinIO.
+
+Production object storage is unaffected (Timeweb S3 per ADR 002) — this service
+is a dev-only emulator.
+
+**Why the compose job was the only thing that could have caught it.** The
+`compose` CI job pulls every image, so a dead reference fails CI rather than a
+developer's machine. It did — but only once the job could actually run. From
+2026-09-25 to 2026-09-28 a missing `outputs:` block on the
+`detect-changes` composite action made that job skip its steps while reporting
+success, so the dead MinIO image sat uncaught behind a green check. See
+`docs/incidents/2026-09-28-ci-silent-skip.md`. The `compose` job now runs
+unconditionally.
+
 **Amendment dev-stack images (2026-09-23):** The local development stack in
 `docker-compose.yml` (Postgres 16-alpine + MinIO) is part of the canonical
 contract. MinIO removed its Docker Hub organization (2025-06), so
