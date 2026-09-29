@@ -607,6 +607,7 @@ so **until #106 merges** that file is the source of truth for four settings:
 | `devCommand` | `frontend/vercel.json` | Vercel default |
 | `outputDirectory` | `frontend/vercel.json` → `frontend/.next/standalone` | Vercel Next.js default |
 | `installCommand` | `frontend/vercel.json` → `corepack enable pnpm && …` | **Must be set in the dashboard** |
+| `framework` | `frontend/vercel.json` → `nextjs` | Vercel detects it from `frontend/next.config.ts`; verify rather than assume |
 
 That `outputDirectory` is the bug. With Root Directory `frontend` (already set
 in the dashboard), the path `frontend/.next/standalone` resolves to
@@ -626,10 +627,21 @@ the table above.
 | **Output Directory** | *default* | Vercel deploys the serverless functions itself |
 | **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Vercel's default `pnpm install` does not enable corepack first, so the pnpm wrapper is missing: `the installed pnpm wrapper is missing at /vercel/.local/share/pnpm/` |
 
-**Install Command is the one setting that must be re-applied by hand after
-#106.** Deleting `frontend/vercel.json` removes the file that currently
-supplies it, and the dashboard default will not do it. Set it in
-*Vercel → Project → Settings → Build & Development → Install Command*.
+**Two settings need attention after #106, not one.** Deleting
+`frontend/vercel.json` removes the file that currently supplies *all five* of
+the overrides above, and the dashboard defaults do not restore two of them:
+
+- **Install Command** — set it explicitly in
+  *Vercel → Project → Settings → Build & Development → Install Command*.
+  Without it the build fails with
+  `the installed pnpm wrapper is missing at /vercel/.local/share/pnpm/`.
+- **Framework Preset** — the file pinned `framework: nextjs`. Confirm the
+  dashboard still shows `Next.js` after the merge; Vercel usually infers it, but
+  the previous state was set explicitly and inference is not guaranteed when
+  the Root Directory changes at the same time.
+
+The other three (`buildCommand`, `devCommand`, `outputDirectory`) are pure
+overrides that Vercel's Next.js defaults replace correctly.
 
 ### Vercel Footguns & Lessons Learned
 
