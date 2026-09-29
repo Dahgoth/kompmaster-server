@@ -99,56 +99,70 @@ openssl s_client -connect www.compmasone.ru:443 -servername www.compmasone.ru </
 
 ## 4. Deploy Pipeline Troubleshooting
 
-### 4.1 Deploy Workflow Stuck on "environment: production-vps"
-- Check GitHub Settings → Environments → production-vps
-- Verify required reviewers (1) and wait timer (0 min)
-- Self-approve if pending
+**Read this first.** The `production-vps` environment permits **only refs matching `v*.*.*`**. A branch push, a `workflow_call` and a `workflow_dispatch` all resolve to the `main` branch and are rejected *before a runner is assigned* — the job shows zero steps and no logs.
+
+The consequences, which shape every remedy below:
+
+- **A tag push is the only way to deploy.** There is no manual re-deploy.
+- `gh workflow run deploy.yml -f tag=...` **will not work.** It is a
+  `workflow_dispatch`, so it is rejected for the same reason a branch push is.
+  Verified: a manual dispatch failed with
+  `Branch "main" is not allowed to deploy to production-vps due to environment
+  protection rules.`
+- To re-deploy, **cut a new tag.** There is no supported override.
+
+### 4.1 Deploy job shows no steps and no logs
+- This is the environment rejecting the ref, not a runner or VPS problem.
+- Check which ref the run used: the run's `head_branch`/`head_sha` in the
+  Actions UI. It must be a `v*.*.*` tag.
+- Check the environment's allowlist:
+  `gh api repos/:owner/:repo/environments/production-vps/deployment-branch-policies`
 
 ### 4.2 Deploy aborted with a version-mismatch error
 - `deploy-storefront.sh` runs `check-versions.js` before building, so a tag cut
-  from a drifted tree aborts the deploy. This is expected only if the release PR
-  was merged without all three `package.json` files aligned.
+  from a drifted tree aborts the deploy.
 - Check what the tag actually contains:
-  `for f in package.json backend/package.json frontend/package.json; do git show vX.Y.Z:$f | grep version; done`
-- If the tag is drifted, fix the three versions in a PR and merge it — that
-  push is the trigger, so it runs `release.yml` and opens the next release PR.
-  Merge that, and the new tag is clean. (release-please will not re-cut an
-  existing tag, though the drifted one can be deleted and re-pushed by hand.)
 
+  ```bash
+  for f in package.json backend/package.json frontend/package.json; do
+    printf '%s ' "$f"; git show "vX.Y.Z:$f" | grep '"version"'
+  done
+  ```
+
+- If the tag is drifted, you cannot re-cut it through release-please, and
+  re-dispatching the same tag is not possible either. **Cut a new tag** with the
+  versions fixed: fix the three files in a PR, merge it (that push opens the
+  next release PR), merge that, and the new tag is clean.
 
 ### 4.3 "Deployment already successful — skipping"
 - The idempotency guard found a `success` deployment for this tag's commit SHA
-  in `production-vps`, so it exited before touching the VPS.
-- **Re-dispatching the same tag does not help on its own** — the guard
-  resolves the same commit SHA and skips again, giving you a green run that
-  deployed nothing. You must clear the record *first*, then trigger.
-- Clearing it, mirroring the guard's own selector (`environment` **and** `ref`),
-  and paginated so history cannot push the record out of the first page:
+  in `production-vps` and exited before touching the VPS.
+- This only happens when the same tag is pushed twice. It is working as designed,
+  not a fault.
+- **To actually deploy a new version, cut a new tag.** Do not try to re-run the
+  existing one — there is no manual path.
 
   ```bash
-  SHA=$(git rev-parse vX.Y.Z^{commit})
-  gh api 'repos/:owner/:repo/deployments?per_page=100' \
-    --jq ".[] | select(.environment==\"production-vps\" and .ref==\"${SHA}\").id"
+  # If you genuinely need to re-push an existing tag, delete and re-push it.
+  # A plain `git push` of an existing tag is a no-op.
+  git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z
+  git push origin vX.Y.Z
   ```
 
-- Then **both** steps — deleting the record alone starts nothing:
-
-  ```bash
-  gh api -X DELETE repos/:owner/:repo/deployments/<id>
-  gh workflow run deploy.yml -f tag=vX.Y.Z
-  ```
-
-  Or simply push a new tag, which is a trigger in its own right.
+- The deployment record is left in place deliberately — it is what the guard
+  reads. There is no need to delete it, and deleting it does not enable a
+  re-deploy on its own, because no dispatch can reach the environment.
 
 ### 4.4 Health gate failure (storefront)
 - Check PM2 logs: `pm2 logs kompmaster-storefront-<color>`
 - Check Caddy logs: `journalctl -u caddy -n 50`
-- Auto-rollback should have triggered — verify `current` symlink points to previous release
+- Auto-rollback should have triggered — verify the `current` symlink points at
+  the previous release
 
 ### 4.5 SSH connection timeout
-- Verify VPS is reachable: `ping api.compmasone.ru`
-- Check SSH key in GitHub secret matches VPS authorized_keys
-- Verify security group / firewall allows port 22 from GitHub runner IPs
+- Verify the VPS is reachable: `ping api.compmasone.ru`
+- Check the SSH key in the GitHub secret matches the VPS `authorized_keys`
+- Verify the security group / firewall allows port 22 from the runner's IP
 
 ---
 

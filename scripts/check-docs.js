@@ -92,7 +92,8 @@ function classify(files) {
         f.startsWith(".github/workflows/") ||
         // Composite actions feed the pipelines. extract-tag decides whether a
         // tag is deployable and fails the deploy when it is not, so it is
-        // deploy surface, not an implementation detail.
+        // deploy surface, not an implementation detail. It is routed to
+        // DEPLOY.md below as well: it owns the tag regex DEPLOY.md documents.
         f.startsWith(".github/actions/") ||
         // release-please config drives the release/deploy pipeline.
         f === ".release-please-config.json",
@@ -106,16 +107,23 @@ function classify(files) {
 
   // Deploy pipeline surface -> DEPLOY.md
   //
-  // Matched by name rather than hard-coded: release.yml lost its deploy job,
-  // sync job, wait loop and workflow_call boundary in one change, and
-  // DEPLOY.md sections exist entirely to describe it. A single filename here
-  // would let the next rewrite of either file through untouched.
-  const DEPLOY_PIPELINE_WORKFLOWS = /^(deploy|release|hotfix-deploy)[^/]*\.yml$/;
-  if (
-    [...touched].some((f) =>
-      DEPLOY_PIPELINE_WORKFLOWS.test(f.replace(/^\.github\/workflows\//, "")),
-    )
-  ) {
+  // Matched by keyword anywhere in the name rather than anchored to a
+  // filename, and over .yml/.yaml. The previous version was anchored to the
+  // start of the name and to .yml, so `production-deploy.yml`, `publish.yml`
+  // and `rollback.yml` would have walked straight through the gate it was
+  // added to close. GitHub accepts either extension, so a rename alone must
+  // not disable the check.
+  const DEPLOY_PIPELINE = /deploy|release|publish|rollback|hotfix/;
+  const isDeployPipelineFile = (f) => {
+    // Every composite action in this repo is pipeline surface. extract-tag
+    // owns the tag regex that DEPLOY.md documents, but its *filename* contains
+    // no pipeline keyword, so a name test cannot route it. Classifying the
+    // whole directory is both simpler and correct.
+    if (f.startsWith(".github/actions/")) return true;
+    if (!f.startsWith(".github/workflows/")) return false;
+    return DEPLOY_PIPELINE.test(f.replace(/^\.github\/workflows\//, ""));
+  };
+  if ([...touched].some(isDeployPipelineFile)) {
     need.add("DEPLOY.md");
   }
 
