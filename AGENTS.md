@@ -45,6 +45,17 @@ surface, and setup.
    else.
 4. **Keep a Changelog.** Every user-facing change must be recorded in
    `CHANGELOG.md`. Unreleased changes go under `[Unreleased]`.
+   **Do not hand-write the `[Unreleased]` section** — `release-please` generates
+   it from your Conventional Commit type via `changelog-types` in
+   `.release-please-config.json` (`fix:` → *Bug Fixes*, `feat:` → *Features*,
+   `chore:` is hidden, and so on). A manual entry duplicates what the release
+   PR will emit, and because `release-please` inserts new version sections
+   *above* the top of the file rather than consuming `[Unreleased]`, the manual
+   section just becomes stale orphan text. Write a good commit message instead;
+   that is the changelog's source of truth.
+   *(One legacy `[Unreleased]` block remains far down `CHANGELOG.md` — it holds
+   ~350 lines of real 1.x/2.1.0-era history under a misleading heading, and is
+   deliberately left untouched pending a separate cleanup. Ignore it.)*
 5. **MIT.** This project is licensed under the MIT License (`LICENSE`).
    Do not introduce code under an incompatible license, and never commit
    secrets, keys, or credentials.
@@ -211,8 +222,8 @@ See `CONTRIBUTING.md` for the full process.
    - `PATCH` — bug fixes.
 2. Update `package.json#version` (root — single source of truth).
 3. Propagate the bumped version to both apps: `pnpm run version:sync`.
-4. Move the relevant `[Unreleased]` entries into a new dated section in
-   `CHANGELOG.md`.
+4. `release-please` writes the new dated section in `CHANGELOG.md` itself
+   (see ground rule 4 — do not hand-write it).
 5. Tag the release commit: `git tag vX.Y.Z`.
 
 Backend and the storefront always deploy from the same tag/commit. Run
