@@ -214,5 +214,5 @@ reported `Ready`, because the deployment itself succeeded.
 
 ### Monorepo pnpm Hoisting Requirements
 - `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
-- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps. **This is the setting that makes Root Directory `frontend` work.**
+- `next.config.ts`: `outputFileTracingRoot` is set to the computed workspace root — `const tracingRoot = path.resolve(__dirname, "..")` — so Next.js traces hoisted deps. **This is the setting that makes Root Directory `frontend` work.**
 - Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`. Consumed by the **VPS** deploy under PM2, not by Vercel.

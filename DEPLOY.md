@@ -560,7 +560,7 @@ shape for this project; there is no `vercel.json`, on purpose.
 |---------|-------|-----------|
 | **Root Directory** | `frontend` | The Next.js app lives here. Vercel detects the pnpm workspace and still installs from the repo root, where `pnpm-lock.yaml` lives. |
 | **Framework Preset** | `Next.js` | Let Vercel build and deploy it as a real Next.js application. |
-| **Build Command** | *default* (`npm run build` / `next build`) | Vercel's Next.js build. Overriding it loses the framework integration. |
+| **Build Command** | *default* (`next build`) | Vercel's Next.js framework default. `npm run build` is equivalent here only because `frontend/package.json` defines `"build": "next build"`; the default itself is the framework preset, not the package script. Overriding it loses the framework integration. |
 | **Output Directory** | *default* (`Next.js default`) | Vercel deploys the serverless functions itself. |
 | **Install Command** | *default* | Vercel runs `pnpm install` at the workspace root; the `pnpm@12.4.2` pin comes from `packageManager`. |
 
@@ -617,8 +617,10 @@ relied on.
 
 ### Monorepo pnpm Hoisting (Required for Vercel & VPS)
 - `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
-- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces
-  hoisted deps. **This is what makes Root Directory `frontend` work** — it is
+- `next.config.ts`: `outputFileTracingRoot` is set to the computed workspace
+  root — `const tracingRoot = path.resolve(__dirname, "..")` (next.config.ts:8),
+  assigned at line 16. It is a resolved absolute path, not the literal string
+  `workspaceRoot`. This is **what makes Root Directory `frontend` work**: it is
   the setting that reaches past the app directory into the workspace.
 - Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`. Used by the **VPS** deploy (PM2), not by Vercel.
 - Vercel builds and deploys the app itself; the VPS deploy builds separately
@@ -837,7 +839,7 @@ that configuration is what produced a 404 on every build. See §10.3.
 
 ### Monorepo pnpm Hoisting Requirements
 - `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
-- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps. **This is the setting that makes Root Directory `frontend` work.**
+- `next.config.ts`: `outputFileTracingRoot` is set to the computed workspace root — `const tracingRoot = path.resolve(__dirname, "..")` (line 8), assigned at line 16. A resolved absolute path, not the literal string `workspaceRoot`. **This is the setting that makes Root Directory `frontend` work.**
 - Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`. Consumed by the **VPS** deploy (PM2), not by Vercel.
 - Vercel builds the Next.js app itself; the VPS builds separately. The two paths are independent.
 
