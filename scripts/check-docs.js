@@ -90,6 +90,10 @@ function classify(files) {
         // ci.yml was recognised, so a release-pipeline rewrite passed
         // docs-sync while DEVELOPMENT.md still described the old pipeline.
         f.startsWith(".github/workflows/") ||
+        // Composite actions feed the pipelines. extract-tag decides whether a
+        // tag is deployable and fails the deploy when it is not, so it is
+        // deploy surface, not an implementation detail.
+        f.startsWith(".github/actions/") ||
         // release-please config drives the release/deploy pipeline.
         f === ".release-please-config.json",
     ) ||
@@ -101,7 +105,19 @@ function classify(files) {
   }
 
   // Deploy pipeline surface -> DEPLOY.md
-  if (touched.has(".github/workflows/deploy.yml")) need.add("DEPLOY.md");
+  //
+  // Matched by name rather than hard-coded: release.yml lost its deploy job,
+  // sync job, wait loop and workflow_call boundary in one change, and
+  // DEPLOY.md sections exist entirely to describe it. A single filename here
+  // would let the next rewrite of either file through untouched.
+  const DEPLOY_PIPELINE_WORKFLOWS = /^(deploy|release|hotfix-deploy)[^/]*\.yml$/;
+  if (
+    [...touched].some((f) =>
+      DEPLOY_PIPELINE_WORKFLOWS.test(f.replace(/^\.github\/workflows\//, "")),
+    )
+  ) {
+    need.add("DEPLOY.md");
+  }
 
   // UX/visual surface -> DESIGN.md
   if (files.some((f) => isFrontendStyle(f) || isFrontendPage(f)) || touched.has("DESIGN.md")) {

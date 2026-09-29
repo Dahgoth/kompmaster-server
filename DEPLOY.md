@@ -493,14 +493,27 @@ jobs:
     outputs:
       tag_name: ${{ steps.release.outputs.tag_name }}
       release_created: ${{ steps.release.outputs.release_created }}
+```
+
+Only the shape matters here; the authoritative version is
+`.github/workflows/release.yml`, including the action SHAs. What is
+significant is what is **absent**: there is no second job. An earlier revision
+of this block showed a sync step and a dispatch step, and a step-2
+`gh workflow run deploy.yml`. Both were removed, and the file also no longer
+contains `on.workflow_call`.
+
+```yaml
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    # ... permissions, outputs, and a single step whose `id: release` feeds
+    # the job outputs above ...
     steps:
-      - actions/checkout@<sha>          # fetch-depth: 0
-      - corepack enable pnpm
-      - actions/setup-node@<sha>         # node-version: '24'
-      - pnpm install --frozen-lockfile --ignore-scripts
-      - googleapis/release-please-action@<sha>
+      - name: Release Please
+        id: release          # <- the outputs block above references this
+        uses: googleapis/release-please-action@<sha>
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: \${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 ```
@@ -517,11 +530,6 @@ workflow into `deploy.yml`. The tag is the entire handoff — which is also the
 only ref the `production-vps` environment accepts, so nothing has to carry a
 ref across the boundary that could resolve to `main` instead.
 
-**Flow**:
-1. `release-please` creates Release PR → on merge (merge commit), creates GitHub Release + tag + bumps manifest
-2. Release workflow runs on push to main → syncs backend/frontend versions to root version (commits + pushes `[skip ci]`)
-3. Push verified via `git ls-remote` (max 20s retry loop, explicit failure if not visible)
-4. `gh workflow run deploy.yml` triggers production deploy with tag input
 
 ---
 
