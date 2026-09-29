@@ -210,14 +210,16 @@ Currently all three are at **2.4.0**.
   `versions` CI job and in the Husky `pre-push` hook.
 - `pnpm run version:sync` runs `node scripts/sync-versions.js`, which writes
   the root version into both apps. Run this after bumping the root version.
-  Note that after release 2.4.0 the release workflow can no longer do this
-  itself: its direct push to `main` is rejected by the `main` ruleset, which
-  requires changes through a pull request. The sync currently has to be
-  applied as a reviewed PR. See `RUNBOOK.md` §9.2.
-- Release flow: bump `version` in root `package.json` →
-  `pnpm run version:sync` → move `CHANGELOG.md` entries into a new dated
-  section → `git tag vX.Y.Z` → push. Backend and frontend always deploy from
-  the same tag.
+  Not needed for releases: `release-please` is configured to bump `backend/`
+  and `frontend/` in the release PR itself (see `.release-please-config.json`),
+  so the three are always in step by the time a release is created. The
+  release workflow now *verifies* alignment rather than repairing it — there
+  is no direct push to `main`, which the branch ruleset would reject anyway.
+  See `RUNBOOK.md` §9.2.
+- Release flow: conventional commits → `release-please` opens a release PR
+  bumping all three `package.json` files and `CHANGELOG.md` → merge it →
+  `release.yml` creates the tag, GitHub Release and deployment. Backend and
+  frontend always deploy from the same tag.
 
 > Historical records (`docs/adr/`, `docs/research/`, `docs/archive/`) keep the
 > original `npm` commands they were written with; they are dated snapshots and
