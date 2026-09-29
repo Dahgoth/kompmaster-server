@@ -502,10 +502,14 @@ part of the release PR itself. The release uses `include-component-in-tag: false
 to produce clean `v*.*.*` tags that match the deploy workflow trigger.
 
 **Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` and
-`kompmaster-v*.*.*` tag pushes — the **only** trigger that works, because the
+`v*.*.*` tag pushes — the **only** trigger that works, because the
 `production-vps` environment permits only refs matching `v*.*.*`, and a branch
 push, a `workflow_call` or a `workflow_dispatch` all resolve to the `main`
 *branch* and are rejected by the environment before a runner is assigned.
+Only the `v*.*.*` pattern deploys. `kompmaster-v*.*.*` is still listed in
+`deploy.yml` for tags cut before v2.3.0, but it does not match the
+`production-vps` policy and would be rejected the same way a branch push is.
+
 `release.yml` therefore has no deploy job at all — release-please cuts the
 release, the tag push is the handoff, and nothing crosses a workflow boundary
 that could carry the wrong ref into the environment check. The version sync is

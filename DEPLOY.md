@@ -413,9 +413,7 @@ Add `--color` flag to `deploy-storefront.sh`:
 **before a runner is assigned** — the job shows zero steps and no logs, which
 looks like a runner or VPS fault and is neither.
 
-Consequently:
-
-`deploy.yml` therefore declares exactly one trigger:
+`deploy.yml` therefore triggers on tag pushes:
 
 ```yaml
 on:
@@ -423,7 +421,14 @@ on:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
 ```
 
-The alternatives were all removed because each one provably cannot deploy:
+**Only the `v*.*.*` pattern actually works.** `kompmaster-v*.*.*` does not
+match the environment's policy — it starts with a `k` — so a `kompmaster-`
+tag is rejected exactly as a branch push is. It is retained in the file only for
+backward compatibility with `kompmaster-v2.2.0` and earlier;
+`include-component-in-tag: false` means release-please has not produced one
+since. Treat it as inert until the file is cleaned up separately.
+
+The other trigger types were all removed because each provably cannot deploy:
 
 - **`workflow_call`** was called by `release.yml`, but a reusable workflow
   inherits the *caller's* ref — `main` — and was rejected. This is the change
@@ -450,7 +455,9 @@ The alternatives were all removed because each one provably cannot deploy:
 name: Deploy Production
 
 on:
-  # The only trigger the production-vps environment accepts.
+  # Only 'v*.*.*' is accepted by the production-vps environment;
+  # 'kompmaster-v*.*.*' is retained for tags cut before v2.3.0 and is
+  # rejected by the environment if it is ever used.
   push:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
 
@@ -588,23 +595,41 @@ manifest history. `release-please--*` branches are excluded from the rules.
 
 Vercel builds the storefront **as a Next.js project**.
 
-**`frontend/vercel.json` is removed by
-[#106](https://github.com/Dahgoth/kompmaster-server/pull/106), not by this PR.**
-Until that merges the file is still in the tree, still declaring
-`outputDirectory: frontend/.next/standalone`, and with Root Directory `frontend`
-that path resolves to `frontend/frontend/.next/standalone` — which is one of the
-reasons every preview was 404ing. This section describes the end state.
+#### What is true right now, and what changes
 
-| Setting | Value | Rationale |
-|---------|-------|-----------|
+**`frontend/vercel.json` still exists on `main`.** It is deleted by
+[#106](https://github.com/Dahgoth/kompmaster-server/pull/106), not by this PR,
+so **until #106 merges** that file is the source of truth for four settings:
+
+| Setting | Source until #106 merges | Source after #106 merges |
+|---------|-------------------------|--------------------------|
+| `buildCommand` | `frontend/vercel.json` → `pnpm --filter kompmaster-frontend build` | Vercel's Next.js default |
+| `devCommand` | `frontend/vercel.json` | Vercel default |
+| `outputDirectory` | `frontend/vercel.json` → `frontend/.next/standalone` | Vercel Next.js default |
+| `installCommand` | `frontend/vercel.json` → `corepack enable pnpm && …` | **Must be set in the dashboard** |
+
+That `outputDirectory` is the bug. With Root Directory `frontend` (already set
+in the dashboard), the path `frontend/.next/standalone` resolves to
+`frontend/frontend/.next/standalone` — it does not exist. Even before that, it
+names a **Node server bundle**, not a static export, so serving it statically
+would break the `product/[id]` routes and `api/revalidate` regardless.
+
+**Table below describes the end state — the configuration that is correct once
+#106 lands and its dashboard change is made.** For today's actual values, read
+the table above.
+
+| Setting | Value (end state) | Rationale |
+|---------|-------------------|-----------|
 | **Root Directory** | `frontend` | The Next.js app lives here. Vercel resolves the pnpm workspace and still installs from the repo root, where `pnpm-lock.yaml` is |
 | **Framework Preset** | `Next.js` | Vercel builds and deploys the app itself, so SSR and server routes work |
 | **Build Command** | *default* | Vercel's Next.js build |
-| **Output Directory** | *default* | Vercel deploys the serverless functions itself. #106 deletes the `outputDirectory` override that was pointing at a Node server bundle |
-| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Vercel's default `pnpm install` does not enable corepack first, so the pnpm wrapper is missing. **This one still needs setting after #106 lands** — deleting `vercel.json` removes the file that currently supplies it, and the dashboard default will not do it |
+| **Output Directory** | *default* | Vercel deploys the serverless functions itself |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Vercel's default `pnpm install` does not enable corepack first, so the pnpm wrapper is missing: `the installed pnpm wrapper is missing at /vercel/.local/share/pnpm/` |
 
-The Install Command is the one setting that must be explicit. It is supplied
-through the dashboard; if you move any other setting, keep it.
+**Install Command is the one setting that must be re-applied by hand after
+#106.** Deleting `frontend/vercel.json` removes the file that currently
+supplies it, and the dashboard default will not do it. Set it in
+*Vercel → Project → Settings → Build & Development → Install Command*.
 
 ### Vercel Footguns & Lessons Learned
 
