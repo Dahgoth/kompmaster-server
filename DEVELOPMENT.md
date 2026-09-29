@@ -424,22 +424,32 @@ The workflow is **path-filtered** via a reusable composite action
 regex patterns (no third-party actions), so each job runs only when its area
 changes:
 
-| Job        | Trigger (any file under)                                 | Steps                                    |
-| ---------- | -------------------------------------------------------- | ---------------------------------------- |
-| `docs-sync` | *always* (skipped on bot-authored PRs)                  | `node scripts/check-docs.js --base …`    |
-| `versions`  | *always* (skipped on release-please PRs)                 | `node scripts/check-versions.js`         |
-| `commitlint`| *PRs only* (skipped on release-please PRs)               | `pnpm run lint:commit`                   |
-| `backend`   | `backend/**`, `scripts/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `docker-compose.yml`, `Caddyfile`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → syntax-check → test |
-| `frontend`  | `frontend/**` (excl. `frontend/terraform/**`), `DESIGN.md`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.editorconfig` | checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → typecheck → test → build |
-| `e2e`       | union of `backend` + `frontend` + `scripts` + `docker-compose.yml` + config files | Postgres service → checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → Playwright install → migrate → seed → build & run Tier A matrix (chromium + WebKit mobile) |
-| `compose`   | `docker-compose.yml`                                     | checkout → detect-changes → docker compose config/pull    |
-| `terraform` | `terraform/**`, `frontend/terraform/**`                  | checkout → detect-changes → setup-terraform (pinned 1.9.8) → fmt/validate |
+| Job        | Trigger                                          | Steps                                    |
+| ---------- | ------------------------------------------------ | ---------------------------------------- |
+| `docs-sync` | *always* (skipped on bot-authored changes)        | `node scripts/check-docs.js --base …`    |
+| `versions`  | *always* (main only, skipped on release-please PRs)| `node scripts/check-versions.js`         |
+| `commitlint`| *PRs only* (skipped on release-please PRs)        | `pnpm run lint:commit`                   |
+| `backend`   | **always**                                        | checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → syntax-check → test |
+| `frontend`  | **always**                                        | checkout → setup-node (Node 24) → corepack enable pnpm → pnpm install → lint → typecheck → test → build |
+| `e2e`       | gated on `frontend/**`, `backend/**`, `scripts/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `docker-compose.yml`, config files | Postgres service → checkout → detect-changes → setup-node (Node 24) → corepack enable pnpm → pnpm install → Playwright install → migrate → seed → build & run Tier A matrix (chromium + WebKit mobile) |
+| `compose`   | **always**                                        | checkout → `docker compose config` / `pull` |
+| `terraform` | **always**                                        | checkout → setup-terraform (pinned 1.9.8) → fmt/init/validate |
+
+**Only `e2e` is path-filtered.** `backend`, `frontend`, `compose` and
+`terraform` deliberately run on every change, because a `detect-changes` guard
+went permanently false for three days and the jobs reported success while
+executing nothing — see
+[docs/incidents/2026-09-28-ci-silent-skip.md](./docs/incidents/2026-09-28-ci-silent-skip.md).
+A guard that silently evaluates false is indistinguishable from a pass, so the
+cheap jobs have none. `e2e` keeps its guard because it is the only job whose
+cost justifies one (~2 min: Postgres plus two browser engines); its output is
+now the action's statically declared `changed`, not a dynamically named one.
 
 All actions are pinned to full commit SHAs and are from GitHub or verified
 Marketplace creators. pnpm is installed via `corepack enable pnpm` after
 `actions/setup-node` (no `pnpm/action-setup`; not GitHub-verified). The
 `dorny/paths-filter` action was replaced with the `detect-changes` composite
-action using POSIX ERE regex patterns.
+action using POSIX ERE regex patterns, used only by `e2e`.
 
 **Release-please PRs** (created by `github-actions[bot]`) skip `docs-sync`,
 `versions`, and `commitlint` jobs to avoid false failures — release-please

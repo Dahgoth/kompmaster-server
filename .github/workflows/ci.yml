@@ -107,24 +107,21 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm run lint:commit
 
+  # No path filter, deliberately. See docs/incidents/2026-09-28-ci-silent-skip.md:
+  # an undeclared composite-action output made these guards permanently false
+  # for three days, so the job reported success while running nothing. Lint,
+  # typecheck, unit tests and the build are cheap enough to always run, and
+  # "no guard" is a failure mode that cannot recur silently.
   backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Detect backend changes
-        uses: ./.github/actions/detect-changes
-        id: changes
-        with:
-          pattern: '^(backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|Caddyfile$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
-          output-name: backend
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        if: steps.changes.outputs.backend == 'true'
         with:
           node-version: 24
       - name: Cache pnpm store
-        if: steps.changes.outputs.backend == 'true'
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: ~/.pnpm-store
@@ -132,15 +129,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - name: Enable pnpm via corepack
-        if: steps.changes.outputs.backend == 'true'
         run: corepack enable pnpm
-      - run: pnpm install --frozen-lockfile
-        if: steps.changes.outputs.backend == 'true'
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Lint backend
-        if: steps.changes.outputs.backend == 'true'
         run: pnpm run lint:backend
       - name: Syntax check (backend JS files in this change set)
-        if: steps.changes.outputs.backend == 'true'
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="${{ github.event.pull_request.base.sha }}"
@@ -157,15 +150,26 @@ jobs:
           # package is CommonJS and a few pre-existing legacy files use ESM
           # syntax (ADR 001 legacy quarantine), which `node --check` rejects
           # even though this change did not touch their content.
+          #
+          # `grep` exits 1 when it matches nothing, and GitHub runs `run:`
+          # steps under `bash -e`. An assignment takes the status of its
+          # command substitution, so an unguarded `files=$(... | grep ...)`
+          # aborts the step with exit 1 and no output the moment a PR touches
+          # no backend JS files. `|| grep_exit=$?` turns that into a compound
+          # command so errexit does not fire, and we still distinguish "no
+          # match" (1, normal) from "bad pattern" (2, real error).
           files=$(git diff -M --diff-filter=AM --name-only "$base"...HEAD 2>/dev/null |
-            grep -E '^backend/(src|tests|scripts)/.*\.js$')
+            grep -E '^backend/(src|tests|scripts)/.*\.js$') || grep_exit=$?
+          if [ "${grep_exit:-0}" -eq 2 ]; then
+            echo "::error::grep failed with invalid pattern or error" >&2
+            exit 1
+          fi
           if [ -n "$files" ]; then
             for f in $files; do node --check "$f"; done
           else
             echo "no backend JS content changes to check."
           fi
       - run: pnpm --filter kompmaster-server test
-        if: steps.changes.outputs.backend == 'true'
 
   frontend:
     runs-on: ubuntu-latest
@@ -173,20 +177,10 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Detect frontend changes
-        uses: ./.github/actions/detect-changes
-        id: changes
-        with:
-          # POSIX ERE: match frontend/ files plus DESIGN.md and config files
-          pattern: '^(frontend/([^/]+/)*[^/]+|DESIGN\.md$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
-          exclude-pattern: '^frontend/terraform/'
-          output-name: frontend
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        if: steps.changes.outputs.frontend == 'true'
         with:
           node-version: 24
       - name: Cache pnpm store
-        if: steps.changes.outputs.frontend == 'true'
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: ~/.pnpm-store
@@ -194,7 +188,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - name: Cache Next.js build
-        if: steps.changes.outputs.frontend == 'true'
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: frontend/.next/cache
@@ -202,22 +195,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-
       - name: Enable pnpm via corepack
-        if: steps.changes.outputs.frontend == 'true'
         run: corepack enable pnpm
-      - run: pnpm install --frozen-lockfile
-        if: steps.changes.outputs.frontend == 'true'
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Lint frontend
-        if: steps.changes.outputs.frontend == 'true'
         run: pnpm run lint:frontend
       - name: Typecheck frontend
-        if: steps.changes.outputs.frontend == 'true'
         run: pnpm --filter kompmaster-frontend run typecheck
       - run: pnpm --filter kompmaster-frontend test
-        if: steps.changes.outputs.frontend == 'true'
       # Production builds fail closed without a baked API base (RUNBOOK §4.4);
       # the URL is public and non-secret.
       - name: Build storefront
-        if: steps.changes.outputs.frontend == 'true'
         run: pnpm --filter kompmaster-frontend run build
         env:
           API_BASE: https://api.compmasone.ru/api
@@ -261,13 +248,12 @@ jobs:
           # POSIX ERE: frontend/ (excl terraform), backend/, scripts/, config files
           pattern: '^(frontend/([^/]+/)*[^/]+|backend/|scripts/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|docker-compose\.yml$|eslint\.config\.js$|\.prettierrc\.json$|\.prettierignore$|\.editorconfig$)'
           exclude-pattern: '^frontend/terraform/'
-          output-name: e2e
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        if: steps.changes.outputs.e2e == 'true'
+        if: steps.changes.outputs.changed == 'true'
         with:
           node-version: 24
       - name: Cache pnpm store
-        if: steps.changes.outputs.e2e == 'true'
+        if: steps.changes.outputs.changed == 'true'
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: ~/.pnpm-store
@@ -275,20 +261,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - name: Enable pnpm via corepack
-        if: steps.changes.outputs.e2e == 'true'
+        if: steps.changes.outputs.changed == 'true'
         run: corepack enable pnpm
-      - run: pnpm install --frozen-lockfile
-        if: steps.changes.outputs.e2e == 'true'
+      - if: steps.changes.outputs.changed == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Install Playwright browsers
-        if: steps.changes.outputs.e2e == 'true'
+        if: steps.changes.outputs.changed == 'true'
         run: pnpm --filter kompmaster-frontend exec playwright install --with-deps chromium webkit
       - name: Apply migrations
-        if: steps.changes.outputs.e2e == 'true'
+        if: steps.changes.outputs.changed == 'true'
         run: pnpm --filter kompmaster-server run migrate
         env:
           DATABASE_URL: postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e
       - name: Seed E2E fixtures
-        if: steps.changes.outputs.e2e == 'true'
+        if: steps.changes.outputs.changed == 'true'
         run: pnpm run seed:e2e
         env:
           DATABASE_URL: postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e
@@ -297,7 +283,7 @@ jobs:
       # without it bakes an empty catalog), and a backgrounded process does not
       # reliably survive the end of a step on the runner.
       - name: Build and run Tier A E2E
-        if: steps.changes.outputs.e2e == 'true'
+        if: steps.changes.outputs.changed == 'true'
         run: |
           trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
           DATABASE_URL=postgres://kompmaster:kompmaster@localhost:5432/kompmaster_e2e \
@@ -316,39 +302,20 @@ jobs:
             || { echo "::error::storefront did not become ready"; cat /tmp/e2e-store.log; exit 1; }
           E2E_STORE_URL=http://localhost:3002 E2E_API_BASE=http://localhost:4000/api pnpm run test:e2e
       - name: Server logs (on failure)
-        if: failure() && steps.changes.outputs.e2e == 'true'
+        if: failure() && steps.changes.outputs.changed == 'true'
         run: |
           echo "===== backend ====="; cat /tmp/e2e-backend.log || true
           echo "===== storefront ====="; cat /tmp/e2e-store.log || true
 
-  # Validates the compose file schema and verifies every pinned image actually
-  # resolves on its registry. Exists because a dead image reference shipped and
-  # survived twice: `minio/minio` (Docker Hub org removed, 2025-06), then
-  # `quay.io/minio/minio` (all MinIO images removed from every public registry,
-  # 2026-09). Nothing pulled the compose images before a developer ran
-  # `docker compose up`.
-  #
-  # This job deliberately has no path filter. For three days it skipped its
-  # steps while reporting success — a missing `outputs:` block on the
-  # detect-changes action — so the dead MinIO image sat uncaught behind a green
-  # check. See docs/incidents/2026-09-28-ci-silent-skip.md.
   compose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Detect compose changes
-        uses: ./.github/actions/detect-changes
-        id: changes
-        with:
-          pattern: '^docker-compose\.yml$'
-          output-name: compose
       - name: Validate compose config
-        if: steps.changes.outputs.compose == 'true'
         run: docker compose config -q
       - name: Verify pinned images resolve
-        if: steps.changes.outputs.compose == 'true'
         run: docker compose pull --quiet
 
   terraform:
@@ -357,24 +324,14 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Detect terraform changes
-        uses: ./.github/actions/detect-changes
-        id: changes
-        with:
-          pattern: '^(terraform/|frontend/terraform/)'
-          output-name: terraform
       # Pinned CLI (repo pins node/pnpm the same way); required_version is >= 1.5.
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
-        if: steps.changes.outputs.terraform == 'true'
         with:
           terraform_version: 1.9.8
           terraform_wrapper: false
       - name: Terraform fmt
-        if: steps.changes.outputs.terraform == 'true'
         run: terraform -chdir=terraform fmt -check -recursive
       - name: Terraform init (no backend; verifies committed provider lockfile)
-        if: steps.changes.outputs.terraform == 'true'
         run: terraform -chdir=terraform init -backend=false -input=false
       - name: Terraform validate
-        if: steps.changes.outputs.terraform == 'true'
         run: terraform -chdir=terraform validate

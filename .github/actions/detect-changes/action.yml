@@ -8,10 +8,23 @@ inputs:
     description: "Optional ERE regex pattern to exclude matched files (e.g., '^frontend/terraform/')"
     required: false
     default: ""
-  output-name:
-    description: "Name of the output variable (e.g., 'backend', 'frontend')"
-    required: false
-    default: "changes"
+outputs:
+  # MUST be declared for the value to reach the calling workflow. A composite
+  # action that writes to $GITHUB_OUTPUT without declaring `outputs:` exposes
+  # nothing to the caller — `steps.<id>.outputs.changed` stays empty forever,
+  # and any `if:` guard on it is permanently false.
+  #
+  # This exact omission made `backend`, `frontend`, `e2e`, `compose` and
+  # `terraform` silently skip every real step from 2026-09-25 to 2026-09-28
+  # while reporting success. See docs/incidents/2026-09-28-ci-silent-skip.md.
+  #
+  # FOOTGUN: `value` below is bound to the step `id: detect`. Renaming that
+  # step without renaming it here reproduces the original incident exactly —
+  # no error, the action still logs the right files, and the caller's guard
+  # silently becomes false. Keep the two in step; there is no test for this.
+  changed:
+    description: "'true' if any changed file matches the pattern"
+    value: ${{ steps.detect.outputs.changed }}
 runs:
   using: "composite"
   steps:
@@ -41,10 +54,10 @@ runs:
           files=$(echo "$files" | grep -v -E '${{ inputs.exclude-pattern }}')
         fi
         if [ -n "$files" ]; then
-          echo "${{ inputs.output-name }}=true" >> $GITHUB_OUTPUT
-          echo "${{ inputs.output-name }} changes detected:"
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "changes detected:"
           echo "$files"
         else
-          echo "${{ inputs.output-name }}=false" >> $GITHUB_OUTPUT
-          echo "No ${{ inputs.output-name }} changes"
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "No matching changes"
         fi
