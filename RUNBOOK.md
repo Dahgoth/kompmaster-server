@@ -13,105 +13,124 @@ triggered follows from that.
 
 **Frequency**: every 90 days, or immediately on suspected compromise.
 
-The risk this procedure guards against is not "can my laptop still SSH" — it
-is "does the key the **deploy workflow** uses still work". Verifying the
-laptop proves nothing, because the deploy uses a different copy of the key
-(the one in the GitHub secret). So the only meaningful check is to confirm
-the secret was updated, then exercise a real deploy.
+**Understand the constraint first.** There is no way to test a key in
+isolation:
+
+- A deploy **cannot be dispatched by hand** — see §4. Every deploy is driven
+  by a tag push.
+- Any tag you push is a **real release**. `deploy.yml` runs
+  `gh release create` for whatever tag reaches it, so a "test" tag publishes a
+  permanent, public GitHub Release and promotes a genuine production deploy.
+
+So the key's first real exercise is the **next actual release**. Rotate on that
+basis: make the change, then cut the next release, and confirm the deploy
+succeeded. Do not manufacture a tag to test it.
 
 ```bash
-# 1. Generate a new ed25519 key pair locally
+# 1. Generate a new ed25519 key pair
 ssh-keygen -t ed25519 -f ~/.ssh/kompmaster_deploy_new \
   -C "kompmaster-deploy-$(date +%Y%m%d)"
 
-# 2. Add the public key to the VPS (keep the old one — see rollback)
+# 2. Add the public key to the VPS. KEEP THE OLD ONE - rollback depends on it.
 ssh-copy-id -i ~/.ssh/kompmaster_deploy_new.pub root@api.compmasone.ru
 
-# 3. Confirm the new key works from this machine
+# 3. Confirm the new key opens a session
 ssh -i ~/.ssh/kompmaster_deploy_new root@api.compmasone.ru "echo 'SSH OK'"
 
-# 4. Replace the GitHub secret:
+# 4. Replace the secret:
 #    Settings -> Environments -> production-vps -> STOREFRONT_SSH_KEY
 #    Paste the PRIVATE key including the BEGIN/END lines.
 
 # 5. Confirm the secret was actually written - its updated_at must be today.
-#    This, not an SSH test from your laptop, is the check that matters: the
-#    deploy uses the copy in the secret, not your local key.
+#    This, not the SSH test in step 3, is the check that matters: the deploy
+#    uses the copy in the secret, not your local key.
 gh secret list --env production-vps | grep STOREFRONT_SSH_KEY
+```
 
-# 6. If you want an end-to-end check, cut a real tag — a deploy cannot be
-#    dispatched by hand (see section 4). A tag push does more than deploy:
-#    deploy.yml also runs `gh release create`, so ANY tag you push here
-#    publishes a public GitHub Release. Do not use a test tag for this.
-#
-#    git tag vX.Y.Z && git push origin vX.Y.Z
-#    gh run list --workflow=deploy.yml --limit=1
-#    # Confirm it reached "Deploy storefront to VPS" and succeeded.
+**6. Leave the old key in `authorized_keys` until the next release has
+deployed successfully.** The next release PR will be cut from `main`; merge it,
+confirm `deploy.yml` reached "Deploy storefront to VPS" and went green
+(`gh run list --workflow=deploy.yml --limit=1`), and only then:
 
-# 7. Remove the old key from authorized_keys (only after step 6 passes)
-
-# 8. Rename the local key
+```bash
+# Remove the old key from authorized_keys, then rename locally
 rm ~/.ssh/kompmaster_deploy ~/.ssh/kompmaster_deploy.pub
 mv ~/.ssh/kompmaster_deploy_new ~/.ssh/kompmaster_deploy
 mv ~/.ssh/kompmaster_deploy_new.pub ~/.ssh/kompmaster_deploy.pub
 ```
 
-**Rollback**: if the new key fails, the old one is still in `authorized_keys`
-until step 7, and the secret can be replaced with the old key.
-
----
+Removing the old key before that point is the one unrecoverable step here: if
+the secret is malformed, the next deploy fails and there is no fallback.
 
 ## 2. Emergency Rollback Procedures
 
 ### 2.1 Storefront rollback (blue/green)
 
 The VPS runs one colour at a time. `deploy-storefront.sh` creates a release
-directory named `releases/<YYYYMMDDHHMMSS>-<colour>` (e.g.
-`releases/20260925183738-blue`), symlinks it as `current`, and manages the
-process `kompmaster-storefront-<colour>`.
+directory named `releases/<YYYYMMDDHHMMSS>-<colour>`, symlinks it as `current`,
+and starts `kompmaster-storefront-<colour>` **with `shared/storefront.env`
+exported into the process**.
 
-**Use `pm2 delete` + `pm2 start`, not `pm2 restart`.** PM2 resolves a script's
-path at process start, so a reload after a symlink flip can keep serving the
-release you just replaced. `deploy-storefront.sh:199-201` documents this
-deliberately, and the health-gate rollback at lines 243-244 does the same.
+Three things the naive command gets wrong, each verified against the script:
+
+1. **The environment must be sourced.** The script creates
+   `shared/storefront.env` and runs `set -a; . shared/storefront.env; set +a`
+   before `pm2 start` (lines 205-220). A bare `pm2 start` from a login shell
+   leaves `PORT` unset, so it defaults to 3000 — right for blue by accident,
+   a port collision for green (3001) — and leaves `API_BASE`/`SITE_URL` absent
+   entirely. The storefront would boot and serve nothing.
+2. **`pm2 delete` + `pm2 start`, not `pm2 restart`.** PM2 resolves a script's
+   path at process start, so a reload after a symlink flip can keep serving the
+   release you just replaced. `deploy-storefront.sh:199-201` documents this
+   deliberately, and its own health-gate rollback does the same.
+3. **`releases/` entries are colour-suffixed.** `ls -t` returns whichever
+   colour deployed *last*, not the one being rolled back. Filter by colour.
 
 ```bash
 # On the VPS (api.compmasone.ru)
 cd /opt/compmaster/storefront
+set -eu
 
-# 1. Which colour is live, and which releases exist for that colour?
-grep STOREFRONT_ACTIVE_COLOR /etc/default/caddy
-ls -1 releases/ | grep -- '-<colour>$' | sort -r   # newest first
+# 1. Decide the colour you are rolling BACK TO, and confirm the live one
+COLOUR=green                                        # <- set this
+LIVE=$(grep -oP '(?<=STOREFRONT_ACTIVE_COLOR=).*' /etc/default/caddy)
+echo "live=$LIVE  rolling back to=$COLOUR"
+[ -n "$COLOUR" ] || { echo "set COLOUR" >&2; exit 1; }
 
-# 2. Point `current` at the target release for THAT colour
-TARGET=$(ls -1d releases/*-<colour> | sort -r | sed -n 2p)
+# 2. Resolve a target release for THAT colour, newest first, and refuse to
+#    continue without one — the symlink flip below is destructive
+TARGET=$(ls -1d releases/*-"$COLOUR" 2>/dev/null | sort -r | head -1)
+[ -n "$TARGET" ] || { echo "no release for $COLOUR" >&2; exit 1; }
+[ -f "$TARGET/server.js" ] || { echo "$TARGET has no server.js" >&2; exit 1; }
+echo "current -> $(readlink current)   target -> $TARGET"
+
+# 3. Point current at it
 ln -sfn "$TARGET" current
 
-# 3. Restart by delete+start against the symlink, not reload
-pm2 delete kompmaster-storefront-<colour> >/dev/null 2>&1 || true
+# 4. Restart WITH the environment, delete+start, and persist for reboot
+set -a; . shared/storefront.env; set +a
+pm2 delete "kompmaster-storefront-$COLOUR" >/dev/null 2>&1 || true
 pm2 start "$PWD/current/server.js" \
-  --name kompmaster-storefront-<colour> --cwd "$PWD/current"
+  --name "kompmaster-storefront-$COLOUR" \
+  --cwd "$PWD/current" --time >/dev/null
+pm2 save >/dev/null
 
-# 4. Only if the rollback goes to the OTHER colour, flip Caddy too
-#    echo "STOREFRONT_ACTIVE_COLOR=<colour>" > /etc/default/caddy
-#    caddy reload --config /etc/caddy/Caddyfile
+# 5. Only if the target is the OTHER colour, flip Caddy as well
+# echo "STOREFRONT_ACTIVE_COLOR=$COLOUR" > /etc/default/caddy
+# caddy reload --config /etc/caddy/Caddyfile
 
-# 5. Verify before declaring it fixed
-curl -sS -o /dev/null -w '%{http_code}
-' https://www.compmasone.ru/
+# 6. Verify
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.compmasone.ru/
 pm2 list
 ```
 
-Two traps this procedure exists to avoid:
+If the service is unhealthy afterwards, roll forward to the colour you came
+from rather than debugging under pressure: the other colour's release is still
+on disk, and the next real deploy will promote a clean one anyway.
 
-- **Directory name includes the colour.** `ls -t releases/` returns whichever
-  colour deployed last, not the one you are rolling back; pointing `current` at
-  a green bundle while restarting `…-blue` produces a rollback that looks like
-  it worked and is not. Filter by colour.
-- **Releases predate the colour suffix.** `releases/20260923151318` was created
-  before the current naming scheme and belongs to neither colour. Do not point
-  `current` at it without checking it contains a `server.js` for the colour you
-  are restarting.
+Note: `releases/20260923151318` predates the colour suffix and belongs to
+neither colour. The `[ -f "$TARGET/server.js" ]` check will catch it if you
+select it explicitly; do not rely on `ls` alone.
 
 ### 2.2 API rollback
 
@@ -250,20 +269,25 @@ Consequences:
 ## 5. Database Backup & Recovery
 
 `backend/scripts/backup.sh` takes a `pg_dump`, gzips it, **encrypts it
-client-side** (AES-256-CTR + PBKDF2) and uploads it. It then deletes the
-plaintext. There is therefore no `.sql.gz` on the VPS to restore from — every
-artifact is `db-<timestamp>.sql.gz.enc`.
+client-side** (AES-256-CTR + PBKDF2) and uploads it, then deletes the
+plaintext. Every artifact is therefore `db-<timestamp>.sql.gz.enc`; there is no
+readable `.sql.gz` to restore from.
+
+**Where files land**: the script does `cd "$(dirname "$0")/.."` first, so its
+`backups/` is **relative to `backend/`**, not the repo root. Running
+`/opt/compmaster/backend/scripts/backup.sh` writes to
+`/opt/compmaster/backend/backups/`. Do not assume the CWD you invoke it from.
 
 **Required environment**: `S3_BACKUP_BUCKET`, `S3_BACKUP_ACCESS_KEY`,
-`S3_BACKUP_SECRET_KEY`, and `BACKUP_ENCRYPTION_KEY`. The script aborts if any
-is missing. **Keep a copy of `BACKUP_ENCRYPTION_KEY` in a password
-manager** — without it the backups are unrecoverable.
+`S3_BACKUP_SECRET_KEY`, `BACKUP_ENCRYPTION_KEY`. The script aborts if any is
+missing. **Keep a copy of `BACKUP_ENCRYPTION_KEY` in a password manager** —
+without it the archives cannot be decrypted at all.
 
 ```bash
-# Take a backup (on the VPS, from the repo root)
-cd /opt/compmaster
+# Take a backup. Invoke by path; the script relocates itself.
+cd /opt/compmaster/backend
 S3_BACKUP_BUCKET=... S3_BACKUP_ACCESS_KEY=... S3_BACKUP_SECRET_KEY=... \
-BACKUP_ENCRYPTION_KEY=... ./backend/scripts/backup.sh
+BACKUP_ENCRYPTION_KEY=... ./scripts/backup.sh
 
 ls -1 backups/          # -> db-20260929-030000.sql.gz.enc
 ```
@@ -271,10 +295,17 @@ ls -1 backups/          # -> db-20260929-030000.sql.gz.enc
 Restoring during an outage:
 
 ```bash
-cd /opt/compmaster
+cd /opt/compmaster/backend      # <- where backup.sh puts its backups/
 
-# 1. Decrypt and decompress to a plaintext dump (in /tmp, not backups/)
-openssl enc -d -aes-256-CTR -pbkdf2   -in "backups/db-20260929-030000.sql.gz.enc"   -out /tmp/restore.sql.gz   -pass env:BACKUP_ENCRYPTION_KEY
+# 0. Load the key. openssl reads it from the ENVIRONMENT, so exporting it is
+#    required - a password-manager copy alone is not enough.
+export BACKUP_ENCRYPTION_KEY='...'
+
+# 1. Decrypt into /tmp, never into backups/
+openssl enc -d -aes-256-ctr -pbkdf2 \
+  -in "backups/db-20260929-030000.sql.gz.enc" \
+  -out /tmp/restore.sql.gz \
+  -pass env:BACKUP_ENCRYPTION_KEY
 
 # 2. Inspect before overwriting
 gunzip -c /tmp/restore.sql.gz | head -20
@@ -282,19 +313,20 @@ gunzip -c /tmp/restore.sql.gz | head -20
 # 3. Restore
 gunzip -c /tmp/restore.sql.gz | psql -U kompmaster -h localhost kompmaster
 
-# 4. Clean up the plaintext
+# 4. Remove the plaintext
 shred -u /tmp/restore.sql.gz 2>/dev/null || rm -f /tmp/restore.sql.gz
+unset BACKUP_ENCRYPTION_KEY
 ```
 
 Notes:
 
 - The bucket has **versioning enabled**, so an overwritten or deleted object
-  still has restorable prior versions. Upload only — never `sync --delete`
-  against it.
-- The script is upload-only by design. It does not prune local or remote
-  copies, so `backups/` grows until you remove files yourself.
-- **The cron entry is not installed on the VPS yet** (no `backups/` directory
-  exists). Until it is, there is no automated backup and nothing to restore.
+  still has restorable prior versions. The script is upload-only by design —
+  never `sync --delete` against it.
+- `BACKUP_KEEP_LOCAL` (default 3) bounds local retention.
+- **The cron entry is not installed on the VPS.** There is no `backups/`
+  directory, so no automatic backup has ever run and there is currently
+  nothing to restore. Treat §5 as the procedure to use *once* cron is set up.
 
 ## 6. Monitoring & Alerting
 
