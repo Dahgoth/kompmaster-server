@@ -52,7 +52,14 @@ services:
       # no identities and every request is rejected.
       - ./docker/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://127.0.0.1:9333/"]
+      # Probe the S3 gateway (8333) AND the master (9333). The S3 port is what
+      # the app actually talks to, so a master-only probe would report healthy
+      # while every upload 500s. Probing both keeps master coverage too.
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf -o /dev/null http://127.0.0.1:8333/ && curl -sf -o /dev/null http://127.0.0.1:9333/",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
