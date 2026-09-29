@@ -78,17 +78,21 @@ sudo -u postgres psql -c "CREATE DATABASE kompmaster OWNER kompmaster;"
 ```
 
 Для S3-хранилища фото — либо купите Selectel Object Storage / Cloudflare R2
-(дадут endpoint, access key, secret key сразу), либо поднимите MinIO на
+(дадут endpoint, access key, secret key сразу), либо поднимите SeaweedFS на
 этом же сервере:
 
 ```bash
 # Быстрый вариант через Docker (нужен docker + docker-compose):
-# образ MinIO зафиксирован и берётся с quay.io — тег minio/minio из Docker Hub
-# больше не существует (организация удалена в 2025-06).
-docker compose up -d postgres minio
+# образ SeaweedFS зафиксирован по digest — образы MinIO больше не доступны
+# ни в одном публичном реестре (проверено локально, это не rate limit).
+docker compose up -d postgres seaweedfs
 ```
 
-> **Docker decision:** Docker is used only for local dev databases (Postgres + MinIO).
+Учётные данные S3 совпадают с прежними: `kompmaster` / `kompmaster123`
+(см. `docker/seaweedfs-s3.json`). Бакет `kompmaster` нужно создать один раз —
+SeaweedFS не создаёт его автоматически, как и MinIO.
+
+> **Docker decision:** Docker is used only for local dev databases (Postgres + SeaweedFS).
 > Production app deployment uses PM2 (`pnpm start`), not Docker.
 > The archived [Docker Evaluation](docs/archive/DOCKER_EVALUATION.md) documents the full rationale.
 

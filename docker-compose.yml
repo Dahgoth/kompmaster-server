@@ -14,26 +14,49 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  minio:
-    # MinIO removed its org from Docker Hub: `minio/minio` fails every pull with
-    # "pull access denied / repository does not exist". The official
-    # distribution is Quay.io. The tag is PINNED to the release verified
-    # working here (`docker compose up -d minio` + /minio/health/live 200).
-    # To upgrade: pull the new RELEASE.* tag from Quay, re-verify health, then
-    # bump it here and in DEVELOPMENT.md §Docker-based setup. Never revert to
-    # the Docker Hub tag or to an unpinned `latest`.
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+  seaweedfs:
+    # Local S3 — dev only (production object storage is Timeweb S3, ADR 002).
+    #
+    # Replaces MinIO. Every MinIO image is now unresolvable from every public
+    # registry — quay.io/minio/minio, docker.io/minio/minio, ghcr.io and
+    # bitnami all fail with "unauthorized / repository does not exist",
+    # including `:latest` and every RELEASE.* tag. That is not a rate limit; it
+    # was reproduced locally. See docs/incidents/2026-09-28-ci-silent-skip.md
+    # §7 for how the dead reference stayed invisible.
+    #
+    # SeaweedFS was chosen because it is the one S3-compatible server that
+    # honours the `ACL: public-read` this app sends on every upload
+    # (backend/src/utils/storage.js). Garage implements no ACL endpoints at all
+    # and LocalStack/s3mock are test emulators, not a dev object store. The
+    # behaviour was verified by running the real uploadBuffer and then fetching
+    # the returned URL with no credentials (HTTP 200).
+    #
+    # Image is PINNED to a digest — see DEVELOPMENT.md §Docker-based setup for
+    # the verify-then-bump upgrade procedure.
+    image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
     restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: kompmaster
-      MINIO_ROOT_PASSWORD: kompmaster123
+    # `server -dir=/data -s3` runs master+volume+filer+s3 in one process.
+    # Internal ports are pinned explicitly so the published ports stay stable.
+    command: >
+      server -dir=/data -s3
+      -master.port=9333 -volume.port=8080 -filer.port=8888 -s3.port=8333
+      -master.volumeSizeLimitMB=100
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # веб-консоль MinIO
+      - "9000:8333"   # S3 API (published on 9000 to match every existing doc and .env.example)
+      - "9334:9333"   # master / cluster status
     volumes:
-      - miniodata:/data
+      - seaweedfs-data:/data
+      # Pre-seeds the S3 identity so `kompmaster` / `kompmaster123` work out of
+      # the box, matching the previous MinIO dev credentials. SeaweedFS has no
+      # equivalent of MINIO_ROOT_USER; without this file the gateway starts with
+      # no identities and every request is rejected.
+      - ./docker/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:9333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
 volumes:
   pgdata:
-  miniodata:
+  seaweedfs-data:

@@ -60,11 +60,15 @@ through `backend/src/config.js`.
 
 ### S3 / object storage
 
-Used by `backend/src/utils/storage.js` for photo uploads. Works with MinIO, Selectel
-Object Storage, and Cloudflare R2 (`forcePathStyle` is enabled). The bundled
-local MinIO container (docker-compose, dev-only) is pinned to
-`quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` — MinIO's Docker Hub
-organization was removed, so `minio/minio` no longer resolves. See
+Used by `backend/src/utils/storage.js` for photo uploads. Works with SeaweedFS,
+Selectel Object Storage, and Cloudflare R2 (`forcePathStyle` is enabled), and
+relies on them honouring `ACL: public-read` — the server sends that on every
+upload so product images are readable at `S3_PUBLIC_URL` without credentials.
+
+The bundled local container is SeaweedFS (docker-compose, dev-only), pinned by
+digest, published on `localhost:9000` with dev credentials
+`kompmaster`/`kompmaster123` from `docker/seaweedfs-s3.json`. It replaced
+MinIO, whose images no longer resolve from any public registry. See
 `DEVELOPMENT.md` §Docker-based setup for the upgrade procedure.
 
 - `S3_ENDPOINT` — S3 endpoint URL. **Required.**
