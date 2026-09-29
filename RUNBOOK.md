@@ -120,11 +120,17 @@ echo "current -> $(readlink current)   target -> $TARGET"
 # 3. Point current at it
 ln -sfn "$TARGET" current
 
-# 4. Start with the environment, but PIN PORT to this colour.
+# 4. Source the environment, then RE-PIN PORT. Order matters.
 #    storefront.env must be sourced: it holds REVALIDATE_SECRET and
 #    INDEXNOW_KEY (deploy-storefront.sh:213-216 writes the file for exactly
-#    those). Only its PORT is unreliable, so it is overridden immediately after.
+#    those). But its PORT is frozen from the first deploy, and `set -a` assigns
+#    it over whatever the case block above computed — so PORT is set again
+#    here, after the source, or the stale value ships.
 set -a; . shared/storefront.env; set +a
+case "$COLOUR" in            # re-pin, post-source
+  blue)  PORT=3000 ;;
+  green) PORT=3001 ;;
+esac
 export PORT NODE_ENV=production \
   API_BASE=https://api.compmasone.ru/api SITE_URL=https://www.compmasone.ru
 
@@ -142,26 +148,30 @@ redirect would leave one line, `www` would fall back to the default domain and
 the API would silently proxy to port 4000.
 
 ```bash
-# 6. Cross-colour only: flip the upstream. Re-derive COLOUR if you are in a
-#    fresh shell - it is a plain variable, not exported state, and an empty
-#    value would write `STOREFRONT_ACTIVE_COLOR=` and drop traffic to the
-#    default upstream.
-COLOUR=blue   # <- set this
-[ -n "$COLOUR" ] || { echo "set COLOUR" >&2; exit 1; }
-sed -i "s/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$COLOUR/" /etc/default/caddy
+# 6. Cross-colour only: flip the upstream to the colour chosen in step 1.
+#    Re-enter it here if you are in a fresh shell — COLOUR is a plain shell
+#    variable, not exported state, and an empty value would write
+#    `STOREFRONT_ACTIVE_COLOR=` and drop traffic to the default upstream.
+#    There is deliberately no default: this block is only correct for the
+#    OTHER colour, so guessing would flip traffic the wrong way silently.
+printf 'colour to activate [%s]: ' "$LIVE"   # default shown is the current one
+read -r ACTIVATE
+[ -n "$ACTIVATE" ] || { echo 'no colour given' >&2; exit 1; }
+case "$ACTIVATE" in blue|green) ;; *) echo "must be blue or green" >&2; exit 1 ;; esac
+sed -i "s/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$ACTIVATE/" /etc/default/caddy
 caddy reload --config /etc/caddy/Caddyfile --force
 ```
 
 **Verify the process you actually restarted, then the public site.** Caddy
-still routes to the old colour until step 5, so a public curl measures the
+still routes to the old colour until step 6, so a public curl measures the
 wrong one in a cross-colour rollback:
 
 ```bash
-# 6. The process you just started
+# 7. The process you just started
 curl -sf -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:$PORT/"
 pm2 list
 
-# 7. Only then the public site
+# 8. Only then the public site
 curl -sS -o /dev/null -w '%{http_code}\n' https://www.compmasone.ru/
 ```
 
@@ -379,14 +389,17 @@ openssl enc -d -aes-256-ctr -pbkdf2 \
 #    gunzip dies on SIGPIPE with 141, and under `set -o pipefail` that aborts
 #    the block before the restore below ever runs. Decompress to a file instead.
 gunzip -t /tmp/restore.sql.gz          # fails unless it is a valid gzip
-gunzip -c /tmp/restore.sql.gz > /tmp/restore.sql
+( umask 077; gunzip -c /tmp/restore.sql.gz > /tmp/restore.sql )
 head -20 /tmp/restore.sql
 
 # 3. Restore
 gunzip -c /tmp/restore.sql.gz | psql -U kompmaster -h localhost kompmaster
 
-# 4. Remove the plaintext and the key
-shred -u /tmp/restore.sql.gz 2>/dev/null || rm -f /tmp/restore.sql.gz
+# 4. Remove BOTH plaintexts. /tmp/restore.sql is the full decompressed
+#    database; leaving it is worse than the compressed one, and /tmp is often
+#    world-readable.
+shred -u /tmp/restore.sql /tmp/restore.sql.gz 2>/dev/null \
+  || rm -f /tmp/restore.sql /tmp/restore.sql.gz
 unset BACKUP_KEY
 ```
 
