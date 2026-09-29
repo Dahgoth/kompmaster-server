@@ -110,19 +110,21 @@ openssl s_client -connect www.compmasone.ru:443 -servername www.compmasone.ru </
   was merged without all three `package.json` files aligned.
 - Check what the tag actually contains:
   `for f in package.json backend/package.json frontend/package.json; do git show vX.Y.Z:$f | grep version; done`
-- If the tag is drifted, cut a new release: fix the versions in a PR, merge it,
-  then re-run `release.yml`. The tag cannot be re-cut after the fact.
+- If the tag is drifted, fix the three versions in a PR and merge it — that
+  push is the trigger, so it runs `release.yml` and opens the next release PR.
+  Merge that, and the new tag is clean. (release-please will not re-cut an
+  existing tag, though the drifted one can be deleted and re-pushed by hand.)
 
-*(An earlier revision of this section covered a `verify-push` step that waited
-for a post-release push to `main`. The release workflow no longer pushes to
-`main` — `extra-files` aligns the versions inside the release PR before the tag
-is cut — so that step and its "re-run the release workflow" remedy no longer
-apply.)*
 
-### 4.3 "Release already deployed — skipping"
-- Idempotency guard triggered: a successful deployment already exists for this
-  tag's commit SHA in `production-vps`
-- To force a re-deploy: `gh workflow run deploy.yml -f tag=vX.Y.Z`
+### 4.3 "Deployment already successful — skipping"
+- The idempotency guard found a `success` deployment for this tag's commit SHA
+  in `production-vps`, so it exited before touching the VPS.
+- **Re-dispatching the same tag does not help** — the guard resolves the same
+  commit SHA and skips again, giving you a green run that deployed nothing.
+- To actually re-deploy, either delete the deployment record so the guard no
+  longer finds it:
+  `gh api repos/:owner/:repo/deployments --jq '.[] | select(.environment=="production-vps").id'`
+  then `gh api -X DELETE repos/:owner/:repo/deployments/<id>`, or cut a new tag.
 
 ### 4.4 Health gate failure (storefront)
 - Check PM2 logs: `pm2 logs kompmaster-storefront-<color>`
