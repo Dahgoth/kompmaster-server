@@ -150,7 +150,13 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ env.TAG }}
+          # Read the tag from the extract-tag step's declared output rather than
+          # the `TAG` env var. Both work — extract-tag writes `TAG` to
+          # $GITHUB_ENV — but the idempotency guard above already reads
+          # `steps.extract.outputs.tag`, and using the same source in both
+          # places keeps the data flow visible in the YAML instead of an
+          # invisible GITHUB_ENV side channel.
+          TAG: ${{ steps.extract.outputs.tag }}
 
       - name: Create GitHub Deployment (production)
         id: deployment
