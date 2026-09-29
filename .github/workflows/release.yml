@@ -16,6 +16,12 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')"
+    # Exposed so the sibling `deploy` job can consume them. A job that calls
+    # another workflow must sit at JOB level, so it cannot read this job's
+    # steps directly.
+    outputs:
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      release_created: ${{ steps.release.outputs.release_created }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -65,9 +71,13 @@ jobs:
           max-retries: '10'
           base-interval: '2'
 
-      - name: Trigger deploy workflow (workflow_call)
-        if: steps.release.outputs.release_created == 'true'
-        uses: ./.github/workflows/deploy.yml
-        with:
-          tag: ${{ steps.release.outputs.tag_name }}
-        secrets: inherit
+  # Reusable workflows are called at the JOB level, never from a step.
+  # GitHub rejects the entire workflow file when `uses: ./.github/workflows/...`
+  # appears inside `steps`, which is what kept this workflow from running at all.
+  deploy:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+    secrets: inherit
