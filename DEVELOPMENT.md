@@ -502,8 +502,7 @@ part of the release PR itself. The release uses `include-component-in-tag: false
 to produce clean `v*.*.*` tags that match the deploy workflow trigger.
 
 **Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` and
-`kompmaster-v*.*.*` tag pushes, and on `workflow_dispatch` for a manual re-deploy
-of an existing tag. The tag is the **only** automatic trigger: the
+`kompmaster-v*.*.*` tag pushes — the **only** trigger that works, because the
 `production-vps` environment permits only refs matching `v*.*.*`, and a branch
 push, a `workflow_call` or a `workflow_dispatch` all resolve to the `main`
 *branch* and are rejected by the environment before a runner is assigned.

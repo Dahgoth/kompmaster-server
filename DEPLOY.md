@@ -415,43 +415,44 @@ looks like a runner or VPS fault and is neither.
 
 Consequently:
 
-| Trigger | Ref seen by the environment | Works? |
-|---------|----------------------------|---------|
-| `push` to a `v*.*.*` tag | the tag | ✅ yes — the only real path |
-| `push` to `main` | `main` | ❌ rejected |
-| `workflow_call` from another workflow | the **caller's** ref (`main`) | ❌ rejected |
-| `workflow_dispatch` (`gh workflow run`) | `main` | ❌ rejected |
+`deploy.yml` therefore declares exactly one trigger:
 
-A `workflow_dispatch` trigger therefore exists in the file but **cannot deploy
-anything**. It was verified failing:
-
-```
-Branch "main" is not allowed to deploy to production-vps due to
-environment protection rules.
+```yaml
+on:
+  push:
+    tags: ['v*.*.*', 'kompmaster-v*.*.*']
 ```
 
-`workflow_call` was removed outright. The `release` trigger was removed because
-release-please publishes a Release on every release, so it would have fired a
-second, concurrent production deploy alongside the tag push — two jobs racing on
-the same colour directory, with an idempotency guard that cannot prevent it
-because both would query the Deployments API before either recorded a result.
+The alternatives were all removed because each one provably cannot deploy:
 
-**To deploy a new version, cut a new tag.** There is no manual override. See
-`RUNBOOK.md` §4.
+- **`workflow_call`** was called by `release.yml`, but a reusable workflow
+  inherits the *caller's* ref — `main` — and was rejected. This is the change
+  that broke the deploy: it looked wired up and produced a job with zero steps
+  and no logs.
+- **`workflow_dispatch`** was a manual re-deploy. It resolves to `main` and is
+  rejected the same way. Verified with a live dispatch:
+
+  ```
+  Branch "main" is not allowed to deploy to production-vps due to
+  environment protection rules.
+  ```
+
+  A trigger that cannot work is worse than no trigger, so it was removed rather
+  than left as a documented no-op.
+- **`release: published`** fired alongside the tag push, because release-please
+  publishes a Release on every release. Two concurrent production deploys would
+  race on the same colour directory, and the idempotency guard cannot prevent it:
+  both would query the Deployments API before either recorded a result.
+
+**To deploy, cut a tag. There is no manual override.** See `RUNBOOK.md` §4.
 
 ```yaml
 name: Deploy Production
 
 on:
-  # Tag push is the only trigger the production-vps environment accepts.
+  # The only trigger the production-vps environment accepts.
   push:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
-  workflow_dispatch:          # accepted by GitHub, rejected by the environment
-    inputs:
-      tag:
-        description: 'Tag to deploy (e.g., v2.0.0)'
-        required: true
-        type: string
 
 permissions:
   contents: write

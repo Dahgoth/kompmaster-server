@@ -181,12 +181,11 @@ matters because `deploy-storefront.sh` runs `check-versions.js` before building
 and would abort on a drifted tree.
 
 **Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` and
-`kompmaster-v*.*.*` tag pushes, plus `workflow_dispatch` for a manual re-deploy
-of an existing tag. The tag is the only automatic trigger: the `production-vps`
-environment permits only `v*.*.*` refs, and a branch push or a `workflow_call`
-resolves to the `main` branch and is rejected before a runner is assigned.
-`release.yml` has no deploy job — release-please cuts the release and the tag
-push is the handoff.
+`kompmaster-v*.*.*` tag pushes, which is the **only** trigger that works. The
+`production-vps` environment permits only refs matching `v*.*.*`, and a branch
+push or a `workflow_call` resolves to the `main` branch and is rejected before
+a runner is assigned. `release.yml` has no deploy job — release-please cuts the
+release and the tag push is the handoff.
 
 Run locally before pushing:
 ```bash
