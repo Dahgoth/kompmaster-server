@@ -484,52 +484,38 @@ permissions:
   issues: write
   pull-requests: write
   id-token: write
+  deployments: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    # Skip [skip ci] commits (version sync commits from previous run)
     if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')"
+    outputs:
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      release_created: ${{ steps.release.outputs.release_created }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with: { node-version: '24' }
-      - run: corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts
-      - name: Release Please
-        id: release
-        uses: googleapis/release-please-action@0dfd8538845b8e92600d271a895a5372865d4062
+      - actions/checkout@<sha>          # fetch-depth: 0
+      - corepack enable pnpm
+      - actions/setup-node@<sha>         # node-version: '24'
+      - pnpm install --frozen-lockfile --ignore-scripts
+      - googleapis/release-please-action@<sha>
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
-
-      - name: Sync versions and trigger deploy
-        if: steps.release.outputs.release_created == 'true'
-        run: |
-          pnpm run version:sync
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/package.json frontend/package.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
-            git push origin HEAD:main
-            # Verify push propagated (max 20s)
-            for i in {1..10}; do
-              if git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then break; fi
-              sleep 2
-            done
-            if ! git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then
-              echo "::error::Version sync commit not visible on origin/main after 20s"
-              exit 1
-            fi
-          else
-            echo "No version changes to commit"
-          fi
-          gh workflow run deploy.yml --ref main -f tag="${{ steps.release.outputs.tag_name }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+**Flow** — one job, and it does not deploy:
+
+1. `release-please` opens a **release PR** bumping the root `package.json`, both
+   app `package.json` files (via `extra-files`) and the root `CHANGELOG.md`.
+2. Merging that PR makes `release.yml` cut the **tag** and the **GitHub Release**.
+3. The **tag push** is what runs `deploy.yml`.
+
+There is no sync step, no dispatch step, and no `workflow_call` from this
+workflow into `deploy.yml`. The tag is the entire handoff — which is also the
+only ref the `production-vps` environment accepts, so nothing has to carry a
+ref across the boundary that could resolve to `main` instead.
 
 **Flow**:
 1. `release-please` creates Release PR → on merge (merge commit), creates GitHub Release + tag + bumps manifest

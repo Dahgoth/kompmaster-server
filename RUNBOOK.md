@@ -104,14 +104,25 @@ openssl s_client -connect www.compmasone.ru:443 -servername www.compmasone.ru </
 - Verify required reviewers (1) and wait timer (0 min)
 - Self-approve if pending
 
-### 4.2 "Version sync commit not visible on origin/main after 20s"
-- Release workflow `verify-push` action failed
-- Check GitHub API status: https://www.githubstatus.com/
-- Re-run release workflow: `gh workflow run release.yml`
+### 4.2 Deploy aborted with a version-mismatch error
+- `deploy-storefront.sh` runs `check-versions.js` before building, so a tag cut
+  from a drifted tree aborts the deploy. This is expected only if the release PR
+  was merged without all three `package.json` files aligned.
+- Check what the tag actually contains:
+  `for f in package.json backend/package.json frontend/package.json; do git show vX.Y.Z:$f | grep version; done`
+- If the tag is drifted, cut a new release: fix the versions in a PR, merge it,
+  then re-run `release.yml`. The tag cannot be re-cut after the fact.
+
+*(An earlier revision of this section covered a `verify-push` step that waited
+for a post-release push to `main`. The release workflow no longer pushes to
+`main` — `extra-files` aligns the versions inside the release PR before the tag
+is cut — so that step and its "re-run the release workflow" remedy no longer
+apply.)*
 
 ### 4.3 "Release already deployed — skipping"
-- Idempotency guard triggered (release exists on main)
-- To force re-deploy: delete release in GitHub UI, then re-run deploy workflow
+- Idempotency guard triggered: a successful deployment already exists for this
+  tag's commit SHA in `production-vps`
+- To force a re-deploy: `gh workflow run deploy.yml -f tag=vX.Y.Z`
 
 ### 4.4 Health gate failure (storefront)
 - Check PM2 logs: `pm2 logs kompmaster-storefront-<color>`

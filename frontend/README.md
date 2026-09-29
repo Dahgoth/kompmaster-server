@@ -169,12 +169,9 @@ version but doesn't run project-specific hooks. The release workflow
 (`.github/workflows/release.yml`) uses `googleapis/release-please-action@v5`
 with a config file (`.release-please-config.json`) for a **single root package**
 producing a **single root `CHANGELOG.md`** (no per-package changelogs), matching
-the ADR 003 deployment model where backend and storefront deploy together.
-Version sync is handled by the root `package.json` as the single source of truth,
-and the release workflow runs `pnpm run version:sync` after a release is created
-to propagate the version to `backend/package.json` and `frontend/package.json`.
-The release uses `include-component-in-tag: false` to produce clean `v*.*.*`
-tags that match the deploy workflow trigger.
+the ADR 003 deployment model where backend and storefront deploy together. The
+release uses `include-component-in-tag: false` to produce clean `v*.*.*` tags
+that match the deploy workflow trigger.
 
 Version alignment is part of the release PR itself: `extra-files` in
 `.release-please-config.json` lists `backend/package.json` and

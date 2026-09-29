@@ -216,11 +216,12 @@ Currently all three are at **2.4.0**.
   All three therefore move together, in one PR, before the tag is cut. That
   ordering matters: `deploy-storefront.sh` runs `check-versions.js` before
   building, so a tag cut from a drifted tree aborts the deploy. See
-  `RUNBOOK.md` §9.2.
+  `RUNBOOK.md` §4.2.
 - Release flow: conventional commits → `release-please` opens a release PR
   bumping all three `package.json` files and `CHANGELOG.md` → merge it →
-  `release.yml` creates the tag, GitHub Release and deployment. Backend and
-  frontend always deploy from the same tag.
+  `release.yml` cuts the tag and GitHub Release → **the tag push is what runs
+  `deploy.yml`**. The release workflow performs no deployment itself. Backend
+  and frontend always deploy from the same tag.
 
 > Historical records (`docs/adr/`, `docs/research/`, `docs/archive/`) keep the
 > original `npm` commands they were written with; they are dated snapshots and
