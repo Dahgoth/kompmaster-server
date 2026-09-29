@@ -119,12 +119,26 @@ openssl s_client -connect www.compmasone.ru:443 -servername www.compmasone.ru </
 ### 4.3 "Deployment already successful — skipping"
 - The idempotency guard found a `success` deployment for this tag's commit SHA
   in `production-vps`, so it exited before touching the VPS.
-- **Re-dispatching the same tag does not help** — the guard resolves the same
-  commit SHA and skips again, giving you a green run that deployed nothing.
-- To actually re-deploy, either delete the deployment record so the guard no
-  longer finds it:
-  `gh api repos/:owner/:repo/deployments --jq '.[] | select(.environment=="production-vps").id'`
-  then `gh api -X DELETE repos/:owner/:repo/deployments/<id>`, or cut a new tag.
+- **Re-dispatching the same tag does not help on its own** — the guard
+  resolves the same commit SHA and skips again, giving you a green run that
+  deployed nothing. You must clear the record *first*, then trigger.
+- Clearing it, mirroring the guard's own selector (`environment` **and** `ref`),
+  and paginated so history cannot push the record out of the first page:
+
+  ```bash
+  SHA=$(git rev-parse vX.Y.Z^{commit})
+  gh api 'repos/:owner/:repo/deployments?per_page=100' \
+    --jq ".[] | select(.environment==\"production-vps\" and .ref==\"${SHA}\").id"
+  ```
+
+- Then **both** steps — deleting the record alone starts nothing:
+
+  ```bash
+  gh api -X DELETE repos/:owner/:repo/deployments/<id>
+  gh workflow run deploy.yml -f tag=vX.Y.Z
+  ```
+
+  Or simply push a new tag, which is a trigger in its own right.
 
 ### 4.4 Health gate failure (storefront)
 - Check PM2 logs: `pm2 logs kompmaster-storefront-<color>`

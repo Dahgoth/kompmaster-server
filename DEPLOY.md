@@ -513,7 +513,7 @@ jobs:
         id: release          # <- the outputs block above references this
         uses: googleapis/release-please-action@<sha>
         with:
-          token: \${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 ```
@@ -540,7 +540,7 @@ ref across the boundary that could resolve to `main` instead.
 | Release PR merge | `push` to `main` | `release.yml` runs `release-please`, which bumps root + both app `package.json` files (via `extra-files`) and the root `CHANGELOG.md`, then cuts the release and the `vX.Y.Z` tag |
 | Tag push (automatic) | `push` to a `v*.*.*` tag | `deploy.yml` runs — the only automatic deploy path, and the only one the `production-vps` environment accepts |
 | Manual tag push | `git push origin v2.3.0` | `deploy.yml` runs |
-| Re-deploy a tag whose deployment record blocks the guard | delete the `production-vps` deployment, or cut a new tag — re-dispatching the same tag is skipped by the idempotency guard | `deploy.yml` runs |
+| Re-deploy a tag blocked by the idempotency guard | clear the guard, then trigger: `gh api -X DELETE .../deployments/<id>` (for the tag's commit SHA) **and** `gh workflow run deploy.yml -f tag=vX.Y.Z` — or simply cut a new tag | `deploy.yml` runs |
 
 **Branch protection**: `main` has ruleset with required checks (8 CI jobs), linear history enforced via **merge commit** (not squash) for release-please PRs to preserve manifest history. `release-please--*` branches excluded from rules.
 
