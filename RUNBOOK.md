@@ -22,8 +22,10 @@ ssh -i ~/.ssh/kompmaster_deploy_new root@api.compmasone.ru "echo 'SSH OK'"
 # 4. Update GitHub secret (Settings → Environments → production-vps → STOREFRONT_SSH_KEY)
 #    Paste the PRIVATE key content (including BEGIN/END lines)
 
-# 5. Verify deploy workflow works with new key
-gh workflow run deploy.yml -f tag=v2.3.1
+# 5. Verify the key works
+ssh -i ~/.ssh/kompmaster_deploy_new root@api.compmasone.ru "echo 'SSH OK'"
+#    (a deploy cannot be dispatched by hand - see section 4; cut a new tag
+#     to exercise the deploy path end to end)
 
 # 6. Remove old key from VPS authorized_keys
 #    (Keep both for 24h overlap, then remove old)
@@ -209,10 +211,11 @@ gh run list --workflow=deploy.yml --limit=5
 # Check release status
 gh release list --limit=5
 
-# Manual deploy
-gh workflow run deploy.yml -f tag=v2.3.1
+# Deploy a specific version: cut a new tag (see section 4 - the environment
+# permits only v*.*.* refs, so `gh workflow run deploy.yml` cannot deploy)
+# git tag v2.3.1 && git push origin v2.3.1
 
-# Manual release (bypass release-please)
+# Re-run release-please on main (no-op unless there are unreleased commits)
 gh workflow run release.yml
 
 # View storefront logs
