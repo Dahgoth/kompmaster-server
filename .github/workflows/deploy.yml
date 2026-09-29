@@ -122,47 +122,97 @@ jobs:
           API_BASE: https://api.compmasone.ru/api
           SITE_URL: https://www.compmasone.ru
 
+      # softprops/action-gh-release and bobheadxi/deployments are not permitted
+      # by the repository's action policy (owned by Dahgoth, created by GitHub,
+      # or Marketplace-verified only). Replaced with the `gh` CLI, which is
+      # preinstalled on GitHub runners and already used by the idempotency
+      # guard above — same Deployments REST API, no third-party dependency.
+
       - name: Create GitHub Release
         if: github.event_name != 'release' && steps.idempotency.outputs.already_deployed != 'true'
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
-        with:
-          tag_name: ${{ env.TAG }}
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+        run: |
+          # Distinguish "release does not exist" (create it) from a real failure
+          # such as auth, rate limiting or a network blip. `gh release view`
+          # exits non-zero for both, so the message is what separates them —
+          # without this, an auth failure would be reported as "release missing"
+          # and then fail again on create with the original error buried.
+          if gh release view "$TAG" >/dev/null 2>view_err.txt; then
+            echo "Release $TAG already exists — leaving it untouched"
+          elif grep -qi "not found" view_err.txt; then
+            # No --title: --generate-notes auto-generates BOTH the release name
+            # and body from the commits, matching the previous
+            # generate_release_notes: true behaviour.
+            gh release create "$TAG" --verify-tag --generate-notes
+          else
+            echo "::error::gh release view failed for $TAG — not a missing release:"
+            cat view_err.txt
+            exit 1
+          fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Read the tag from the extract-tag step's declared output rather than
+          # the `TAG` env var. Both work — extract-tag writes `TAG` to
+          # $GITHUB_ENV — but the idempotency guard above already reads
+          # `steps.extract.outputs.tag`, and using the same source in both
+          # places keeps the data flow visible in the YAML instead of an
+          # invisible GITHUB_ENV side channel.
+          TAG: ${{ steps.extract.outputs.tag }}
 
       - name: Create GitHub Deployment (production)
+        id: deployment
         if: steps.idempotency.outputs.already_deployed != 'true'
-        uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: production-vps
-          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
-          auto-merge: false
+        run: |
+          if [ -z "$TAG_COMMIT" ]; then
+            echo "::error::TAG_COMMIT is empty; cannot create deployment" >&2
+            exit 1
+          fi
+          DEPLOYMENT_ID=$(gh api --method POST "repos/${{ github.repository }}/deployments" \
+            --input - --jq '.id' <<JSON
+          {
+            "ref": "$TAG_COMMIT",
+            "environment": "production-vps",
+            "auto_merge": false,
+            "required_contexts": []
+          }
+          JSON
+          )
+          echo "id=$DEPLOYMENT_ID" >> "$GITHUB_OUTPUT"
+          echo "Created deployment $DEPLOYMENT_ID for $TAG_COMMIT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_COMMIT: ${{ steps.idempotency.outputs.TAG_COMMIT }}
 
       - name: Update Deployment Status (success)
-        if: success() && steps.idempotency.outputs.already_deployed != 'true'
-        uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: production-vps
-          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
-          status: success
-          deployment-url: https://www.compmasone.ru
+        if: >-
+          success() &&
+          steps.idempotency.outputs.already_deployed != 'true' &&
+          steps.deployment.outputs.id != ''
+        run: |
+          gh api --method POST \
+            "repos/${{ github.repository }}/deployments/${{ steps.deployment.outputs.id }}/statuses" \
+            -f state=success \
+            -f environment=production-vps \
+            -f log_url=https://www.compmasone.ru \
+            -f description="Storefront deployed" \
+            --jq '.state'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Deployment Status (failure)
-        if: failure() && steps.idempotency.outputs.already_deployed != 'true'
-        uses: bobheadxi/deployments@18dcfe705d6892121d665b21ef9ff448791807f3
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: production-vps
-          ref: ${{ steps.idempotency.outputs.TAG_COMMIT }}
-          status: failure
+        if: >-
+          failure() &&
+          steps.idempotency.outputs.already_deployed != 'true' &&
+          steps.deployment.outputs.id != ''
+        run: |
+          gh api --method POST \
+            "repos/${{ github.repository }}/deployments/${{ steps.deployment.outputs.id }}/statuses" \
+            -f state=failure \
+            -f environment=production-vps \
+            -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f description="Storefront deploy failed" \
+            --jq '.state'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Emit deployment metric
         if: always() && steps.idempotency.outputs.already_deployed != 'true'
