@@ -47,33 +47,21 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Sync versions and trigger deploy
+      # release-please now bumps backend/ and frontend/ package.json in the
+      # release PR itself (see .release-please-config.json), so there is
+      # nothing to sync after the fact — and nothing that needs a direct push
+      # to main, which the branch ruleset rejects anyway.
+      #
+      # This is a verification, not a repair. If it fails, the release PR was
+      # merged with the packages out of step, and that is worth stopping for
+      # rather than papering over with a commit that bypasses review.
+      - name: Verify version alignment
         if: steps.release.outputs.release_created == 'true'
-        run: |
-          pnpm run version:sync
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/package.json frontend/package.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
-            git push origin HEAD:main 2>&1 | tee /tmp/push.log || { echo "::error::Failed to push version sync commit: $(cat /tmp/push.log)"; exit 1; }
-          else
-            echo "No version changes to commit"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verify push propagated
-        if: steps.release.outputs.release_created == 'true'
-        uses: ./.github/actions/verify-push
-        with:
-          branch: main
-          max-retries: '10'
-          base-interval: '2'
+        run: node scripts/check-versions.js
 
   # Reusable workflows are called at the JOB level, never from a step.
   # GitHub rejects the entire workflow file when `uses: ./.github/workflows/...`
-  # appears inside `steps`, which is what kept this workflow from running at all.
+  # appears inside `steps`.
   deploy:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'

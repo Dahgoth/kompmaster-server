@@ -2,6 +2,7 @@
   "versioning-strategy": "default",
   "release-type": "node",
   "include-component-in-tag": false,
+  "separate-pull-requests": false,
   "packages": {
     ".": {
       "release-type": "node",
@@ -18,6 +19,16 @@
         { "type": "chore", "section": "Chores", "hidden": true },
         { "type": "revert", "section": "Reverts", "hidden": false }
       ]
+    },
+    "backend": {
+      "release-type": "node",
+      "package-name": "kompmaster-server",
+      "component": ""
+    },
+    "frontend": {
+      "release-type": "node",
+      "package-name": "kompmaster-frontend",
+      "component": ""
     }
   }
 }
