@@ -7,8 +7,6 @@ on:
   # environment before a runner is ever assigned.
   push:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -127,7 +125,7 @@ jobs:
       # guard above — same Deployments REST API, no third-party dependency.
 
       - name: Create GitHub Release
-        if: github.event_name != 'release' && steps.idempotency.outputs.already_deployed != 'true'
+        if: steps.idempotency.outputs.already_deployed != 'true'
         run: |
           # Distinguish "release does not exist" (create it) from a real failure
           # such as auth, rate limiting or a network blip. `gh release view`

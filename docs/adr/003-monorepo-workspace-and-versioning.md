@@ -129,21 +129,24 @@ encodes this.
   https://pnpm.io/settings
 - Vercel monorepo guidance — https://vercel.com/docs/monorepos
 - `DEVELOPMENT.md`, `DEPLOY.md`, `terraform/README.md`, `terraform/RUNBOOK.md`
+
 **Amendment — versioning enforcement and deploy trigger (2026-09-29).**
 
-The "fixed shared versioning" rule above is retained, but *how* it is enforced
-and *when* the deploy runs both changed after the release pipeline was
-rebuilt. Three findings drove it.
+The "fixed shared versioning" rule above is retained, but *how* release-please
+applies it and *what triggers the deploy* both changed after the release
+pipeline was rebuilt. Three findings drove it.
 
 **1. Nothing reads the app versions.** No code in `backend/src` or
 `frontend/src` reads a `version` field; the storefront does not surface it; the
 API health endpoint returns only `{ok, time}`. The fields exist because pnpm
-requires them in every `package.json`, not because anything consumes them. Their
-*values* are therefore free, and only the equality convention is load-bearing.
+requires a `version` in every `package.json`, not because anything consumes
+them. Their *values* are therefore free, and only the equality convention is
+load-bearing — which is why it is kept and enforced, rather than deleted.
 
-**2. The sync cannot happen after the release.** `backend/scripts/deploy-storefront.sh`
-runs `node scripts/check-versions.js` before building, and the deploy is
-triggered by the tag release-please creates. Verified on the v2.4.1 tag:
+**2. The sync must happen before the tag, not after.**
+`backend/scripts/deploy-storefront.sh:86` runs `check-versions.js` before
+building, and the deploy is triggered by the tag release-please creates.
+Verified on the v2.4.1 tag:
 
 ```
 v2.4.1 -> 013a5476
@@ -152,22 +155,30 @@ v2.4.1 -> 013a5476
   frontend/package.json 2.4.0   <- drifted
 ```
 
-A tag cut from a drifted tree aborts the deploy. So the alignment has to land
-**inside the release PR, before it is merged** — not as a follow-up afterwards.
-`.github/workflows/sync-release-pr-versions.yml` does that, pushing the sync
-onto the `release-please--*` branch, which the `main` ruleset already excludes
-from protection, so no bypass is required.
+A tag cut from a drifted tree aborts the deploy, so a post-release sync job can
+never protect it. The alignment is instead made part of the release PR itself
+via `extra-files` in `.release-please-config.json`:
 
-The previous post-release `sync-versions` job, which opened a follow-up PR
-after the release was cut, was therefore always too late to protect the
-deploy, while still blocking pushes until it merged.
+```json
+"extra-files": ["backend/package.json", "frontend/package.json"]
+```
 
-**3. The deploy must be triggered by the tag, not by a branch or a
-workflow call.** The `production-vps` environment permits only refs matching
-`v*.*.*`. A `push` to `main`, a `workflow_call` from `release.yml`, and a
-`workflow_dispatch` all resolve to the `main` *branch* and are rejected by the
-environment before a runner is assigned — observed as a job with zero steps and
-no logs. Only a tag ref satisfies the policy, which is what the original
-`on: push: tags` trigger was for. The `workflow_call` coupling introduced in
-#105 silently broke the environment gate, and the policy's intent — only tags
-deploy to production — is now restored.
+release-please updates the top-level `version` of any `.json` file listed there,
+so all three versions move together in the one PR that also bumps the root and
+writes the changelog. This reuses the push path release-please already uses for
+its own release PR, rather than adding a second workflow that pushes with
+`GITHUB_TOKEN` — a credential whose pushes do not trigger workflow runs, which
+would have left the release PR with no check runs and therefore unmergeable.
+
+**3. The deploy is triggered by the tag alone.** The `production-vps`
+environment permits only refs matching `v*.*.*`. A `push` to `main`, a
+`workflow_call`, and a `workflow_dispatch` all resolve to the `main` branch and
+are rejected by the environment before a runner is assigned — observed as a job
+with zero steps and no logs. Only a tag ref satisfies the policy.
+
+`deploy.yml` therefore triggers on `push: tags` alone. The `release: published`
+trigger was removed: release-please publishes a GitHub Release on every release,
+so keeping both meant two concurrent production deploys racing on the same
+colour directory with no coordination. `release.yml` no longer contains a
+`deploy` job at all — the tag push is the whole handoff, and nothing crosses a
+workflow boundary that could carry the wrong ref into the environment check.
