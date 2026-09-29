@@ -118,19 +118,7 @@ encodes this.
    directories.** Rejected: infrastructure is repo-wide, not backend-only, and
    Terraform state/docs references assume the root.
 
-## References
-
-- ADR 001 — canonical core, pure C API-only, single-repo decision; Open
-  Question 5 (repo split)
-- ADR 002 — PoC re-scope: API-only VPS (PM2) + S3/CDN storefront
-- PR #21 — `build(deps): migrate dependency management from npm to pnpm`
-- `docs/research/repo-split-analysis.md` — historical 1-repo vs 2-repo analysis
-- pnpm workspaces — https://pnpm.io/workspaces ; settings —
-  https://pnpm.io/settings
-- Vercel monorepo guidance — https://vercel.com/docs/monorepos
-- `DEVELOPMENT.md`, `DEPLOY.md`, `terraform/README.md`, `terraform/RUNBOOK.md`
-
-**Amendment — versioning enforcement and deploy trigger (2026-09-29).**
+## Amendment — versioning enforcement and deploy trigger (2026-09-29)
 
 The "fixed shared versioning" rule above is retained, but *how* release-please
 applies it and *what triggers the deploy* both changed after the release
@@ -182,3 +170,15 @@ so keeping both meant two concurrent production deploys racing on the same
 colour directory with no coordination. `release.yml` no longer contains a
 `deploy` job at all — the tag push is the whole handoff, and nothing crosses a
 workflow boundary that could carry the wrong ref into the environment check.
+
+## References
+
+- ADR 001 — canonical core, pure C API-only, single-repo decision; Open
+  Question 5 (repo split)
+- ADR 002 — PoC re-scope: API-only VPS (PM2) + S3/CDN storefront
+- PR #21 — `build(deps): migrate dependency management from npm to pnpm`
+- `docs/research/repo-split-analysis.md` — historical 1-repo vs 2-repo analysis
+- pnpm workspaces — https://pnpm.io/workspaces ; settings —
+  https://pnpm.io/settings
+- Vercel monorepo guidance — https://vercel.com/docs/monorepos
+- `DEVELOPMENT.md`, `DEPLOY.md`, `terraform/README.md`, `terraform/RUNBOOK.md`
