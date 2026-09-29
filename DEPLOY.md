@@ -586,16 +586,22 @@ manifest history. `release-please--*` branches are excluded from the rules.
 
 ### 10.3 Vercel Integration — Monorepo Configuration
 
-Vercel builds the storefront **as a Next.js project**. There is no `vercel.json`
-in the repo, on purpose.
+Vercel builds the storefront **as a Next.js project**.
+
+**`frontend/vercel.json` is removed by
+[#106](https://github.com/Dahgoth/kompmaster-server/pull/106), not by this PR.**
+Until that merges the file is still in the tree, still declaring
+`outputDirectory: frontend/.next/standalone`, and with Root Directory `frontend`
+that path resolves to `frontend/frontend/.next/standalone` — which is one of the
+reasons every preview was 404ing. This section describes the end state.
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
 | **Root Directory** | `frontend` | The Next.js app lives here. Vercel resolves the pnpm workspace and still installs from the repo root, where `pnpm-lock.yaml` is |
 | **Framework Preset** | `Next.js` | Vercel builds and deploys the app itself, so SSR and server routes work |
 | **Build Command** | *default* | Vercel's Next.js build |
-| **Output Directory** | *default* | Vercel deploys the serverless functions itself |
-| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Vercel's default `pnpm install` does not enable corepack first, and the pnpm wrapper is then missing |
+| **Output Directory** | *default* | Vercel deploys the serverless functions itself. #106 deletes the `outputDirectory` override that was pointing at a Node server bundle |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Vercel's default `pnpm install` does not enable corepack first, so the pnpm wrapper is missing. **This one still needs setting after #106 lands** — deleting `vercel.json` removes the file that currently supplies it, and the dashboard default will not do it |
 
 The Install Command is the one setting that must be explicit. It is supplied
 through the dashboard; if you move any other setting, keep it.
