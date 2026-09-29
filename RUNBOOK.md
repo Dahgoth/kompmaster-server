@@ -180,7 +180,7 @@ curl -sS https://api.compmasone.ru/api/health
 
 **There is no S3 origin to roll back to.** S3 website hosting for `www` was
 retired when the storefront moved onto the VPS, and the `kompmaster-frontend`
-bucket is no longer provisioned (ADR 001, phase 6).
+bucket is no longer provisioned (ADR 007, phase 6).
 
 `www` is an A record to the VPS floating IP, managed by Terraform:
 
@@ -206,7 +206,7 @@ independent of the storefront's origin.
 
 ```bash
 # Force a reload (picks up a changed Caddyfile)
-caddy reload --config /etc/caddy/Caddyfile
+caddy reload --config /etc/caddy/Caddyfile --force
 
 # Verify
 curl -sI https://www.compmasone.ru | head -1
@@ -338,28 +338,38 @@ ls -1 backups/          # -> db-20260929-030000.sql.gz.enc
 Restoring during an outage:
 
 ```bash
-cd /opt/compmaster/backend      # <- where backup.sh puts its backups/
+set -euo pipefail                     # see the note below before removing this
+cd /opt/compmaster/backend            # <- where backup.sh puts its backups/
 
-# 0. Load the key. openssl reads it from the ENVIRONMENT, so exporting it is
-#    required - a password-manager copy alone is not enough.
-export BACKUP_ENCRYPTION_KEY='...'
+# 0. Supply the key WITHOUT exporting it into the shell. `export` on a root
+#    production box writes the passphrase to /root/.bash_history, and this is
+#    the one credential whose loss is unrecoverable. openssl reads it from the
+#    variable below, which lives only for this command:
+read -rs BACKUP_KEY && export BACKUP_KEY
 
 # 1. Decrypt into /tmp, never into backups/
 openssl enc -d -aes-256-ctr -pbkdf2 \
   -in "backups/db-20260929-030000.sql.gz.enc" \
   -out /tmp/restore.sql.gz \
-  -pass env:BACKUP_ENCRYPTION_KEY
+  -pass env:BACKUP_KEY
 
-# 2. Inspect before overwriting
+# 2. Prove the plaintext exists before touching the database
+gunzip -t /tmp/restore.sql.gz          # fails if the archive is not a valid gzip
 gunzip -c /tmp/restore.sql.gz | head -20
 
 # 3. Restore
 gunzip -c /tmp/restore.sql.gz | psql -U kompmaster -h localhost kompmaster
 
-# 4. Remove the plaintext
+# 4. Remove the plaintext and the key
 shred -u /tmp/restore.sql.gz 2>/dev/null || rm -f /tmp/restore.sql.gz
-unset BACKUP_ENCRYPTION_KEY
+unset BACKUP_KEY
 ```
+
+**`set -euo pipefail` is not optional here.** Without it, a wrong `.enc`
+path means `openssl` writes nothing, `gunzip` fails, and `psql` is handed
+empty stdin — where it **exits 0**. The operator concludes the database was
+restored. It was not. The `gunzip -t` above catches the same class of error
+earlier and more legibly.
 
 Notes:
 

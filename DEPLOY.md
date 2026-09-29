@@ -478,14 +478,25 @@ jobs:
           fetch-depth: 0
 
       - name: Extract and validate tag
-        # ./.github/actions/extract-tag — validates against ^(kompmaster-)?vX.Y.Z
+        # ./.github/actions/extract-tag — real guard:
+        #   ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$
+        # note the (-.*)? suffix: prereleases like v2.4.2-rc.1 ARE deployable
 
       - name: Check if already deployed (idempotency guard)
         # resolves tag -> commit SHA, then queries the Deployments API for
         # environment==production-vps AND ref==<sha>; skips if status is success
 
-      - name: Setup SSH key / Detect colour / Deploy / Deployments
+      - name: Setup SSH key / Detect colour / Deploy
         # all skipped when already_deployed=true
+
+      - name: Create GitHub Release
+        # NOT dead code: the `github.event_name != 'release'` guard was dropped
+        # with the release trigger, so this runs on every tag push and creates
+        # the Release for a tag that was pushed manually. Also skipped when
+        # already_deployed=true.
+
+      - name: Create / update GitHub Deployment (production-vps)
+        # deployment record + success/failure status, same guard
 ```
 
 **Key features**:
@@ -542,11 +553,14 @@ contains `on.workflow_call`.
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    # ... permissions, outputs, and a single step whose `id: release` feeds
-    # the job outputs above ...
+    # permissions and outputs omitted for brevity
     steps:
+      - actions/checkout@<sha>            # fetch-depth: 0
+      - corepack enable pnpm
+      - actions/setup-node@<sha>           # node-version: '24'
+      - pnpm install --frozen-lockfile --ignore-scripts
       - name: Release Please
-        id: release          # <- the outputs block above references this
+        id: release            # <- the outputs block above references this
         uses: googleapis/release-please-action@<sha>
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -580,12 +594,13 @@ it. Nothing else can reach the `production-vps` environment.
 | Tag push | `push` to a `v*.*.*` tag | `deploy.yml` runs — the **only** deploy path that exists |
 | Manual tag push | `git push origin vX.Y.Z` | `deploy.yml` runs, same as above |
 
-**There is no manual re-deploy.** `gh workflow run deploy.yml -f tag=...` is a
-`workflow_dispatch`: it resolves to the `main` branch, and the environment
-permits only `v*.*.*` refs, so it is rejected before a runner is assigned —
-observed as a job with zero steps and no logs. The same applies to a branch push
-and to a `workflow_call` from another workflow. To deploy a new version, cut a
-new tag. See `RUNBOOK.md` §4.
+**There is no manual re-deploy.** `deploy.yml` declares one trigger,
+`push: tags`, so `gh workflow run deploy.yml` is rejected by `gh` itself as
+not-dispatchable. A branch push and a `workflow_call` from another workflow both
+resolve to `main`, which the environment also rejects — that is what
+`workflow_call` used to do, and it is why the deploy silently produced jobs
+with zero steps and no logs. To deploy a new version, cut a new tag. See
+`RUNBOOK.md` §4.
 
 **Branch protection**: `main` has a ruleset with 8 required checks, linear
 history enforced via **merge commit** (not squash) so release-please preserves

@@ -180,8 +180,8 @@ building that PR. All three move together, before the tag is cut — which
 matters because `deploy-storefront.sh` runs `check-versions.js` before building
 and would abort on a drifted tree.
 
-**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` and
-`v*.*.*` tag pushes, which is the **only** trigger that works. The
+**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` tag
+pushes, which is the **only** trigger that works. The
 `production-vps` environment permits only refs matching `v*.*.*`, and a branch
 push or a `workflow_call` resolves to the `main` branch and is rejected before
 a runner is assigned. The `kompmaster-v*.*.*` pattern still listed in
