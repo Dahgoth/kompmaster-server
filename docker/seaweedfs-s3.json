@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "kompmaster",
+      "credentials": [
+        {
+          "accessKeyId": "kompmaster",
+          "secretAccessKey": "kompmaster123",
+          "role": "admin"
+        }
+      ]
+    }
+  ]
+}

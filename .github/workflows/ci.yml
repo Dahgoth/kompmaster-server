@@ -321,11 +321,17 @@ jobs:
           echo "===== backend ====="; cat /tmp/e2e-backend.log || true
           echo "===== storefront ====="; cat /tmp/e2e-store.log || true
 
-  # Runs only when the local dev stack changes: validates the compose file
-  # schema and verifies every pinned image actually resolves on its registry.
-  # Exists because a dead image reference (`minio/minio` after MinIO removed
-  # its Docker Hub org, 2025-06) shipped and survived — nothing ever pulled
-  # the compose images before a developer ran `docker compose up`.
+  # Validates the compose file schema and verifies every pinned image actually
+  # resolves on its registry. Exists because a dead image reference shipped and
+  # survived twice: `minio/minio` (Docker Hub org removed, 2025-06), then
+  # `quay.io/minio/minio` (all MinIO images removed from every public registry,
+  # 2026-09). Nothing pulled the compose images before a developer ran
+  # `docker compose up`.
+  #
+  # This job deliberately has no path filter. For three days it skipped its
+  # steps while reporting success — a missing `outputs:` block on the
+  # detect-changes action — so the dead MinIO image sat uncaught behind a green
+  # check. See docs/incidents/2026-09-28-ci-silent-skip.md.
   compose:
     runs-on: ubuntu-latest
     steps:

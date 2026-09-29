@@ -14,12 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **deploy:** add release trigger for release-please API tag creation ([bc54199](https://github.com/Dahgoth/kompmaster-server/commit/bc54199706687d71f06684b3a1b5b9cc0afb8179))
 * **deploy:** add release trigger for release-please API tag creation ([#73](https://github.com/Dahgoth/kompmaster-server/issues/73)) ([81cd91f](https://github.com/Dahgoth/kompmaster-server/commit/81cd91f805a309fb746bd113f83f056d658b6bd5))
 
-## [Unreleased]
-
-### Bug Fixes
-
-* **deploy:** add release trigger for release-please API tag creation ([bc54199](https://github.com/Dahgoth/kompmaster-server/commit/bc54199))
-
 ## [2.3.0](https://github.com/Dahgoth/kompmaster-server/compare/v2.2.0...v2.3.0) (2026-09-25)
 
 

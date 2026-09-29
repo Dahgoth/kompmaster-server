@@ -14,7 +14,9 @@ that agents must follow, see [`AGENTS.md`](AGENTS.md).
    `pnpm run version:check` before pushing and `pnpm run version:sync` after
    a bump. See `AGENTS.md` for the release flow.
 4. **Keep a Changelog** — every user-facing change is recorded in
-   [`CHANGELOG.md`](CHANGELOG.md).
+   [`CHANGELOG.md`](CHANGELOG.md) by `release-please`, generated from your
+   Conventional Commit message. Do not hand-write an `[Unreleased]` section;
+   it duplicates the generated entry and goes stale.
 5. **Keep docs in sync** — when you change a documented domain, update the
    corresponding doc in the same PR (see below).
 6. **MIT** — do not introduce code under an incompatible license and
