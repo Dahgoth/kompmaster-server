@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0](https://github.com/Dahgoth/kompmaster-server/compare/v2.3.1...v2.4.0) (2026-09-29)
+
+
+### Features
+
+* **ci:** comprehensive CI/CD pipeline improvements ([751c63d](https://github.com/Dahgoth/kompmaster-server/commit/751c63d54424597b4289da4ff700117f580cb416))
+* **ci:** migrate release→deploy to workflow_call; add RUNBOOK with SSH rotation ([91d778d](https://github.com/Dahgoth/kompmaster-server/commit/91d778d94bec51447bed5952eade486346b1c706))
+
+
+### Bug Fixes
+
+* **ci:** add deployments write; fix duration/idempotency/test/audit ([2246046](https://github.com/Dahgoth/kompmaster-server/commit/2246046a0b3d1477eeb7540527f3888c027a4302))
+* **ci:** exempt Dependabot branch pushes from docs-sync ([841208e](https://github.com/Dahgoth/kompmaster-server/commit/841208ebb556f5378f0e0ce2f46155342e636247))
+* **ci:** exempt Dependabot branch pushes from docs-sync ([#99](https://github.com/Dahgoth/kompmaster-server/issues/99)) ([4eaefc1](https://github.com/Dahgoth/kompmaster-server/commit/4eaefc18b6faf8cc97942ce2d45e6a12dd66e762))
+* **ci:** fix DEPLOYMENT_ID, duration, backoff, CodeQL v3, integration test ([da212ed](https://github.com/Dahgoth/kompmaster-server/commit/da212edeccfa36070cb4b0cf0d5daef4c43a9ee2))
+* **ci:** fix verify-push test push, deploy tag notice, remove SLSA dead code, move audit to schedule ([bbffbfd](https://github.com/Dahgoth/kompmaster-server/commit/bbffbfdd5eec924f5d8bd232f4911dd3c5d883f6))
+* **ci:** idempotency API errors; deploy ref=TAG_COMMIT; duration fallback; verify-push; audit escape ([15fe574](https://github.com/Dahgoth/kompmaster-server/commit/15fe574ee02e014513483e2fae941a45764c28d8))
+* **ci:** idempotency by tag commit; SSH error; verify-push exits; audit output ([12dd37e](https://github.com/Dahgoth/kompmaster-server/commit/12dd37e70420b515983e2aa228240e101e7378d6))
+* **ci:** key bot exclusions on PR author, not event actor ([773200c](https://github.com/Dahgoth/kompmaster-server/commit/773200c5a4806f3aaefba1f1b162b169fb07c90a))
+* **ci:** key bot exclusions on PR author, not event actor ([#96](https://github.com/Dahgoth/kompmaster-server/issues/96)) ([3980e7f](https://github.com/Dahgoth/kompmaster-server/commit/3980e7fcc8cb015bb33d0f9c47db8f42d52b774e))
+* **ci:** stop path-filter guards from silently skipping every step ([9b76646](https://github.com/Dahgoth/kompmaster-server/commit/9b766468f512969001fab2294a4df2d95536ba9b))
+* **ci:** stop path-filter guards from silently skipping every step ([#102](https://github.com/Dahgoth/kompmaster-server/issues/102)) ([c59bf3b](https://github.com/Dahgoth/kompmaster-server/commit/c59bf3bf2eb762eb276c9ceb18456b4e89fd61cf))
+* **ci:** stop the backend syntax-check step aborting when no backend JS changed ([b1c74b5](https://github.com/Dahgoth/kompmaster-server/commit/b1c74b511116bc55d3388a7d5a9cac8e4ab72250))
+* **codeql:** cover Actions, use default suite, correct code-scanning claim ([886af6c](https://github.com/Dahgoth/kompmaster-server/commit/886af6cfb89d983436553ae0b27011df8db38cce))
+* **deploy:** address review on release guard, title, failure log_url ([6f978dd](https://github.com/Dahgoth/kompmaster-server/commit/6f978dd41e7b2c19c4833e46ea7ef514b09f9e19))
+* **deploy:** read the tag from extract-tag's output, not env.TAG ([427a26e](https://github.com/Dahgoth/kompmaster-server/commit/427a26ef4de5ab5639da5812d885822ebd5bb1bb))
+* **deploy:** replace blocked third-party actions with the gh CLI ([98c5856](https://github.com/Dahgoth/kompmaster-server/commit/98c5856b7ae3053d82d33cecf32119ca5ea1fa32))
+* **deploy:** replace blocked third-party actions with the gh CLI ([#107](https://github.com/Dahgoth/kompmaster-server/issues/107)) ([a080ad0](https://github.com/Dahgoth/kompmaster-server/commit/a080ad0d5a199833b4d1bce3ffd75cdd6bb63837))
+* **deps:** gate auto-merge on fetch-metadata, not labels ([097e6ae](https://github.com/Dahgoth/kompmaster-server/commit/097e6aed666c7ad9c7e2f2f401b5bf33657723c1))
+* **deps:** gate auto-merge on fetch-metadata, not labels ([#94](https://github.com/Dahgoth/kompmaster-server/issues/94)) ([c8ea503](https://github.com/Dahgoth/kompmaster-server/commit/c8ea5036c6f0dece7244003badf2c92c54f0f208))
+* **deps:** remove invalid auto-merge key from dependabot.yml ([0556499](https://github.com/Dahgoth/kompmaster-server/commit/0556499be7ee86a190120785586d80f1bbda7116))
+* **dev:** probe the S3 gateway in the healthcheck, not just the master ([9b66d31](https://github.com/Dahgoth/kompmaster-server/commit/9b66d31b933624c399793f2c4984965362b418e6))
+* **dev:** replace MinIO with SeaweedFS in the local Docker stack ([b5ee07f](https://github.com/Dahgoth/kompmaster-server/commit/b5ee07f4449a18e6911e8fbb400b18f9072ca7fb))
+* **dev:** replace MinIO with SeaweedFS in the local Docker stack ([#103](https://github.com/Dahgoth/kompmaster-server/issues/103)) ([41ee99b](https://github.com/Dahgoth/kompmaster-server/commit/41ee99bcb8a5841d5eb62b333b52c4ede916b26b))
+* **release:** add push verify fail; fix [skip ci] for dispatch; case for tag detect ([549cd31](https://github.com/Dahgoth/kompmaster-server/commit/549cd31e69f7bdaff827d06ea02e8491ef61c8aa))
+* **release:** add workflow_dispatch to deploy; add [skip ci] guard; verify push propagation ([54cc7eb](https://github.com/Dahgoth/kompmaster-server/commit/54cc7eba23a5a9a247adc3e3045d83aa6dbc01f3))
+* **release:** call deploy.yml at job level, not from a step ([1622c95](https://github.com/Dahgoth/kompmaster-server/commit/1622c9518b26aa9a97fd6904307befb6fbf1cee3))
+* **release:** call deploy.yml at job level, not from a step ([#105](https://github.com/Dahgoth/kompmaster-server/issues/105)) ([5389b6c](https://github.com/Dahgoth/kompmaster-server/commit/5389b6cd9996f8d3ba59dcc0179684333abf82e1))
+* **release:** commit and push version sync changes after release-please creates release ([a46a1c8](https://github.com/Dahgoth/kompmaster-server/commit/a46a1c8419a1d5d74a660f588bebab89faa436ea))
+* **release:** handle no-changes sync; add push error handling; combine sync+deploy with delay ([4dbc800](https://github.com/Dahgoth/kompmaster-server/commit/4dbc800983ee3b0430cde818e038f3212e7b8e92))
+* **release:** trigger deploy workflow & commit version sync after release-please ([#75](https://github.com/Dahgoth/kompmaster-server/issues/75)) ([6d07fe7](https://github.com/Dahgoth/kompmaster-server/commit/6d07fe7dc89521af80dc329a3ff339c6304b471f))
+* **release:** trigger deploy workflow after release-please creates release ([3741d02](https://github.com/Dahgoth/kompmaster-server/commit/3741d02528d097569ea63c5cc75a679c1ab8c9ce))
+* **storefront:** add trailing slashes to rsync for static assets ([2504d1c](https://github.com/Dahgoth/kompmaster-server/commit/2504d1cf47db6bdea80f6cc9691854e2c9955989))
+* **storefront:** add trailing slashes to rsync for static assets ([#76](https://github.com/Dahgoth/kompmaster-server/issues/76)) ([b2ecfbb](https://github.com/Dahgoth/kompmaster-server/commit/b2ecfbb85afbb87c5bcde086df5e762a3fa404ca))
+
 ## [2.3.1](https://github.com/Dahgoth/kompmaster-server/compare/v2.3.0...v2.3.1) (2026-09-25)
 
 
