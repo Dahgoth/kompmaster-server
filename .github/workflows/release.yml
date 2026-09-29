@@ -132,38 +132,3 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Wait for the sync PR to merge
-        if: steps.open-pr.outputs.created == 'true'
-        run: |
-          set -euo pipefail
-          NUMBER="${{ steps.open-pr.outputs.pr-number }}"
-          for i in $(seq 1 60); do
-            STATE=$(gh pr view "$NUMBER" --json state --jq '.state')
-            if [ "$STATE" = "MERGED" ]; then
-              echo "Sync PR #${NUMBER} merged"
-              exit 0
-            fi
-            if [ "$STATE" = "CLOSED" ]; then
-              echo "::error::Sync PR #${NUMBER} was closed without merging"
-              exit 1
-            fi
-            echo "  #$NUMBER is ${STATE} (${i}/60)"
-            sleep 20
-          done
-          echo "::error::Sync PR #${NUMBER} did not merge within 20 minutes"
-          exit 1
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Reusable workflows are called at the JOB level, never from a step.
-  # GitHub rejects the entire workflow file when a workflow path appears
-  # inside steps, which is what kept this workflow from running at all.
-  deploy:
-    needs: [release-please, sync-versions]
-    if: >-
-      needs.release-please.outputs.release_created == 'true' &&
-      needs.sync-versions.result != 'failure'
-    uses: ./.github/workflows/deploy.yml
-    with:
-      tag: ${{ needs.release-please.outputs.tag_name }}
-    secrets: inherit

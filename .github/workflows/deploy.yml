@@ -1,17 +1,15 @@
 name: Deploy Production
 
 on:
+  # Tag push is the production trigger. The production-vps environment allows
+  # only v*.*.* refs, and a tag ref is what satisfies it; a branch push or a
+  # workflow_call inherits the caller's ref (main) and is rejected by the
+  # environment before a runner is ever assigned.
   push:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to deploy (e.g., v2.0.0)'
-        required: true
-        type: string
-  workflow_call:
     inputs:
       tag:
         description: 'Tag to deploy (e.g., v2.0.0)'

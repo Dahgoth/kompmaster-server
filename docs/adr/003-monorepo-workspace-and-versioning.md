@@ -129,3 +129,45 @@ encodes this.
   https://pnpm.io/settings
 - Vercel monorepo guidance — https://vercel.com/docs/monorepos
 - `DEVELOPMENT.md`, `DEPLOY.md`, `terraform/README.md`, `terraform/RUNBOOK.md`
+**Amendment — versioning enforcement and deploy trigger (2026-09-29).**
+
+The "fixed shared versioning" rule above is retained, but *how* it is enforced
+and *when* the deploy runs both changed after the release pipeline was
+rebuilt. Three findings drove it.
+
+**1. Nothing reads the app versions.** No code in `backend/src` or
+`frontend/src` reads a `version` field; the storefront does not surface it; the
+API health endpoint returns only `{ok, time}`. The fields exist because pnpm
+requires them in every `package.json`, not because anything consumes them. Their
+*values* are therefore free, and only the equality convention is load-bearing.
+
+**2. The sync cannot happen after the release.** `backend/scripts/deploy-storefront.sh`
+runs `node scripts/check-versions.js` before building, and the deploy is
+triggered by the tag release-please creates. Verified on the v2.4.1 tag:
+
+```
+v2.4.1 -> 013a5476
+  package.json          2.4.1
+  backend/package.json  2.4.0   <- drifted
+  frontend/package.json 2.4.0   <- drifted
+```
+
+A tag cut from a drifted tree aborts the deploy. So the alignment has to land
+**inside the release PR, before it is merged** — not as a follow-up afterwards.
+`.github/workflows/sync-release-pr-versions.yml` does that, pushing the sync
+onto the `release-please--*` branch, which the `main` ruleset already excludes
+from protection, so no bypass is required.
+
+The previous post-release `sync-versions` job, which opened a follow-up PR
+after the release was cut, was therefore always too late to protect the
+deploy, while still blocking pushes until it merged.
+
+**3. The deploy must be triggered by the tag, not by a branch or a
+workflow call.** The `production-vps` environment permits only refs matching
+`v*.*.*`. A `push` to `main`, a `workflow_call` from `release.yml`, and a
+`workflow_dispatch` all resolve to the `main` *branch* and are rejected by the
+environment before a runner is assigned — observed as a job with zero steps and
+no logs. Only a tag ref satisfies the policy, which is what the original
+`on: push: tags` trigger was for. The `workflow_call` coupling introduced in
+#105 silently broke the environment gate, and the policy's intent — only tags
+deploy to production — is now restored.

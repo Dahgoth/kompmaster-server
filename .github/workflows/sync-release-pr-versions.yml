@@ -1,0 +1,69 @@
+name: Sync Release PR Versions
+
+# ADR 003 makes the root package.json the single source of truth, so
+# backend/package.json and frontend/package.json must mirror it. release-please
+# only bumps the root, so the two apps would otherwise drift the moment the
+# release PR merges.
+#
+# This cannot be fixed after the fact. deploy-storefront.sh runs
+# check-versions.js before building, and the deploy is triggered by the tag
+# that release-please creates from the release commit — so a drift present at
+# that moment aborts the deploy. The sync therefore has to land inside the
+# release PR itself, before it is merged.
+#
+# Pushing to a release-please--* branch is permitted because the main ruleset
+# already excludes those refs, so this needs no bypass and no direct push to
+# main.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    # Only release-please's own release PRs.
+    if: >-
+      github.event.pull_request.head.ref startsWith('release-please--') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the PR branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Enable pnpm via corepack
+        run: corepack enable pnpm
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+
+      - name: Push version alignment onto the release PR
+        run: |
+          set -euo pipefail
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+
+          pnpm run version:sync
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/package.json frontend/package.json
+
+          if git diff --cached --quiet; then
+            echo "Versions already aligned — nothing to do"
+            exit 0
+          fi
+
+          # No skip marker in this message. A skip token anywhere in a commit
+          # message suppresses every workflow for that push, which would stop
+          # these version files from ever being written.
+          git commit -m "chore: align app versions with the release version"
+          git push origin "HEAD:${BRANCH}"
+          echo "Pushed version alignment to ${BRANCH}"
