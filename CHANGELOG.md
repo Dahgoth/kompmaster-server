@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1](https://github.com/Dahgoth/kompmaster-server/compare/v2.4.0...v2.4.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **release:** keep a single root CHANGELOG.md ([ed50846](https://github.com/Dahgoth/kompmaster-server/commit/ed508466621804a724a044fc90e9203875a5689e))
+* **release:** let release-please own all three package versions ([7bf5b95](https://github.com/Dahgoth/kompmaster-server/commit/7bf5b9597bb937e68e51383d304f7bf61cb78751))
+* **release:** let release-please own all three package versions ([#110](https://github.com/Dahgoth/kompmaster-server/issues/110)) ([098ab4b](https://github.com/Dahgoth/kompmaster-server/commit/098ab4bcb8afbef8cf1e3a2734174bd7301aa503))
+* **release:** sync app versions through a pull request, not a direct push ([0ca5212](https://github.com/Dahgoth/kompmaster-server/commit/0ca521267b804a61a80df8114246519ac8c7c729))
+* **release:** sync app versions through a pull request, not a direct push ([#112](https://github.com/Dahgoth/kompmaster-server/issues/112)) ([bd3f35a](https://github.com/Dahgoth/kompmaster-server/commit/bd3f35a887e29e434428d2f02243645f7e2cebec))
+
 ## [2.4.0](https://github.com/Dahgoth/kompmaster-server/compare/v2.3.1...v2.4.0) (2026-09-29)
 
 
