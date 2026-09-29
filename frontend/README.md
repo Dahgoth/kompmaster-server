@@ -181,9 +181,10 @@ tags that match the deploy workflow trigger.
 `release.published` events (for release-please API-created tags). Additionally,
 the release workflow explicitly triggers the deploy workflow via `workflow_dispatch`
 after release-please creates a release, since GitHub doesn't trigger workflows
-for bot-created events. The release workflow also commits and pushes the version
-sync changes (backend/frontend package.json) after release-please bumps the root
-version. New releases will use clean `v*.*.*` tags since
+for bot-created events. After release-please bumps the root version, the
+`sync-versions` job opens an auto-merging pull request aligning
+`backend/package.json` and `frontend/package.json` to it. It cannot push
+straight to `main`, which the branch ruleset rejects. New releases will use clean `v*.*.*` tags since
 `include-component-in-tag: false` is set in the release-please config.
 
 Run locally before pushing:

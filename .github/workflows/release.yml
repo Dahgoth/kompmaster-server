@@ -16,9 +16,6 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')"
-    # Exposed so the sibling `deploy` job can consume them. A job that calls
-    # another workflow must sit at JOB level, so it cannot read this job's
-    # steps directly.
     outputs:
       tag_name: ${{ steps.release.outputs.tag_name }}
       release_created: ${{ steps.release.outputs.release_created }}
@@ -47,24 +44,125 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # release-please now bumps backend/ and frontend/ package.json in the
-      # release PR itself (see .release-please-config.json), so there is
-      # nothing to sync after the fact — and nothing that needs a direct push
-      # to main, which the branch ruleset rejects anyway.
-      #
-      # This is a verification, not a repair. If it fails, the release PR was
-      # merged with the packages out of step, and that is worth stopping for
-      # rather than papering over with a commit that bypasses review.
-      - name: Verify version alignment
-        if: steps.release.outputs.release_created == 'true'
-        run: node scripts/check-versions.js
-
-  # Reusable workflows are called at the JOB level, never from a step.
-  # GitHub rejects the entire workflow file when `uses: ./.github/workflows/...`
-  # appears inside `steps`.
-  deploy:
+  # ADR 003 makes the root package.json the single source of truth, so
+  # backend/ and frontend/ must mirror it. release-please only manages the
+  # root, and it cannot bump the apps itself either: the main ruleset requires
+  # changes through a pull request, so a direct push to main is rejected with
+  # GH013.
+  #
+  # So the sync goes through a pull request like any other change. The branch
+  # is release-please--*, which the ruleset already excludes, so pushing the
+  # branch itself needs no checks; the PR is held to the full ruleset and
+  # merges only once CI is green.
+  #
+  # The commit message deliberately carries no skip marker. A skip token
+  # anywhere in a commit message suppresses every workflow for that push,
+  # including this one, which would leave the PR unable to merge.
+  sync-versions:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      pr-number: ${{ steps.open-pr.outputs.pr-number }}
+      created: ${{ steps.open-pr.outputs.created }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Enable pnpm via corepack
+        run: corepack enable pnpm
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Open version-sync pull request
+        id: open-pr
+        run: |
+          set -euo pipefail
+          TAG="$TAG"
+          BRANCH="release-please--sync-${TAG}"
+
+          pnpm run version:sync
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/package.json frontend/package.json
+
+          if git diff --cached --quiet; then
+            echo "No version drift - nothing to sync"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "chore: sync backend/frontend versions to ${TAG}"
+          git push -f origin "HEAD:${BRANCH}"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --base main --state open \
+            --json number --jq '.[0].number // empty')
+
+          if [ -z "$PR_NUMBER" ]; then
+            PR_NUMBER=$(gh pr create --base main --head "$BRANCH" \
+              --title "chore: sync backend/frontend versions to ${TAG}" \
+              --body "Automated version alignment for release ${TAG} (ADR 003).
+
+          release-please only manages the root package.json, so backend/ and
+          frontend/ are aligned here instead. Merging this runs the sync and
+          lets the deploy proceed.
+
+          This PR must pass the usual required checks before it merges." \
+              | tail -1 | sed 's#.*/##')
+          fi
+
+          echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+          echo "Opened sync PR #${PR_NUMBER}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Enable auto-merge
+        if: steps.open-pr.outputs.created == 'true'
+        run: gh pr merge "${{ steps.open-pr.outputs.pr-number }}" --auto --merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for the sync PR to merge
+        if: steps.open-pr.outputs.created == 'true'
+        run: |
+          set -euo pipefail
+          NUMBER="${{ steps.open-pr.outputs.pr-number }}"
+          for i in $(seq 1 60); do
+            STATE=$(gh pr view "$NUMBER" --json state --jq '.state')
+            if [ "$STATE" = "MERGED" ]; then
+              echo "Sync PR #${NUMBER} merged"
+              exit 0
+            fi
+            if [ "$STATE" = "CLOSED" ]; then
+              echo "::error::Sync PR #${NUMBER} was closed without merging"
+              exit 1
+            fi
+            echo "  #$NUMBER is ${STATE} (${i}/60)"
+            sleep 20
+          done
+          echo "::error::Sync PR #${NUMBER} did not merge within 20 minutes"
+          exit 1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Reusable workflows are called at the JOB level, never from a step.
+  # GitHub rejects the entire workflow file when a workflow path appears
+  # inside steps, which is what kept this workflow from running at all.
+  deploy:
+    needs: [release-please, sync-versions]
+    if: >-
+      needs.release-please.outputs.release_created == 'true' &&
+      needs.sync-versions.result != 'failure'
     uses: ./.github/workflows/deploy.yml
     with:
       tag: ${{ needs.release-please.outputs.tag_name }}
