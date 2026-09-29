@@ -45,6 +45,10 @@ ssh -i ~/.ssh/kompmaster_deploy_new root@api.compmasone.ru "echo 'SSH OK'"
 #    This, not the SSH test in step 3, is the check that matters: the deploy
 #    uses the copy in the secret, not your local key.
 gh secret list --env production-vps | grep STOREFRONT_SSH_KEY
+#    Columns are INDEX NAME / UPDATED / CREATED; UPDATED is a full timestamp
+#    (e.g. 2026-09-29T14:03:00Z), not a bare date. For an exact comparison:
+#    gh api repos/:owner/:repo/environments/production-vps/secrets \
+#      --jq '.secrets[] | select(.name=="STOREFRONT_SSH_KEY") | .updated_at'
 ```
 
 **6. Leave the old key in `authorized_keys` until the next release has
@@ -66,39 +70,43 @@ the secret is malformed, the next deploy fails and there is no fallback.
 
 ### 2.1 Storefront rollback (blue/green)
 
-The VPS runs one colour at a time. `deploy-storefront.sh` creates a release
-directory named `releases/<YYYYMMDDHHMMSS>-<colour>`, symlinks it as `current`,
-and starts `kompmaster-storefront-<colour>` **with `shared/storefront.env`
-exported into the process**.
+**The simplest safe rollback is: fix forward on the next release.** The deploy
+is driven entirely by a tag push, so a bad release is replaced by cutting the
+next one — no manual procedure required. Use the steps below only when the site
+is actively broken and the next release is not imminent.
 
-Three things the naive command gets wrong, each verified against the script:
+State of the world on the VPS:
 
-1. **The environment must be sourced.** The script creates
-   `shared/storefront.env` and runs `set -a; . shared/storefront.env; set +a`
-   before `pm2 start` (lines 205-220). A bare `pm2 start` from a login shell
-   leaves `PORT` unset, so it defaults to 3000 — right for blue by accident,
-   a port collision for green (3001) — and leaves `API_BASE`/`SITE_URL` absent
-   entirely. The storefront would boot and serve nothing.
-2. **`pm2 delete` + `pm2 start`, not `pm2 restart`.** PM2 resolves a script's
-   path at process start, so a reload after a symlink flip can keep serving the
-   release you just replaced. `deploy-storefront.sh:199-201` documents this
-   deliberately, and its own health-gate rollback does the same.
-3. **`releases/` entries are colour-suffixed.** `ls -t` returns whichever
-   colour deployed *last*, not the one being rolled back. Filter by colour.
+- Release directories are `releases/<YYYYMMDDHHMMSS>-<colour>`.
+- `current` is a symlink to the live release.
+- One colour is live at a time. `Caddyfile` routes `www` to `127.0.0.1:3000`
+  (blue) or `:3001` (green) by reading `STOREFRONT_ACTIVE_COLOR` from
+  `/etc/default/caddy`. **The port is not a setting you pass — it is a property
+  of the colour.**
+- `shared/storefront.env` is written **once**, the first time a deploy runs, and
+  never rewritten (`deploy-storefront.sh:206`). Its `PORT` is therefore the port
+  of whichever colour deployed first — on a host whose first deploy was blue it
+  says `3000` even when green is live. **Do not source it for a cross-colour
+  rollback.** Override `PORT` explicitly from the colour table below.
 
 ```bash
 # On the VPS (api.compmasone.ru)
 cd /opt/compmaster/storefront
 set -eu
 
-# 1. Decide the colour you are rolling BACK TO, and confirm the live one
-COLOUR=green                                        # <- set this
-LIVE=$(grep -oP '(?<=STOREFRONT_ACTIVE_COLOR=).*' /etc/default/caddy)
-echo "live=$LIVE  rolling back to=$COLOUR"
-[ -n "$COLOUR" ] || { echo "set COLOUR" >&2; exit 1; }
+# 1. Choose the colour to roll BACK TO, and confirm it is not already live
+COLOUR=blue                      # blue=3000  green=3001  <- set this
+case "$COLOUR" in
+  blue)  PORT=3000 ;;
+  green) PORT=3001 ;;
+  *) echo "COLOUR must be blue or green" >&2; exit 1 ;;
+esac
+LIVE=$(sed -n 's/^STOREFRONT_ACTIVE_COLOR=//p' /etc/default/caddy)
+echo "live=$LIVE  rollback-to=$COLOUR (port $PORT)"
+[ -n "$LIVE" ] || { echo "cannot read STOREFRONT_ACTIVE_COLOR" >&2; exit 1; }
+[ "$COLOUR" != "$LIVE" ] || echo "NOTE: already live — you are restarting, not rolling back"
 
-# 2. Resolve a target release for THAT colour, newest first, and refuse to
-#    continue without one — the symlink flip below is destructive
+# 2. Resolve a target for THAT colour and refuse to continue without one
 TARGET=$(ls -1d releases/*-"$COLOUR" 2>/dev/null | sort -r | head -1)
 [ -n "$TARGET" ] || { echo "no release for $COLOUR" >&2; exit 1; }
 [ -f "$TARGET/server.js" ] || { echo "$TARGET has no server.js" >&2; exit 1; }
@@ -107,30 +115,55 @@ echo "current -> $(readlink current)   target -> $TARGET"
 # 3. Point current at it
 ln -sfn "$TARGET" current
 
-# 4. Restart WITH the environment, delete+start, and persist for reboot
-set -a; . shared/storefront.env; set +a
-pm2 delete "kompmaster-storefront-$COLOUR" >/dev/null 2>&1 || true
-pm2 start "$PWD/current/server.js" \
-  --name "kompmaster-storefront-$COLOUR" \
-  --cwd "$PWD/current" --time >/dev/null
+# 4. Start with the CORRECT port. Deliberately not sourcing storefront.env:
+#    its PORT is written once and may belong to the other colour.
+PORT=$PORT NODE_ENV=production \
+API_BASE=https://api.compmasone.ru/api SITE_URL=https://www.compmasone.ru \
+  pm2 delete "kompmaster-storefront-$COLOUR" >/dev/null 2>&1 || true
+PORT=$PORT NODE_ENV=production \
+API_BASE=https://api.compmasone.ru/api SITE_URL=https://www.compmasone.ru \
+  pm2 start "$PWD/current/server.js" \
+    --name "kompmaster-storefront-$COLOUR" --cwd "$PWD/current" --time >/dev/null
 pm2 save >/dev/null
-
-# 5. Only if the target is the OTHER colour, flip Caddy as well
-# echo "STOREFRONT_ACTIVE_COLOR=$COLOUR" > /etc/default/caddy
-# caddy reload --config /etc/caddy/Caddyfile
-
-# 6. Verify
-curl -sS -o /dev/null -w '%{http_code}\n' https://www.compmasone.ru/
-pm2 list
 ```
 
-If the service is unhealthy afterwards, roll forward to the colour you came
-from rather than debugging under pressure: the other colour's release is still
-on disk, and the next real deploy will promote a clean one anyway.
+If the rollback crosses colours, Caddy must be repointed as well. **Use
+`sed -i`, never `>`** — `/etc/default/caddy` also holds `DOMAIN` and `PORT`,
+which the Caddyfile resolves as `{$DOMAIN:...}` and `{$PORT:4000}`. A `>`
+redirect would leave one line, `www` would fall back to the default domain and
+the API would silently proxy to port 4000.
 
-Note: `releases/20260923151318` predates the colour suffix and belongs to
-neither colour. The `[ -f "$TARGET/server.js" ]` check will catch it if you
-select it explicitly; do not rely on `ls` alone.
+```bash
+# 5. Cross-colour only: flip the upstream
+sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR='"$COLOUR"'/' /etc/default/caddy
+caddy reload --config /etc/caddy/Caddyfile --force
+```
+
+**Verify the process you actually restarted, then the public site.** Caddy
+still routes to the old colour until step 5, so a public curl measures the
+wrong one in a cross-colour rollback:
+
+```bash
+# 6. The process you just started
+curl -sf -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:$PORT/"
+pm2 list
+
+# 7. Only then the public site
+curl -sS -o /dev/null -w '%{http_code}\n' https://www.compmasone.ru/
+```
+
+`deploy-storefront.sh:231-247` gates on exactly this — `curl -sf http://127.0.0.1:$PORT/`
+with 30 retries, then automatic rollback. The manual path has no such gate, so
+these two curls are the whole safety net.
+
+Notes:
+
+- `releases/20260923151318` predates the colour suffix and belongs to neither
+  colour. The `server.js` check catches it if selected explicitly; do not rely
+  on `ls` alone.
+- A stale `PORT` in the running process is invisible to `pm2 list`. If the
+  storefront starts but serves nothing, check the port first:
+  `pid=$(pm2 pid kompmaster-storefront-$COLOUR); tr '\0' '\n' < /proc/$pid/environ | grep -E '^(PORT|API_BASE)='`
 
 ### 2.2 API rollback
 
@@ -195,14 +228,17 @@ resembles a runner or VPS fault and is neither.
 
 Consequences:
 
-- **A `v*.*.*` tag push is the only way to deploy.** There is no manual
-  re-deploy. `gh workflow run deploy.yml -f tag=...` is a `workflow_dispatch`
-  and is rejected for the same reason as a branch push. Verified failure:
+- **A `v*.*.*` tag push is the only way to deploy.** `deploy.yml` declares one
+  trigger, `push: tags`. There is no `workflow_dispatch`, so
+  `gh workflow run deploy.yml` is rejected by `gh` itself — the workflow is not
+  dispatchable.
 
-  ```
-  Branch "main" is not allowed to deploy to production-vps due to
-  environment protection rules.
-  ```
+  (While a `workflow_dispatch` trigger still existed, dispatching produced
+  `Branch "main" is not allowed to deploy to production-vps due to environment
+  protection rules` — a `workflow_dispatch` resolves to the branch, and the
+  environment permits only tags. That trigger has since been removed, so that
+  exact message can no longer be reproduced. The constraint it demonstrated is
+  the reason it was removed.)
 
 - **`kompmaster-v*.*.*` tags do not work either.** `deploy.yml` still lists
   that pattern for backward compatibility, but it does not match the
@@ -237,8 +273,10 @@ Consequences:
 ### 4.3 "Deployment already successful — skipping"
 - The idempotency guard found a `success` deployment for this tag's commit SHA
   in `production-vps` and exited before touching the VPS.
-- This only happens when the same tag is pushed twice. It is the guard working,
-  not a fault.
+- The guard keys on the **commit SHA**, not the tag name, so **any** tag
+  resolving to an already-deployed commit skips just as silently — a
+  `kompmaster-vX.Y.Z` twin of a deployed `vX.Y.Z`, an alias, or a hotfix tag on
+  the same commit. It is the guard working, not a fault.
 - **To deploy a new version, cut a new tag.** Re-running the existing one is not
   possible — no dispatch reaches the environment.
 - If you genuinely must re-push an existing tag, delete it first. A plain
@@ -246,9 +284,14 @@ Consequences:
   `push` event:
 
   ```bash
-  git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z
-  git push origin vX.Y.Z
+  SHA=$(git rev-parse vX.Y.Z^{commit})   # remember where it points
+  git push origin :refs/tags/vX.Y.Z     # delete the REMOTE tag
+  git tag -f vX.Y.Z "$SHA"              # recreate locally at the same commit
+  git push origin vX.Y.Z                # now it exists to push
   ```
+
+  Deleting locally first leaves nothing to push — git answers
+  `src refspec ... does not match any`. Recreate before pushing.
 
 - Leave the deployment record alone. It is what the guard reads, and deleting
   it enables nothing, because no dispatch can reach the environment.

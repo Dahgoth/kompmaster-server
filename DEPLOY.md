@@ -599,7 +599,7 @@ Vercel builds the storefront **as a Next.js project**.
 
 **`frontend/vercel.json` still exists on `main`.** It is deleted by
 [#106](https://github.com/Dahgoth/kompmaster-server/pull/106), not by this PR,
-so **until #106 merges** that file is the source of truth for four settings:
+so **until #106 merges** that file is the source of truth for five settings:
 
 | Setting | Source until #106 merges | Source after #106 merges |
 |---------|-------------------------|--------------------------|
