@@ -203,12 +203,17 @@ alternatives considered. Consequences:
 
 The root `package.json#version` is the single source of truth for the release
 version. `backend/package.json` and `frontend/package.json` must mirror it.
+Currently all three are at **2.4.0**.
 
 - `pnpm run version:check` runs `node scripts/check-versions.js`, which fails
   if either app's version drifts from the root. This runs as an always-on
   `versions` CI job and in the Husky `pre-push` hook.
 - `pnpm run version:sync` runs `node scripts/sync-versions.js`, which writes
   the root version into both apps. Run this after bumping the root version.
+  Note that after release 2.4.0 the release workflow can no longer do this
+  itself: its direct push to `main` is rejected by the `main` ruleset, which
+  requires changes through a pull request. The sync currently has to be
+  applied as a reviewed PR. See `RUNBOOK.md` §9.2.
 - Release flow: bump `version` in root `package.json` →
   `pnpm run version:sync` → move `CHANGELOG.md` entries into a new dated
   section → `git tag vX.Y.Z` → push. Backend and frontend always deploy from
