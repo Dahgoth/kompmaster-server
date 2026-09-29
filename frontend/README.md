@@ -176,16 +176,20 @@ to propagate the version to `backend/package.json` and `frontend/package.json`.
 The release uses `include-component-in-tag: false` to produce clean `v*.*.*`
 tags that match the deploy workflow trigger.
 
-**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on both
-`v*.*.*` and `kompmaster-v*.*.*` tags for backward compatibility, and on
-`release.published` events (for release-please API-created tags). Additionally,
-the release workflow explicitly triggers the deploy workflow via `workflow_dispatch`
-after release-please creates a release, since GitHub doesn't trigger workflows
-for bot-created events. After release-please bumps the root version, the
-`sync-versions` job opens an auto-merging pull request aligning
-`backend/package.json` and `frontend/package.json` to it. It cannot push
-straight to `main`, which the branch ruleset rejects. New releases will use clean `v*.*.*` tags since
-`include-component-in-tag: false` is set in the release-please config.
+Version alignment is part of the release PR itself: `extra-files` in
+`.release-please-config.json` lists `backend/package.json` and
+`frontend/package.json`, so release-please updates the `version` of each while
+building that PR. All three move together, before the tag is cut — which
+matters because `deploy-storefront.sh` runs `check-versions.js` before building
+and would abort on a drifted tree.
+
+**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` and
+`kompmaster-v*.*.*` tag pushes, plus `workflow_dispatch` for a manual re-deploy
+of an existing tag. The tag is the only automatic trigger: the `production-vps`
+environment permits only `v*.*.*` refs, and a branch push or a `workflow_call`
+resolves to the `main` branch and is rejected before a runner is assigned.
+`release.yml` has no deploy job — release-please cuts the release and the tag
+push is the handoff.
 
 Run locally before pushing:
 ```bash

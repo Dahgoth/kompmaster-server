@@ -543,11 +543,10 @@ jobs:
 
 | Event | Trigger | Actions |
 |-------|---------|---------|
-| PR merged to `main` | `push` to `main` | Release workflow → version sync → deploy workflow |
-| Manual tag push | `git push origin v2.3.0` | Deploy workflow (tag push trigger) |
-| GitHub Release created | `release.published` | Deploy workflow (release trigger) |
-| Manual re-deploy | `gh workflow run deploy.yml -f tag=v2.3.0` | Deploy workflow (workflow_dispatch) |
-| Release PR merge | `release-please` PR merged | Release workflow (via push to main) |
+| Release PR merge | `push` to `main` | `release.yml` runs `release-please`, which bumps root + both app `package.json` files (via `extra-files`) and the root `CHANGELOG.md`, then cuts the release and the `vX.Y.Z` tag |
+| Tag push (automatic) | `push` to a `v*.*.*` tag | `deploy.yml` runs — the only automatic deploy path, and the only one the `production-vps` environment accepts |
+| Manual tag push | `git push origin v2.3.0` | `deploy.yml` runs |
+| Manual re-deploy | `gh workflow run deploy.yml -f tag=v2.3.0` | `deploy.yml` runs |
 
 **Branch protection**: `main` has ruleset with required checks (8 CI jobs), linear history enforced via **merge commit** (not squash) for release-please PRs to preserve manifest history. `release-please--*` branches excluded from rules.
 

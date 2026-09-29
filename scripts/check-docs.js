@@ -85,8 +85,13 @@ function classify(files) {
         isBackendWorkflowFile(f) ||
         isFrontendWorkflowFile(f) ||
         f === ".husky/pre-push" ||
-        f === ".github/workflows/ci.yml" ||
-        f === "scripts/check-docs.js",
+        f === "scripts/check-docs.js" ||
+        // Any workflow change is a dev-workflow change. Previously only
+        // ci.yml was recognised, so a release-pipeline rewrite passed
+        // docs-sync while DEVELOPMENT.md still described the old pipeline.
+        f.startsWith(".github/workflows/") ||
+        // release-please config drives the release/deploy pipeline.
+        f === ".release-please-config.json",
     ) ||
     backendTouched ||
     frontendTouched ||
@@ -94,6 +99,9 @@ function classify(files) {
   ) {
     need.add("DEVELOPMENT.md");
   }
+
+  // Deploy pipeline surface -> DEPLOY.md
+  if (touched.has(".github/workflows/deploy.yml")) need.add("DEPLOY.md");
 
   // UX/visual surface -> DESIGN.md
   if (files.some((f) => isFrontendStyle(f) || isFrontendPage(f)) || touched.has("DESIGN.md")) {
