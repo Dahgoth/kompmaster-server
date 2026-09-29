@@ -131,10 +131,22 @@ jobs:
       - name: Create GitHub Release
         if: github.event_name != 'release' && steps.idempotency.outputs.already_deployed != 'true'
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          # Distinguish "release does not exist" (create it) from a real failure
+          # such as auth, rate limiting or a network blip. `gh release view`
+          # exits non-zero for both, so the message is what separates them —
+          # without this, an auth failure would be reported as "release missing"
+          # and then fail again on create with the original error buried.
+          if gh release view "$TAG" >/dev/null 2>view_err.txt; then
             echo "Release $TAG already exists — leaving it untouched"
+          elif grep -qi "not found" view_err.txt; then
+            # No --title: --generate-notes auto-generates BOTH the release name
+            # and body from the commits, matching the previous
+            # generate_release_notes: true behaviour.
+            gh release create "$TAG" --verify-tag --generate-notes
           else
-            gh release create "$TAG" --verify-tag --generate-notes --title "$TAG"
+            echo "::error::gh release view failed for $TAG — not a missing release:"
+            cat view_err.txt
+            exit 1
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -190,6 +202,7 @@ jobs:
             "repos/${{ github.repository }}/deployments/${{ steps.deployment.outputs.id }}/statuses" \
             -f state=failure \
             -f environment=production-vps \
+            -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             -f description="Storefront deploy failed" \
             --jq '.state'
         env:
