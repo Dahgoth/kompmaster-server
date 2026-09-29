@@ -421,12 +421,13 @@ on:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
 ```
 
-**Only the `v*.*.*` pattern actually works.** `kompmaster-v*.*.*` does not
-match the environment's policy — it starts with a `k` — so a `kompmaster-`
-tag is rejected exactly as a branch push is. It is retained in the file only for
-backward compatibility with `kompmaster-v2.2.0` and earlier;
+**Only `v*.*.*` actually works, and the second pattern is a known wart.**
+`kompmaster-v*.*.*` starts with a `k`, so it cannot match the environment's
+`v*.*.*` policy. It survives in the file for tags cut before v2.3.0;
 `include-component-in-tag: false` means release-please has not produced one
-since. Treat it as inert until the file is cleaned up separately.
+since. It is inert and should be removed from `deploy.yml` and from
+`extract-tag`'s regex in a separate change — it is a behaviour edit, not a
+documentation one.
 
 The other trigger types were all removed because each provably cannot deploy:
 
@@ -594,13 +595,19 @@ it. Nothing else can reach the `production-vps` environment.
 | Tag push | `push` to a `v*.*.*` tag | `deploy.yml` runs — the **only** deploy path that exists |
 | Manual tag push | `git push origin vX.Y.Z` | `deploy.yml` runs, same as above |
 
-**There is no manual re-deploy.** `deploy.yml` declares one trigger,
-`push: tags`, so `gh workflow run deploy.yml` is rejected by `gh` itself as
-not-dispatchable. A branch push and a `workflow_call` from another workflow both
-resolve to `main`, which the environment also rejects — that is what
-`workflow_call` used to do, and it is why the deploy silently produced jobs
-with zero steps and no logs. To deploy a new version, cut a new tag. See
-`RUNBOOK.md` §4.
+**There is no manual re-deploy.** `deploy.yml` declares exactly one trigger,
+`push: tags`, with no `branches:` key. Two consequences:
+
+- `gh workflow run deploy.yml` is rejected by `gh` itself as
+  not-dispatchable.
+- A push to `main` **never creates a run at all** — it does not match the tag
+  filter, so no job is allocated and the environment's branch policy is never
+  consulted. This is different from the original failure: when
+  `workflow_call` was present, a call *did* start a job, that job *did* reach
+  the environment, and was rejected there — which is why it presented as a job
+  with zero steps and no logs. Today the same call site does not run at all.
+
+To deploy a new version, cut a new tag. See `RUNBOOK.md` §4.
 
 **Branch protection**: `main` has a ruleset with 8 required checks, linear
 history enforced via **merge commit** (not squash) so release-please preserves

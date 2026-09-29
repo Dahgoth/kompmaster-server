@@ -84,10 +84,12 @@ State of the world on the VPS:
   `/etc/default/caddy`. **The port is not a setting you pass — it is a property
   of the colour.**
 - `shared/storefront.env` is written **once**, the first time a deploy runs, and
-  never rewritten (`deploy-storefront.sh:206`). Its `PORT` is therefore the port
-  of whichever colour deployed first — on a host whose first deploy was blue it
-  says `3000` even when green is live. **Do not source it for a cross-colour
-  rollback.** Override `PORT` explicitly from the colour table below.
+  never rewritten (`deploy-storefront.sh:206`). Its `PORT` is baked at that
+  moment from whichever colour deployed first, so on a blue-first host it says
+  `3000` even when green is live. **Source it — it holds
+  `REVALIDATE_SECRET` and `INDEXNOW_KEY`, and the storefront is broken without
+  them — but pin `PORT` to the colour you are starting.** That is what step 5
+  does.
 
 ```bash
 # On the VPS (api.compmasone.ru)
@@ -103,7 +105,10 @@ case "$COLOUR" in
 esac
 LIVE=$(sed -n 's/^STOREFRONT_ACTIVE_COLOR=//p' /etc/default/caddy)
 echo "live=$LIVE  rollback-to=$COLOUR (port $PORT)"
-[ -n "$LIVE" ] || { echo "cannot read STOREFRONT_ACTIVE_COLOR" >&2; exit 1; }
+# An unset value is NORMAL, not corruption: deploy.yml:84-97 treats empty as
+# "first deploy, treated as blue", and Caddyfile:71-78 ships a default
+# upstream for it. Only a malformed line is an error.
+[ -n "$LIVE" ] || LIVE=blue      # matches the deploy script's own default
 [ "$COLOUR" != "$LIVE" ] || echo "NOTE: already live — you are restarting, not rolling back"
 
 # 2. Resolve a target for THAT colour and refuse to continue without one
@@ -115,15 +120,18 @@ echo "current -> $(readlink current)   target -> $TARGET"
 # 3. Point current at it
 ln -sfn "$TARGET" current
 
-# 4. Start with the CORRECT port. Deliberately not sourcing storefront.env:
-#    its PORT is written once and may belong to the other colour.
-PORT=$PORT NODE_ENV=production \
-API_BASE=https://api.compmasone.ru/api SITE_URL=https://www.compmasone.ru \
-  pm2 delete "kompmaster-storefront-$COLOUR" >/dev/null 2>&1 || true
-PORT=$PORT NODE_ENV=production \
-API_BASE=https://api.compmasone.ru/api SITE_URL=https://www.compmasone.ru \
-  pm2 start "$PWD/current/server.js" \
-    --name "kompmaster-storefront-$COLOUR" --cwd "$PWD/current" --time >/dev/null
+# 4. Start with the environment, but PIN PORT to this colour.
+#    storefront.env must be sourced: it holds REVALIDATE_SECRET and
+#    INDEXNOW_KEY (deploy-storefront.sh:213-216 writes the file for exactly
+#    those). Only its PORT is unreliable, so it is overridden immediately after.
+set -a; . shared/storefront.env; set +a
+export PORT NODE_ENV=production \
+  API_BASE=https://api.compmasone.ru/api SITE_URL=https://www.compmasone.ru
+
+# 5. Restart, delete+start (never reload: PM2 binds the script path at start)
+pm2 delete "kompmaster-storefront-$COLOUR" >/dev/null 2>&1 || true
+pm2 start "$PWD/current/server.js" \
+  --name "kompmaster-storefront-$COLOUR" --cwd "$PWD/current" --time >/dev/null
 pm2 save >/dev/null
 ```
 
@@ -134,8 +142,13 @@ redirect would leave one line, `www` would fall back to the default domain and
 the API would silently proxy to port 4000.
 
 ```bash
-# 5. Cross-colour only: flip the upstream
-sed -i 's/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR='"$COLOUR"'/' /etc/default/caddy
+# 6. Cross-colour only: flip the upstream. Re-derive COLOUR if you are in a
+#    fresh shell - it is a plain variable, not exported state, and an empty
+#    value would write `STOREFRONT_ACTIVE_COLOR=` and drop traffic to the
+#    default upstream.
+COLOUR=blue   # <- set this
+[ -n "$COLOUR" ] || { echo "set COLOUR" >&2; exit 1; }
+sed -i "s/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$COLOUR/" /etc/default/caddy
 caddy reload --config /etc/caddy/Caddyfile --force
 ```
 
@@ -279,9 +292,12 @@ Consequences:
   the same commit. It is the guard working, not a fault.
 - **To deploy a new version, cut a new tag.** Re-running the existing one is not
   possible — no dispatch reaches the environment.
-- If you genuinely must re-push an existing tag, delete it first. A plain
-  `git push` of a tag that already exists on the remote is a no-op and fires no
-  `push` event:
+- Re-pushing the **same commit** will not help either: the guard keys on the
+  commit SHA, so it skips again. Pushing a tag that already exists on the
+  remote is also a no-op and fires no `push` event at all. To re-run a deploy
+  you need **a different commit** — which in practice means a new release. The
+  delete-and-repush sequence below only helps when the tag pointed somewhere
+  else, or when no successful deployment record exists for that commit:
 
   ```bash
   SHA=$(git rev-parse vX.Y.Z^{commit})   # remember where it points
@@ -312,9 +328,10 @@ Consequences:
 ## 5. Database Backup & Recovery
 
 `backend/scripts/backup.sh` takes a `pg_dump`, gzips it, **encrypts it
-client-side** (AES-256-CTR + PBKDF2) and uploads it, then deletes the
-plaintext. Every artifact is therefore `db-<timestamp>.sql.gz.enc`; there is no
-readable `.sql.gz` to restore from.
+client-side** (AES-256-CTR + PBKDF2) and **deletes the plaintext before the
+upload** (line 38, upload at line 53). That ordering is the point: an
+interrupted upload never leaves a readable dump behind. Every artifact is
+therefore `db-<timestamp>.sql.gz.enc`; there is no readable `.sql.gz` on disk.
 
 **Where files land**: the script does `cd "$(dirname "$0")/.."` first, so its
 `backups/` is **relative to `backend/`**, not the repo root. Running
@@ -345,7 +362,11 @@ cd /opt/compmaster/backend            # <- where backup.sh puts its backups/
 #    production box writes the passphrase to /root/.bash_history, and this is
 #    the one credential whose loss is unrecoverable. openssl reads it from the
 #    variable below, which lives only for this command:
-read -rs BACKUP_KEY && export BACKUP_KEY
+printf 'Backups are AES-256-CTR+PBKDF2. Paste the key (input hidden): ' >&2
+read -rs BACKUP_KEY        # needs a TTY: do not paste this block into a script
+                          # or a pipe, or read hits EOF and returns 1
+[ -n "$BACKUP_KEY" ] || { echo 'no key supplied' >&2; exit 1; }
+export BACKUP_KEY
 
 # 1. Decrypt into /tmp, never into backups/
 openssl enc -d -aes-256-ctr -pbkdf2 \
@@ -353,9 +374,13 @@ openssl enc -d -aes-256-ctr -pbkdf2 \
   -out /tmp/restore.sql.gz \
   -pass env:BACKUP_KEY
 
-# 2. Prove the plaintext exists before touching the database
-gunzip -t /tmp/restore.sql.gz          # fails if the archive is not a valid gzip
-gunzip -c /tmp/restore.sql.gz | head -20
+# 2. Prove the plaintext exists before touching the database.
+#    `gunzip -c ... | head` is deliberately NOT used: head exits after 20 lines,
+#    gunzip dies on SIGPIPE with 141, and under `set -o pipefail` that aborts
+#    the block before the restore below ever runs. Decompress to a file instead.
+gunzip -t /tmp/restore.sql.gz          # fails unless it is a valid gzip
+gunzip -c /tmp/restore.sql.gz > /tmp/restore.sql
+head -20 /tmp/restore.sql
 
 # 3. Restore
 gunzip -c /tmp/restore.sql.gz | psql -U kompmaster -h localhost kompmaster
