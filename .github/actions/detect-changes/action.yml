@@ -17,6 +17,11 @@ outputs:
   # This exact omission made `backend`, `frontend`, `e2e`, `compose` and
   # `terraform` silently skip every real step from 2026-09-25 to 2026-09-28
   # while reporting success. See docs/incidents/2026-09-28-ci-silent-skip.md.
+  #
+  # FOOTGUN: `value` below is bound to the step `id: detect`. Renaming that
+  # step without renaming it here reproduces the original incident exactly —
+  # no error, the action still logs the right files, and the caller's guard
+  # silently becomes false. Keep the two in step; there is no test for this.
   changed:
     description: "'true' if any changed file matches the pattern"
     value: ${{ steps.detect.outputs.changed }}

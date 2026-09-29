@@ -130,7 +130,7 @@ jobs:
             ${{ runner.os }}-pnpm-
       - name: Enable pnpm via corepack
         run: corepack enable pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Lint backend
         run: pnpm run lint:backend
       - name: Syntax check (backend JS files in this change set)
@@ -196,7 +196,7 @@ jobs:
             ${{ runner.os }}-nextjs-
       - name: Enable pnpm via corepack
         run: corepack enable pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Lint frontend
         run: pnpm run lint:frontend
       - name: Typecheck frontend
@@ -263,8 +263,8 @@ jobs:
       - name: Enable pnpm via corepack
         if: steps.changes.outputs.changed == 'true'
         run: corepack enable pnpm
-      - run: pnpm install --frozen-lockfile
-        if: steps.changes.outputs.changed == 'true'
+      - if: steps.changes.outputs.changed == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Install Playwright browsers
         if: steps.changes.outputs.changed == 'true'
         run: pnpm --filter kompmaster-frontend exec playwright install --with-deps chromium webkit
