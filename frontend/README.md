@@ -135,23 +135,26 @@ Caddy config, DNS cutover, and RAM headroom formula.
 
 ## CI (GitHub Actions)
 
-Frontend CI lives in the root `.github/workflows/ci.yml` and is path-filtered
-via the `detect-changes` composite action (`.github/actions/detect-changes`),
-which uses inline `git diff` with POSIX ERE regex patterns. The `frontend` job
-runs on any `frontend/**` change (excluding `frontend/terraform/**`), `DESIGN.md`,
-or shared config files (`eslint.config.js`, `.prettierrc.json`, `.prettierignore`,
-`.editorconfig`).
+Frontend CI lives in the root `.github/workflows/ci.yml`. The `frontend` job
+runs on **every** change — it is deliberately not path-filtered. Until
+2026-09-28 it was, and the path filter was broken: the `detect-changes`
+composite action never declared an `outputs:` block, so
+`steps.changes.outputs.frontend` was permanently empty and every conditional
+step skipped while the job still reported success. Removing the guard makes
+that failure mode impossible. Only `e2e` is path-filtered now, via
+`detect-changes`, because it is the one job whose runtime justifies a guard
+(~2 min: Postgres plus two browser engines).
 
-Steps:
+The `frontend` job runs lint, typecheck, unit tests and the production build:
+
 1. `actions/checkout` (pinned SHA)
-2. `detect-changes` composite action (POSIX ERE pattern)
-3. `actions/setup-node` Node 24 (pinned SHA)
-4. `corepack enable pnpm` (no `pnpm/action-setup` — not GitHub-verified)
-5. `pnpm install --frozen-lockfile`
-6. `pnpm run lint:frontend` (ESLint over `frontend/**`)
-7. `pnpm --filter kompmaster-frontend run typecheck` (`tsc --noEmit`)
-8. `pnpm --filter kompmaster-frontend test` (Vitest)
-9. `pnpm --filter kompmaster-frontend run build` (`next build` standalone)
+2. `actions/setup-node` Node 24 (pinned SHA)
+3. `corepack enable pnpm` (no `pnpm/action-setup` — not GitHub-verified)
+4. `pnpm install --frozen-lockfile --ignore-scripts`
+5. `pnpm run lint:frontend` (ESLint over `frontend/**`)
+6. `pnpm --filter kompmaster-frontend run typecheck` (`tsc --noEmit`)
+7. `pnpm --filter kompmaster-frontend test` (Vitest)
+8. `pnpm --filter kompmaster-frontend run build` (`next build` standalone)
 
 The `e2e` job runs the Playwright Tier A matrix (chromium + WebKit mobile)
 when `frontend/**` or `backend/**` changes — it provisions a throwaway
