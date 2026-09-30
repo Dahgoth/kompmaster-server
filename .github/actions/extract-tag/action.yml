@@ -19,10 +19,13 @@ runs:
         # For tag push: github.ref_name (e.g., "v2.0.0")
         # For release event: github.event.release.tag_name
         # For workflow_call: inputs.tag
-        # For workflow_dispatch: inputs.tag
+        # For workflow_dispatch: github.ref_name. The dispatch is done with
+        # `--ref <tag>` so the run's ref IS the tag; there is no `tag` input,
+        # and `inputs.tag` would be empty. The `*` branch below also reads
+        # ref_name, so a dispatch on a tag falls there correctly.
         case "${{ github.event_name }}" in
           release) TAG="${{ github.event.release.tag_name }}" ;;
-          workflow_call|workflow_dispatch) TAG="${{ inputs.tag }}" ;;
+          workflow_call) TAG="${{ inputs.tag }}" ;;
           *) TAG="${{ github.ref_name }}" ;;
         esac
         if [ -z "$TAG" ]; then

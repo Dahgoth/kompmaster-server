@@ -43,3 +43,59 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # release-please creates the tag through the GitHub API, and an API-created
+      # tag ref emits no `push` event — so deploy.yml's `push: tags` trigger never
+      # fired. Verified on v2.4.2 and v2.4.3: both were tagged and released, and
+      # ZERO deploy runs were created. A `release: published` trigger does not
+      # fix it either; no run with `event=release` has ever been created here.
+      #
+      # Dispatching with `--ref <tag>` makes the new run's ref the tag itself,
+      # which is what the production-vps environment policy (type: tag,
+      # v*.*.*) requires. This is the smallest change that produces a job the
+      # gate will accept: no re-tagging, no extra config, and the release tag
+      # stays exactly as release-please created it.
+      #
+      # A dispatch failure fails the release job loudly, rather than leaving a
+      # tagged release that silently never deploys.
+      - name: Trigger the production deploy for the new tag
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          set -eu
+          TAG="${{ steps.release.outputs.tag_name }}"
+          gh workflow run deploy.yml --ref "$TAG"
+          echo "dispatched deploy.yml on ${TAG}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # release-please creates the tag through the GitHub API, and an API-created
+      # tag ref emits no `push` event — so `deploy.yml`'s `push: tags` trigger
+      # never fired. Verified on v2.4.2 and v2.4.3: both were tagged and
+      # released, and ZERO deploy runs were created. A `release: published`
+      # trigger does not fix it either; no run with `event=release` has ever
+      # been created in this repository.
+      #
+      # `skip-github-release: true` in the config stops release-please creating
+      # the Release object while still creating the tag, and this step pushes
+      # that tag over git. A real git push DOES fire `push: tags`, so the deploy
+      # runs with the tag as its ref and the production-vps policy
+      # (type: tag, v*.*.*) accepts it.
+      #
+      # A push failure fails the release job loudly, instead of leaving a tagged
+      # release that silently never deploys.
+      - name: Push release tag to trigger the deploy
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          set -eu
+          TAG="${{ steps.release.outputs.tag_name }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The tag already exists remotely (release-please created it), so
+          # pushing the local ref for the same commit is a no-op; this makes it
+          # explicit and fails loudly if it somehow is missing.
+          git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}" \
+            || git push origin "refs/tags/${TAG}"
+          git push origin "refs/tags/${TAG}"
+          echo "pushed ${TAG} — deploy.yml should now run on push:tags"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

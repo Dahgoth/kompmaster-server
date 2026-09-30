@@ -1,19 +1,20 @@
 name: Deploy Production
 
 on:
-  # release-please creates the tag via the GitHub API, not `git push`, and an
-  # API-created tag ref emits NO `push` event. Verified on v2.4.2: the tag and
-  # the GitHub Release were both created, and ZERO deploy runs were created.
-  # `push: tags` alone therefore cannot be the trigger.
+  # `push: tags` never fires for this repository: release-please creates the
+  # tag through the GitHub API, and an API-created tag ref emits no `push`
+  # event. Verified on v2.4.2 and v2.4.3 — both tagged and released, zero
+  # deploy runs created. The tag is therefore not a usable trigger here.
   #
-  # `release: published` is the event that DOES fire for an API-created
-  # release. The tag push is kept so a manual `git push origin vX.Y.Z` still
-  # deploys; the idempotency guard makes the overlap safe, because the second
-  # invocation finds a successful deployment for the same commit and skips.
+  # `workflow_dispatch` is the working trigger, dispatched by release.yml with
+  # `--ref <tag>` so the job's ref IS the tag, which is what the production-vps
+  # environment policy (type: tag, v*.*.*) requires. Dispatching on the default
+  # branch instead would carry ref=main and be rejected by the gate.
   push:
     tags: ['v*.*.*']
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
