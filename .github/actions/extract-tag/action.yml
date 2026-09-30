@@ -29,8 +29,15 @@ runs:
           echo "::error::Tag is required" >&2
           exit 1
         fi
-        if ! [[ "$TAG" =~ ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
-          echo "::error::Tag $TAG does not match semantic version format vX.Y.Z" >&2
+        # Matches the deploy trigger exactly: v<major>.<minor>.<patch>[-<pre>].
+        # The optional `kompmaster-` prefix is gone — it was a fossil from
+        # before include-component-in-tag: false (release-please has not cut
+        # one since v2.2.0), the production-vps policy (`v*.*.*`) never
+        # accepted it, and leaving it here would let a `kompmaster-` release
+        # through the `release: published` trigger that the tag list no longer
+        # matches. Trigger and validator must agree.
+        if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+          echo "::error::Tag $TAG does not match vX.Y.Z[-prerelease]" >&2
           exit 1
         fi
         echo "TAG=$TAG" >> $GITHUB_ENV
