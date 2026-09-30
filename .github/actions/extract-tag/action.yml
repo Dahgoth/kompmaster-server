@@ -1,8 +1,13 @@
 name: 'Extract Tag'
 description: 'Extract and validate tag from GitHub event context'
 inputs:
+  # Unused in practice: nothing calls this action via workflow_call any more,
+  # and a workflow_dispatch run dispatched on a tag carries the tag in
+  # github.ref_name with no input at all. Kept so the declared interface
+  # matches the `workflow_call` arm below; it is dead code waiting to be
+  # deleted along with that arm.
   tag:
-    description: 'Tag input for workflow_call/workflow_dispatch'
+    description: 'Tag input (only used by the workflow_call arm; unused in practice)'
     required: false
     default: ''
 outputs:

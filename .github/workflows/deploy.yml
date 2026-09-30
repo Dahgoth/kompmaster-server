@@ -23,6 +23,19 @@ permissions:
 
 jobs:
   deploy-production:
+    # The idempotency guard below is check-then-act: it reads the Deployments
+    # API and then deploys. Two triggers firing for the same commit (a manual
+    # `git push origin vX.Y.Z` while a release is also published, or a retry
+    # alongside the release dispatch) would both read "not deployed" and both
+    # deploy, racing on the same colour directory. The guard prevents a
+    # *sequential* double deploy; this prevents a *concurrent* one.
+    #
+    # Keyed on the head SHA, so different releases still deploy in parallel;
+    # only runs for the same commit serialise. cancel-in-progress: false, so a
+    # queued deploy waits rather than being dropped.
+    concurrency:
+      group: deploy-production-${{ github.sha }}
+      cancel-in-progress: false
     # Custom GitHub Environment for VPS production deploy (not Vercel's "Production")
     # Create in GitHub Settings → Environments → production-vps
     # Add secrets: STOREFRONT_SSH_KEY, STOREFRONT_SSH_HOST, STOREFRONT_ROOT
