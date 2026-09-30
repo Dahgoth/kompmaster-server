@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.4](https://github.com/Dahgoth/kompmaster-server/compare/v2.4.3...v2.4.4) (2026-09-30)
+
+
+### Bug Fixes
+
+* **release:** dispatch deploy.yml on the tag so production deploys ([b41217b](https://github.com/Dahgoth/kompmaster-server/commit/b41217b645a9a80576be8b57699c0a2a1f16586f))
+* **release:** dispatch deploy.yml on the tag so production deploys ([#122](https://github.com/Dahgoth/kompmaster-server/issues/122)) ([fd6e756](https://github.com/Dahgoth/kompmaster-server/commit/fd6e75655824c824a0862e6ed840ab5ec399c7e8))
+* **release:** fix the review round - drop dead trigger, correct docs, fix comments ([0815fa6](https://github.com/Dahgoth/kompmaster-server/commit/0815fa699bac1b16e236e17f4271300269b0d1ec))
+* **release:** remove the abandoned no-op push, add concurrency, fix stale test ([f1d553c](https://github.com/Dahgoth/kompmaster-server/commit/f1d553c47fc9e39f12f513cd37c1ff494e36de0c))
+
 ## [2.4.3](https://github.com/Dahgoth/kompmaster-server/compare/v2.4.2...v2.4.3) (2026-09-30)
 
 
