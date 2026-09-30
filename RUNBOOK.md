@@ -148,17 +148,20 @@ redirect would leave one line, `www` would fall back to the default domain and
 the API would silently proxy to port 4000.
 
 ```bash
-# 6. Cross-colour only: flip the upstream to the colour chosen in step 1.
-#    Re-enter it here if you are in a fresh shell — COLOUR is a plain shell
-#    variable, not exported state, and an empty value would write
-#    `STOREFRONT_ACTIVE_COLOR=` and drop traffic to the default upstream.
-#    There is deliberately no default: this block is only correct for the
-#    OTHER colour, so guessing would flip traffic the wrong way silently.
-printf 'colour to activate [%s]: ' "$LIVE"   # default shown is the current one
-read -r ACTIVATE
-[ -n "$ACTIVATE" ] || { echo 'no colour given' >&2; exit 1; }
-case "$ACTIVATE" in blue|green) ;; *) echo "must be blue or green" >&2; exit 1 ;; esac
-sed -i "s/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$ACTIVATE/" /etc/default/caddy
+# 6. Cross-colour only: flip the upstream to the colour from step 1.
+#    If you are in a fresh shell, re-enter BOTH values: $COLOUR and $LIVE are
+#    plain shell variables, not exported state, and the runbook's `set -eu` is
+#    still in force, so an unset $COLOUR would abort the block.
+COLOUR=            # the colour you rolled back TO (step 1)
+LIVE=              # the colour that is live right now (step 1)
+[ -n "$COLOUR" ] || { echo 'set COLOUR to the colour you rolled back to' >&2; exit 1; }
+[ -n "$LIVE" ]   || { echo 'set LIVE to the current colour' >&2; exit 1; }
+# Refuse to "flip" to the colour already live: that is a no-op that looks
+# like success, and in a cross-colour rollback it is the wrong answer.
+[ "$COLOUR" != "$LIVE" ] \
+  || { echo "COLOUR is already live ($LIVE) - not a cross-colour rollback" >&2; exit 1; }
+case "$COLOUR" in blue|green) ;; *) echo "COLOUR must be blue or green" >&2; exit 1 ;; esac
+sed -i "s/^STOREFRONT_ACTIVE_COLOR=.*/STOREFRONT_ACTIVE_COLOR=$COLOUR/" /etc/default/caddy
 caddy reload --config /etc/caddy/Caddyfile --force
 ```
 
@@ -365,7 +368,7 @@ ls -1 backups/          # -> db-20260929-030000.sql.gz.enc
 Restoring during an outage:
 
 ```bash
-set -euo pipefail                     # see the note below before removing this
+set -eu                               # deliberately NOT pipefail - see step 2
 cd /opt/compmaster/backend            # <- where backup.sh puts its backups/
 
 # 0. Supply the key WITHOUT exporting it into the shell. `export` on a root
@@ -384,30 +387,34 @@ openssl enc -d -aes-256-ctr -pbkdf2 \
   -out /tmp/restore.sql.gz \
   -pass env:BACKUP_KEY
 
-# 2. Prove the plaintext exists before touching the database.
-#    `gunzip -c ... | head` is deliberately NOT used: head exits after 20 lines,
-#    gunzip dies on SIGPIPE with 141, and under `set -o pipefail` that aborts
-#    the block before the restore below ever runs. Decompress to a file instead.
+# 2. Validate the archive and preview it, then restore. No plaintext is ever
+#    written to disk: the preview below is a pipe, and step 3 streams the .gz
+#    straight into psql.
+#    `pipefail` is off for the preview line on purpose: head exits after 20
+#    lines, gunzip takes SIGPIPE and dies 141, and under pipefail that is a
+#    failed pipeline which would abort the restore. It is scoped to this one
+#    command rather than the whole block.
 gunzip -t /tmp/restore.sql.gz          # fails unless it is a valid gzip
-( umask 077; gunzip -c /tmp/restore.sql.gz > /tmp/restore.sql )
-head -20 /tmp/restore.sql
+set +e; gunzip -c /tmp/restore.sql.gz | head -20; set -e
 
 # 3. Restore
 gunzip -c /tmp/restore.sql.gz | psql -U kompmaster -h localhost kompmaster
 
-# 4. Remove BOTH plaintexts. /tmp/restore.sql is the full decompressed
-#    database; leaving it is worse than the compressed one, and /tmp is often
-#    world-readable.
-shred -u /tmp/restore.sql /tmp/restore.sql.gz 2>/dev/null \
-  || rm -f /tmp/restore.sql /tmp/restore.sql.gz
+# 4. Remove the archive. Nothing else was ever written in plaintext.
+shred -u /tmp/restore.sql.gz 2>/dev/null || rm -f /tmp/restore.sql.gz
 unset BACKUP_KEY
 ```
 
-**`set -euo pipefail` is not optional here.** Without it, a wrong `.enc`
+**`set -e` is not optional here.** Without it, a wrong `.enc`
 path means `openssl` writes nothing, `gunzip` fails, and `psql` is handed
 empty stdin — where it **exits 0**. The operator concludes the database was
 restored. It was not. The `gunzip -t` above catches the same class of error
 earlier and more legibly.
+
+`pipefail` is off for exactly one line, and the reason is narrow: `head`
+closing the pipe early makes `gunzip` exit 141, which `pipefail` would treat
+as a failed pipeline and `set -e` would then abort the restore. The preview is
+the only command in the block that needs the exemption.
 
 Notes:
 
