@@ -158,7 +158,10 @@ its own release PR, rather than adding a second workflow that pushes with
 `GITHUB_TOKEN` — a credential whose pushes do not trigger workflow runs, which
 would have left the release PR with no check runs and therefore unmergeable.
 
-**3. The deploy is triggered by the tag alone.** The `production-vps`
+**3. The deploy is triggered by the tag alone.** *(Superseded — see the
+amendment at the end of this file. The tag is still the unit of deployment, but
+it is not the trigger: an API-created tag ref emits no `push` event, and the
+deploy is dispatched with `gh workflow run deploy.yml --ref <tag>`.)* The `production-vps`
 environment permits only refs matching `v*.*.*`. A `push` to `main`, a
 `workflow_call`, and a `workflow_dispatch` all resolve to the `main` branch and
 are rejected by the environment before a runner is assigned — observed as a job
@@ -182,3 +185,38 @@ workflow boundary that could carry the wrong ref into the environment check.
   https://pnpm.io/settings
 - Vercel monorepo guidance — https://vercel.com/docs/monorepos
 - `DEVELOPMENT.md`, `DEPLOY.md`, `terraform/README.md`, `terraform/RUNBOOK.md`
+
+## Amendment — the deploy trigger (2026-09-30)
+
+Decision 3 above recorded the intent that a tag drives the deploy. That intent
+holds; the mechanism it named does not, and this amendment corrects it.
+
+`release-please` creates the tag through the GitHub API. An API-created tag ref
+emits **no `push` event**, so `deploy.yml`'s `push: tags` trigger never fired.
+Verified on v2.4.2 and v2.4.3: both were tagged and released, and **zero deploy
+runs were created**. No run with `event=release` has ever been created in this
+repository either, so `release: published` was not a fallback.
+
+Three consequences, each established by observation rather than inference:
+
+1. **The trigger is `workflow_dispatch`, run by `release.yml`.**
+   `gh workflow run deploy.yml --ref <tag>` makes the run's ref the tag, which
+   is what the `production-vps` deployment branch policy (`type: tag`,
+   `v*.*.*`) requires. Dispatching without `--ref` carries `ref=main` and the
+   policy rejects it — the observed behaviour of the only dispatch this
+   repository has run.
+2. **A reusable workflow inherits the caller's ref.** The `workflow_call` path
+   that `release.yml` used until #115 always carried `main`, so the environment
+   rejected it while the code being deployed was correct. That is why the
+   deploy job was removed from `release.yml`.
+3. **The environment gate is evaluated before any step runs**, and it reads the
+   *run's* ref. No step, output, or input can influence it.
+
+`push: tags` is retained for a manual `git push origin vX.Y.Z`, and the
+commit-SHA idempotency guard plus a `concurrency` group keyed on that SHA keep
+the overlap between a manual push and a release dispatch bounded.
+
+The earlier amendment to this file stated that "the tag push is the entire
+handoff". That was inferred from the environment policy rather than from a run,
+and it was wrong in the same way: a policy says what is *accepted*, not what
+*arrives*.

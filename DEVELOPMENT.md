@@ -501,19 +501,21 @@ release's version into `backend/package.json` and `frontend/package.json` as
 part of the release PR itself. The release uses `include-component-in-tag: false`
 to produce clean `v*.*.*` tags that match the deploy workflow trigger.
 
-**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` tag
-pushes — the **only** trigger that works, because the
-`production-vps` environment permits only refs matching `v*.*.*`, and a branch
-push, a `workflow_call` or a `workflow_dispatch` all resolve to the `main`
-*branch* and are rejected by the environment before a runner is assigned.
-Only the `v*.*.*` pattern deploys. `kompmaster-v*.*.*` is still listed in
-`deploy.yml` for tags cut before v2.3.0, but it does not match the
-`production-vps` policy and would be rejected the same way a branch push is.
+**Deploy workflow** (`.github/workflows/deploy.yml`) is triggered by
+`release.yml` via `gh workflow run deploy.yml --ref "$TAG"`. The `--ref` is what
+makes it work: the run's ref becomes the tag, which is what the `production-vps`
+policy (`type: tag`, `v*.*.*`) accepts. Dispatching without `--ref` runs on the
+default branch and carries `ref=main`, which the policy rejects.
 
-`release.yml` therefore has no deploy job at all — release-please cuts the
-release, the tag push is the handoff, and nothing crosses a workflow boundary
-that could carry the wrong ref into the environment check. The version sync is
-handled entirely inside the release PR; the release workflow does not push to
+`push: tags` is kept for a manual `git push origin vX.Y.Z`, but it cannot catch a
+release: release-please creates the tag through the GitHub API, and an
+API-created tag ref emits no `push` event — verified on v2.4.2 and v2.4.3, both
+tagged and released with **zero deploy runs created**. `workflow_call` and
+`release: published` were both removed; neither ever produced a run here.
+
+`release.yml` does not deploy directly. The version sync is handled entirely
+inside the release PR via `extra-files`; the release workflow never pushes to
+`main`.
 `main`.
 
 **Pre-commit hook** runs `pnpm run format:check` (Prettier) to prevent
