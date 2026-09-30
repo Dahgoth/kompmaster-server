@@ -19,5 +19,6 @@
         { "type": "revert", "section": "Reverts", "hidden": false }
       ]
     }
-  }
+  },
+  "extra-files": ["backend/package.json", "frontend/package.json"]
 }

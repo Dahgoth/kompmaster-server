@@ -1,22 +1,12 @@
 name: Deploy Production
 
 on:
+  # Tag push is the production trigger. The production-vps environment allows
+  # only v*.*.* refs, and a tag ref is what satisfies it; a branch push or a
+  # workflow_call inherits the caller's ref (main) and is rejected by the
+  # environment before a runner is ever assigned.
   push:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to deploy (e.g., v2.0.0)'
-        required: true
-        type: string
-  workflow_call:
-    inputs:
-      tag:
-        description: 'Tag to deploy (e.g., v2.0.0)'
-        required: true
-        type: string
 
 permissions:
   contents: write
@@ -129,7 +119,7 @@ jobs:
       # guard above — same Deployments REST API, no third-party dependency.
 
       - name: Create GitHub Release
-        if: github.event_name != 'release' && steps.idempotency.outputs.already_deployed != 'true'
+        if: steps.idempotency.outputs.already_deployed != 'true'
         run: |
           # Distinguish "release does not exist" (create it) from a real failure
           # such as auth, rate limiting or a network blip. `gh release view`

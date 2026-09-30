@@ -169,23 +169,24 @@ version but doesn't run project-specific hooks. The release workflow
 (`.github/workflows/release.yml`) uses `googleapis/release-please-action@v5`
 with a config file (`.release-please-config.json`) for a **single root package**
 producing a **single root `CHANGELOG.md`** (no per-package changelogs), matching
-the ADR 003 deployment model where backend and storefront deploy together.
-Version sync is handled by the root `package.json` as the single source of truth,
-and the release workflow runs `pnpm run version:sync` after a release is created
-to propagate the version to `backend/package.json` and `frontend/package.json`.
-The release uses `include-component-in-tag: false` to produce clean `v*.*.*`
-tags that match the deploy workflow trigger.
+the ADR 003 deployment model where backend and storefront deploy together. The
+release uses `include-component-in-tag: false` to produce clean `v*.*.*` tags
+that match the deploy workflow trigger.
 
-**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on both
-`v*.*.*` and `kompmaster-v*.*.*` tags for backward compatibility, and on
-`release.published` events (for release-please API-created tags). Additionally,
-the release workflow explicitly triggers the deploy workflow via `workflow_dispatch`
-after release-please creates a release, since GitHub doesn't trigger workflows
-for bot-created events. After release-please bumps the root version, the
-`sync-versions` job opens an auto-merging pull request aligning
-`backend/package.json` and `frontend/package.json` to it. It cannot push
-straight to `main`, which the branch ruleset rejects. New releases will use clean `v*.*.*` tags since
-`include-component-in-tag: false` is set in the release-please config.
+Version alignment is part of the release PR itself: `extra-files` in
+`.release-please-config.json` lists `backend/package.json` and
+`frontend/package.json`, so release-please updates the `version` of each while
+building that PR. All three move together, before the tag is cut — which
+matters because `deploy-storefront.sh` runs `check-versions.js` before building
+and would abort on a drifted tree.
+
+**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` tag
+pushes, which is the **only** trigger that works. The
+`production-vps` environment permits only refs matching `v*.*.*`, and a branch
+push or a `workflow_call` resolves to the `main` branch and is rejected before
+a runner is assigned. The `kompmaster-v*.*.*` pattern still listed in
+`deploy.yml` predates v2.3.0 and would be rejected too. `release.yml` has no deploy job — release-please cuts the
+release and the tag push is the handoff.
 
 Run locally before pushing:
 ```bash

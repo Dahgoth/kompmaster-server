@@ -209,16 +209,19 @@ Currently all three are at **2.4.0**.
   if either app's version drifts from the root. This runs as an always-on
   `versions` CI job and in the Husky `pre-push` hook.
 - `pnpm run version:sync` runs `node scripts/sync-versions.js`, which writes
-  the root version into both apps. Run this after bumping the root version.
-  Releases need this too, and it is done by the release workflow as a pull
-  request: after a release is created, `sync-versions` opens a
-  `release-please--sync-<tag>` PR and enables auto-merge on it. It cannot
-  push straight to `main` because the ruleset requires changes through a
-  pull request. See `RUNBOOK.md` §9.2.
+  the root version into both apps. Run this after bumping the root version by
+  hand. **Releases do not need it** — `extra-files` in
+  `.release-please-config.json` lists both app `package.json` files, and
+  release-please updates the `version` of each while building the release PR.
+  All three therefore move together, in one PR, before the tag is cut. That
+  ordering matters: `deploy-storefront.sh` runs `check-versions.js` before
+  building, so a tag cut from a drifted tree aborts the deploy. See
+  `RUNBOOK.md` §4.2.
 - Release flow: conventional commits → `release-please` opens a release PR
   bumping all three `package.json` files and `CHANGELOG.md` → merge it →
-  `release.yml` creates the tag, GitHub Release and deployment. Backend and
-  frontend always deploy from the same tag.
+  `release.yml` cuts the tag and GitHub Release → **the tag push is what runs
+  `deploy.yml`**. The release workflow performs no deployment itself. Backend
+  and frontend always deploy from the same tag.
 
 > Historical records (`docs/adr/`, `docs/research/`, `docs/archive/`) keep the
 > original `npm` commands they were written with; they are dated snapshots and
@@ -492,22 +495,26 @@ The release workflow (`.github/workflows/release.yml`) uses
 `googleapis/release-please-action@v5` with a config file
 (`.release-please-config.json`) for a **single root package** (`.`) producing a
 single root `CHANGELOG.md`. This matches the ADR 003 deployment model where
-backend and storefront always deploy from the same tag. Version sync is
-handled by the root `package.json` as the single source of truth, and the
-release workflow runs `pnpm run version:sync` after a release is created to
-propagate the version to `backend/package.json` and `frontend/package.json`.
-The release uses `include-component-in-tag: false` to produce clean `v*.*.*`
-tags that match the deploy workflow trigger.
+backend and storefront always deploy from the same tag. The root
+`package.json` is the single source of truth, and `extra-files` propagates each
+release's version into `backend/package.json` and `frontend/package.json` as
+part of the release PR itself. The release uses `include-component-in-tag: false`
+to produce clean `v*.*.*` tags that match the deploy workflow trigger.
 
-**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on both
-`v*.*.*` and `kompmaster-v*.*.*` tags for backward compatibility, and on
-`release.published` events (for release-please API-created tags). Additionally,
-the release workflow explicitly triggers the deploy workflow via `workflow_dispatch`
-after release-please creates a release, since GitHub doesn't trigger workflows
-for bot-created events. The release workflow also commits and pushes the version
-sync changes (backend/frontend package.json) after release-please bumps the root
-version. New releases will use clean `v*.*.*` tags since
-`include-component-in-tag: false` is set in the release-please config.
+**Deploy workflow** (`.github/workflows/deploy.yml`) triggers on `v*.*.*` tag
+pushes — the **only** trigger that works, because the
+`production-vps` environment permits only refs matching `v*.*.*`, and a branch
+push, a `workflow_call` or a `workflow_dispatch` all resolve to the `main`
+*branch* and are rejected by the environment before a runner is assigned.
+Only the `v*.*.*` pattern deploys. `kompmaster-v*.*.*` is still listed in
+`deploy.yml` for tags cut before v2.3.0, but it does not match the
+`production-vps` policy and would be rejected the same way a branch push is.
+
+`release.yml` therefore has no deploy job at all — release-please cuts the
+release, the tag push is the handoff, and nothing crosses a workflow boundary
+that could carry the wrong ref into the environment check. The version sync is
+handled entirely inside the release PR; the release workflow does not push to
+`main`.
 
 **Pre-commit hook** runs `pnpm run format:check` (Prettier) to prevent
 formatting errors from being committed. The `pre-push` hook runs the full

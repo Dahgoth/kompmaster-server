@@ -406,32 +406,61 @@ Add `--color` flag to `deploy-storefront.sh`:
 
 ### 10.2 Deploy Workflow (`.github/workflows/deploy.yml`)
 
-**Triggers** (multiple entry points, all converge to same deploy job):
-1. `push: tags` — manual tag push (`git push origin v2.3.0`)
-2. `release: published` — GitHub Release created (including by `release-please`)
-3. `workflow_dispatch` — manual re-deploy via GitHub UI or `gh workflow run`
-4. `workflow_call` — called by release workflow after version sync
+**The environment constrains the triggers, so read this before changing them.**
+
+`production-vps` has a deployment branch policy permitting **only refs matching
+`v*.*.*`**. Anything that resolves to a *branch* is rejected by the environment
+**before a runner is assigned** — the job shows zero steps and no logs, which
+looks like a runner or VPS fault and is neither.
+
+`deploy.yml` therefore triggers on tag pushes:
+
+```yaml
+on:
+  push:
+    tags: ['v*.*.*', 'kompmaster-v*.*.*']
+```
+
+**Only `v*.*.*` actually works, and the second pattern is a known wart.**
+`kompmaster-v*.*.*` starts with a `k`, so it cannot match the environment's
+`v*.*.*` policy. It survives in the file for tags cut before v2.3.0;
+`include-component-in-tag: false` means release-please has not produced one
+since. It is inert and should be removed from `deploy.yml` and from
+`extract-tag`'s regex in a separate change — it is a behaviour edit, not a
+documentation one.
+
+The other trigger types were all removed because each provably cannot deploy:
+
+- **`workflow_call`** was called by `release.yml`, but a reusable workflow
+  inherits the *caller's* ref — `main` — and was rejected. This is the change
+  that broke the deploy: it looked wired up and produced a job with zero steps
+  and no logs.
+- **`workflow_dispatch`** was a manual re-deploy. It resolves to `main` and is
+  rejected the same way. Verified with a live dispatch:
+
+  ```
+  Branch "main" is not allowed to deploy to production-vps due to
+  environment protection rules.
+  ```
+
+  A trigger that cannot work is worse than no trigger, so it was removed rather
+  than left as a documented no-op.
+- **`release: published`** fired alongside the tag push, because release-please
+  publishes a Release on every release. Two concurrent production deploys would
+  race on the same colour directory, and the idempotency guard cannot prevent it:
+  both would query the Deployments API before either recorded a result.
+
+**To deploy, cut a tag. There is no manual override.** See `RUNBOOK.md` §4.
 
 ```yaml
 name: Deploy Production
 
 on:
+  # Only 'v*.*.*' is accepted by the production-vps environment;
+  # 'kompmaster-v*.*.*' is retained for tags cut before v2.3.0 and is
+  # rejected by the environment if it is ever used.
   push:
     tags: ['v*.*.*', 'kompmaster-v*.*.*']
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to deploy (e.g., v2.0.0)'
-        required: true
-        type: string
-  workflow_call:
-    inputs:
-      tag:
-        description: 'Tag to deploy (e.g., v2.0.0)'
-        required: true
-        type: string
 
 permissions:
   contents: write
@@ -440,7 +469,7 @@ permissions:
 
 jobs:
   deploy-production:
-    environment: production-vps
+    environment: production-vps   # enforces the v*.*.* ref policy above
     runs-on: self-hosted
     timeout-minutes: 30
     steps:
@@ -449,21 +478,40 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify tag format
-        # Handles all 4 event types via case statement
+      - name: Extract and validate tag
+        # ./.github/actions/extract-tag — real guard:
+        #   ^(kompmaster-)?v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$
+        # note the (-.*)? suffix: prereleases like v2.4.2-rc.1 ARE deployable
 
       - name: Check if already deployed (idempotency guard)
-        # Uses `gh release view` to check if release exists on main
+        # resolves tag -> commit SHA, then queries the Deployments API for
+        # environment==production-vps AND ref==<sha>; skips if status is success
 
-      - name: Setup SSH key / Detect color / Deploy / Create Release / Deployments
-        # All skipped if already_deployed=true
+      - name: Setup SSH key / Detect colour / Deploy
+        # all skipped when already_deployed=true
+
+      - name: Create GitHub Release
+        # NOT dead code: the `github.event_name != 'release'` guard was dropped
+        # with the release trigger, so this runs on every tag push and creates
+        # the Release for a tag that was pushed manually. Also skipped when
+        # already_deployed=true.
+
+      - name: Create / update GitHub Deployment (production-vps)
+        # deployment record + success/failure status, same guard
 ```
 
 **Key features**:
-- **Idempotency guard**: `gh release view` checks if release already exists on `main` — skips entire deploy if true
-- **Blue/Green**: `--color=blue|green` + `--promote` flag handles inactive color detection, health gate, Caddy traffic flip
-- **Health gates + auto-rollback**: boot-verify on build machine (port 3199), health gate on VPS (port 3000/3001), auto-rollback on failure
-- **No fixed wait timer** — removed 5-min environment wait; deploy script provides health gates
+- **Idempotency guard** — resolves the tag to a commit SHA and checks for a
+  `success` deployment of that SHA in `production-vps`. It is a guard against a
+  double tag push, not a way to enable a re-deploy: clearing the record still
+  leaves no trigger that reaches the environment.
+- **Blue/green** — `--color=blue|green` with `--promote` picks the inactive
+  colour, gates on health, then flips the Caddy upstream
+- **Health gates + auto-rollback** — boot-verify on the build machine, health
+  gate on the VPS, automatic rollback on failure
+- **Version check before build** — `deploy-storefront.sh` runs
+  `check-versions.js`, so a tag cut from a drifted tree aborts before anything
+  is shipped
 
 ---
 
@@ -484,123 +532,181 @@ permissions:
   issues: write
   pull-requests: write
   id-token: write
+  deployments: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    # Skip [skip ci] commits (version sync commits from previous run)
     if: "github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')"
+    outputs:
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      release_created: ${{ steps.release.outputs.release_created }}
+```
+
+Only the shape matters here; the authoritative version is
+`.github/workflows/release.yml`, including the action SHAs. What is
+significant is what is **absent**: there is no second job. An earlier revision
+of this block showed a sync step and a dispatch step, and a step-2
+`gh workflow run deploy.yml`. Both were removed, and the file also no longer
+contains `on.workflow_call`.
+
+```yaml
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    # permissions and outputs omitted for brevity
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with: { node-version: '24' }
-      - run: corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts
+      - actions/checkout@<sha>            # fetch-depth: 0
+      - corepack enable pnpm
+      - actions/setup-node@<sha>           # node-version: '24'
+      - pnpm install --frozen-lockfile --ignore-scripts
       - name: Release Please
-        id: release
-        uses: googleapis/release-please-action@0dfd8538845b8e92600d271a895a5372865d4062
+        id: release            # <- the outputs block above references this
+        uses: googleapis/release-please-action@<sha>
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
-
-      - name: Sync versions and trigger deploy
-        if: steps.release.outputs.release_created == 'true'
-        run: |
-          pnpm run version:sync
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/package.json frontend/package.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: sync backend/frontend versions to root ${{ steps.release.outputs.tag_name }} [skip ci]"
-            git push origin HEAD:main
-            # Verify push propagated (max 20s)
-            for i in {1..10}; do
-              if git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then break; fi
-              sleep 2
-            done
-            if ! git ls-remote --exit-code origin main | grep -q "$(git rev-parse HEAD)"; then
-              echo "::error::Version sync commit not visible on origin/main after 20s"
-              exit 1
-            fi
-          else
-            echo "No version changes to commit"
-          fi
-          gh workflow run deploy.yml --ref main -f tag="${{ steps.release.outputs.tag_name }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-**Flow**:
-1. `release-please` creates Release PR → on merge (merge commit), creates GitHub Release + tag + bumps manifest
-2. Release workflow runs on push to main → syncs backend/frontend versions to root version (commits + pushes `[skip ci]`)
-3. Push verified via `git ls-remote` (max 20s retry loop, explicit failure if not visible)
-4. `gh workflow run deploy.yml` triggers production deploy with tag input
+**Flow** — one job, and it does not deploy:
+
+1. `release-please` opens a **release PR** bumping the root `package.json`, both
+   app `package.json` files (via `extra-files`) and the root `CHANGELOG.md`.
+2. Merging that PR makes `release.yml` cut the **tag** and the **GitHub Release**.
+3. The **tag push** is what runs `deploy.yml`.
+
+There is no sync step, no dispatch step, and no `workflow_call` from this
+workflow into `deploy.yml`. The tag is the entire handoff — which is also the
+only ref the `production-vps` environment accepts, so nothing has to carry a
+ref across the boundary that could resolve to `main` instead.
+
 
 ---
 
 ### 10.4 Release Cycle Summary
 
-| Event | Trigger | Actions |
-|-------|---------|---------|
-| PR merged to `main` | `push` to `main` | Release workflow → version sync → deploy workflow |
-| Manual tag push | `git push origin v2.3.0` | Deploy workflow (tag push trigger) |
-| GitHub Release created | `release.published` | Deploy workflow (release trigger) |
-| Manual re-deploy | `gh workflow run deploy.yml -f tag=v2.3.0` | Deploy workflow (workflow_dispatch) |
-| Release PR merge | `release-please` PR merged | Release workflow (via push to main) |
+The pipeline is one-directional. `release.yml` cuts a tag; the tag push deploys
+it. Nothing else can reach the `production-vps` environment.
 
-**Branch protection**: `main` has ruleset with required checks (8 CI jobs), linear history enforced via **merge commit** (not squash) for release-please PRs to preserve manifest history. `release-please--*` branches excluded from rules.
+| Event | Trigger | What happens |
+|-------|---------|--------------|
+| Release PR merge | `push` to `main` | `release.yml` runs `release-please`, which bumps the root `package.json`, both app `package.json` files (via `extra-files`) and the root `CHANGELOG.md`, then cuts the GitHub Release and the `vX.Y.Z` tag |
+| Tag push | `push` to a `v*.*.*` tag | `deploy.yml` runs — the **only** deploy path that exists |
+| Manual tag push | `git push origin vX.Y.Z` | `deploy.yml` runs, same as above |
 
-### 10.3 Vercel Integration — Correct Configuration for Monorepo
+**There is no manual re-deploy.** `deploy.yml` declares exactly one trigger,
+`push: tags`, with no `branches:` key. Two consequences:
 
-**Important**: The Vercel dashboard must be configured as follows for monorepo deployments with pnpm hoisting:
+- `gh workflow run deploy.yml` is rejected by `gh` itself as
+  not-dispatchable.
+- A push to `main` **never creates a run at all** — it does not match the tag
+  filter, so no job is allocated and the environment's branch policy is never
+  consulted. This is different from the original failure: when
+  `workflow_call` was present, a call *did* start a job, that job *did* reach
+  the environment, and was rejected there — which is why it presented as a job
+  with zero steps and no logs. Today the same call site does not run at all.
 
-| Setting | Value | Rationale |
-|---------|-------|-----------|
-| **Root Directory** | `.` (repo root) | Monorepo needs access to hoisted `pnpm-lock.yaml` and `node_modules` at workspace root |
-| **Framework Preset** | `Other` (NOT Next.js) | Next.js auto-detection runs `pnpm install` BEFORE custom commands, causing pnpm wrapper missing error |
-| **Build Command** | `pnpm --filter kompmaster-frontend build` | Runs from repo root with hoisted deps available |
-| **Output Directory** | `frontend/.next/standalone` | Relative to Root Directory (`.`) |
-| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Must enable corepack FIRST to install correct pnpm version |
+To deploy a new version, cut a new tag. See `RUNBOOK.md` §4.
 
-**Vercel config file** (`frontend/vercel.json`):
-```json
-{
-  "buildCommand": "pnpm --filter kompmaster-frontend build",
-  "outputDirectory": "frontend/.next/standalone",
-  "framework": "nextjs",
-  "installCommand": "corepack enable pnpm && pnpm install --frozen-lockfile",
-  "devCommand": "pnpm --filter kompmaster-frontend dev"
-}
-```
+**Branch protection**: `main` has a ruleset with 8 required checks, linear
+history enforced via **merge commit** (not squash) so release-please preserves
+manifest history. `release-please--*` branches are excluded from the rules.
+
+### 10.3 Vercel Integration — Monorepo Configuration
+
+Vercel builds the storefront **as a Next.js project**.
+
+#### What is true right now, and what changes
+
+**`frontend/vercel.json` still exists on `main`.** It is deleted by
+[#106](https://github.com/Dahgoth/kompmaster-server/pull/106), not by this PR,
+so **until #106 merges** that file is the source of truth for five settings:
+
+| Setting | Source until #106 merges | Source after #106 merges |
+|---------|-------------------------|--------------------------|
+| `buildCommand` | `frontend/vercel.json` → `pnpm --filter kompmaster-frontend build` | Vercel's Next.js default |
+| `devCommand` | `frontend/vercel.json` | Vercel default |
+| `outputDirectory` | `frontend/vercel.json` → `frontend/.next/standalone` | Vercel Next.js default |
+| `installCommand` | `frontend/vercel.json` → `corepack enable pnpm && …` | **Must be set in the dashboard** |
+| `framework` | `frontend/vercel.json` → `nextjs` | Vercel detects it from `frontend/next.config.ts`; verify rather than assume |
+
+That `outputDirectory` is the bug. With Root Directory `frontend` (already set
+in the dashboard), the path `frontend/.next/standalone` resolves to
+`frontend/frontend/.next/standalone` — it does not exist. Even before that, it
+names a **Node server bundle**, not a static export, so serving it statically
+would break the `product/[id]` routes and `api/revalidate` regardless.
+
+**Table below describes the end state — the configuration that is correct once
+#106 lands and its dashboard change is made.** For today's actual values, read
+the table above.
+
+| Setting | Value (end state) | Rationale |
+|---------|-------------------|-----------|
+| **Root Directory** | `frontend` | The Next.js app lives here. Vercel resolves the pnpm workspace and still installs from the repo root, where `pnpm-lock.yaml` is |
+| **Framework Preset** | `Next.js` | Vercel builds and deploys the app itself, so SSR and server routes work |
+| **Build Command** | *default* | Vercel's Next.js build |
+| **Output Directory** | *default* | Vercel deploys the serverless functions itself |
+| **Install Command** | `corepack enable pnpm && pnpm install --frozen-lockfile` | Vercel's default `pnpm install` does not enable corepack first, so the pnpm wrapper is missing: `the installed pnpm wrapper is missing at /vercel/.local/share/pnpm/` |
+
+**Two settings need attention after #106, not one.** Deleting
+`frontend/vercel.json` removes the file that currently supplies *all five* of
+the overrides above, and the dashboard defaults do not restore two of them:
+
+- **Install Command** — set it explicitly in
+  *Vercel → Project → Settings → Build & Development → Install Command*.
+  Without it the build fails with
+  `the installed pnpm wrapper is missing at /vercel/.local/share/pnpm/`.
+- **Framework Preset** — the file pinned `framework: nextjs`. Confirm the
+  dashboard still shows `Next.js` after the merge; Vercel usually infers it, but
+  the previous state was set explicitly and inference is not guaranteed when
+  the Root Directory changes at the same time.
+
+The other three (`buildCommand`, `devCommand`, `outputDirectory`) are pure
+overrides that Vercel's Next.js defaults replace correctly.
 
 ### Vercel Footguns & Lessons Learned
 
-#### 1. Framework Preset = Next.js → Auto-detection runs `pnpm install` BEFORE custom commands
-Vercel's Next.js detection runs its own `pnpm install` BEFORE any custom `installCommand`/`buildCommand`, using its own pnpm wrapper which fails with "pnpm wrapper missing" error.
-**Fix**: Set Framework Preset = `Other` to disable auto-detection.
+#### 1. A green Vercel check does not mean the preview works
+The check reports on the **deployment**, not on whether a route resolves. A build
+that produces nothing servable still deploys successfully and 404s at request
+time. Fetch a real route before believing a preview.
 
-#### 2. Root Directory = `frontend/` → Can't access repo-root `pnpm-lock.yaml`
-Vercel runs commands from the configured Root Directory. With `frontend/`, it can't reach the workspace root `pnpm-lock.yaml` and hoisted `node_modules`.
-**Fix**: Root Directory = `.` (repo root).
+#### 2. `vercel.json` placement follows Root Directory, not convenience
+With Root Directory `.`, Vercel reads `vercel.json` from the repo root. This
+project previously kept one in `frontend/`, so every setting in it was inert
+with no error to signal it — the build fell through to `npm run build`, a
+script that does not exist, and the output resolved to the repo root, which has
+no application. Every preview 404'd while the check reported `Ready`.
 
-#### 3. Install in `buildCommand` → Defeats Vercel build caching
-Moving `pnpm install` to `buildCommand` means every deploy does a fresh install with zero cache benefit.
-**Fix**: Keep install in `installCommand`, enable corepack there.
+If you change Root Directory, move or delete `vercel.json` to match.
 
-#### 4. `vercel-build` script in root `package.json` → Dead code
-When `vercel.json` has explicit `buildCommand`, the `vercel-build` script in `package.json` is never used.
-**Fix**: Remove or use consistently.
+#### 3. Do not point `outputDirectory` at a standalone Next.js server
+`output: "standalone"` produces a **Node server bundle**, not a static export.
+Serving it through a static `outputDirectory` breaks the dynamic
+`product/[id]` routes and the `api/revalidate` server route. Vercel serves that
+shape correctly only as a Next.js project with the default output directory.
 
-#### 5. Corepack not enabled → Vercel's pnpm wrapper missing
-Vercel's pnpm wrapper for v12.4.2 was missing in their build environment.
-**Fix**: `corepack enable pnpm` in `installCommand`.
+#### 4. Root Directory = `frontend` does not break a pnpm monorepo
+This was previously documented here as a footgun, and following it is what
+produced the 404s. The claim was a misdiagnosis: Vercel resolves the workspace
+root from `pnpm-workspace.yaml` and installs from the repo root regardless of
+Root Directory. What makes hoisted dependencies resolve at build time is
+`outputFileTracingRoot` in `frontend/next.config.ts`, which is already set.
+
+#### 5. The pnpm version is pinned by `packageManager`
+The root `package.json` pins `pnpm@12.4.2`. Vercel needs corepack enabled to
+honour it; without that the wrapper is missing and the build fails with
+`the installed pnpm wrapper is missing at /vercel/.local/share/pnpm/`.
 
 ### Monorepo pnpm Hoisting (Required for Vercel & VPS)
 - `pnpm-workspace.yaml`: `nodeLinker: hoisted` places all deps at repo root
-- `next.config.ts`: `outputFileTracingRoot: workspaceRoot` so Next.js traces hoisted deps
-- Standalone output: `frontend/.next/standalone/frontend/server.js` + `frontend/.next/standalone/node_modules/`
-- Build MUST run from repo root (`Root Directory = .`)
+- `next.config.ts`: `outputFileTracingRoot` is set to the computed workspace root
+  — `const tracingRoot = path.resolve(__dirname, "..")` (line 8), assigned at
+  line 16. A resolved absolute path, not the literal string `workspaceRoot`.
+  **This is the setting that makes Root Directory `frontend` work.**
+- Standalone output `frontend/.next/standalone/frontend/server.js` is consumed by
+  the **VPS** deploy under PM2, not by Vercel
 
 ---
 

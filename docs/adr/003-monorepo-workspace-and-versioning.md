@@ -118,6 +118,59 @@ encodes this.
    directories.** Rejected: infrastructure is repo-wide, not backend-only, and
    Terraform state/docs references assume the root.
 
+## Amendment — versioning enforcement and deploy trigger (2026-09-29)
+
+The "fixed shared versioning" rule above is retained, but *how* release-please
+applies it and *what triggers the deploy* both changed after the release
+pipeline was rebuilt. Three findings drove it.
+
+**1. Nothing reads the app versions.** No code in `backend/src` or
+`frontend/src` reads a `version` field; the storefront does not surface it; the
+API health endpoint returns only `{ok, time}`. The fields exist because pnpm
+requires a `version` in every `package.json`, not because anything consumes
+them. Their *values* are therefore free, and only the equality convention is
+load-bearing — which is why it is kept and enforced, rather than deleted.
+
+**2. The sync must happen before the tag, not after.**
+`backend/scripts/deploy-storefront.sh:86` runs `check-versions.js` before
+building, and the deploy is triggered by the tag release-please creates.
+Verified on the v2.4.1 tag:
+
+```
+v2.4.1 -> 013a5476
+  package.json          2.4.1
+  backend/package.json  2.4.0   <- drifted
+  frontend/package.json 2.4.0   <- drifted
+```
+
+A tag cut from a drifted tree aborts the deploy, so a post-release sync job can
+never protect it. The alignment is instead made part of the release PR itself
+via `extra-files` in `.release-please-config.json`:
+
+```json
+"extra-files": ["backend/package.json", "frontend/package.json"]
+```
+
+release-please updates the top-level `version` of any `.json` file listed there,
+so all three versions move together in the one PR that also bumps the root and
+writes the changelog. This reuses the push path release-please already uses for
+its own release PR, rather than adding a second workflow that pushes with
+`GITHUB_TOKEN` — a credential whose pushes do not trigger workflow runs, which
+would have left the release PR with no check runs and therefore unmergeable.
+
+**3. The deploy is triggered by the tag alone.** The `production-vps`
+environment permits only refs matching `v*.*.*`. A `push` to `main`, a
+`workflow_call`, and a `workflow_dispatch` all resolve to the `main` branch and
+are rejected by the environment before a runner is assigned — observed as a job
+with zero steps and no logs. Only a tag ref satisfies the policy.
+
+`deploy.yml` therefore triggers on `push: tags` alone. The `release: published`
+trigger was removed: release-please publishes a GitHub Release on every release,
+so keeping both meant two concurrent production deploys racing on the same
+colour directory with no coordination. `release.yml` no longer contains a
+`deploy` job at all — the tag push is the whole handoff, and nothing crosses a
+workflow boundary that could carry the wrong ref into the environment check.
+
 ## References
 
 - ADR 001 — canonical core, pure C API-only, single-repo decision; Open
