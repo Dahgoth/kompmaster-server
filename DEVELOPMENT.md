@@ -749,6 +749,29 @@ Postgres `16.15-alpine`.
 - SeaweedFS: S3 API on `localhost:9000`, master/status on `localhost:9334`.
   No web console — SeaweedFS has no MinIO-style UI.
 
+## Vercel (storefront previews)
+
+Vercel builds the storefront **as a Next.js project**. Project settings:
+
+| Setting | Value |
+|---------|-------|
+| Root Directory | `frontend` |
+| Framework Preset | `Next.js` |
+| Build / Output / Install | defaults |
+
+There is **no `vercel.json`** in the repo, deliberately. Vercel reads that file
+from the Root Directory, so the `frontend/vercel.json` this project used to
+carry was never read: the build fell through to `npm run build` (a script that
+does not exist in the root `package.json`) and the output directory resolved to
+the repo root. Every build 404'd while the Vercel check still reported
+`Ready`, because that check reports on the deployment, not on whether a route
+resolves.
+
+Root Directory `frontend` is correct for a pnpm monorepo — Vercel resolves the
+workspace and installs from the repo root. `outputFileTracingRoot` in
+`frontend/next.config.ts` is what makes hoisted dependencies resolve. See
+[DEPLOY.md](DEPLOY.md) §10.3 for the full rationale and footguns.
+
 ## Terraform (PoC infrastructure)
 
 `/terraform/` provisions the PoC runtime on Timeweb Cloud (ADR-002, Option

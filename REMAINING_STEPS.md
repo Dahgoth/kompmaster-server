@@ -1,6 +1,6 @@
 # Remaining Implementation Steps — Post-PR Merge
 
-> **Excludes**: Vercel project setup (already complete — Root Directory = `.`, Framework = Other, Install/Build commands configured)
+> **Excludes**: Vercel project setup. **Superseded 2026-09-28** — the configuration described below (Root Directory `.`, Framework `Other`, custom `frontend/vercel.json`) produced a 404 on every build and has been replaced. The project now runs with Root Directory `frontend` and Framework Preset `Next.js`, with no `vercel.json`; see `DEPLOY.md` §10.3.
 
 ---
 
@@ -204,4 +204,4 @@ curl -I https://www.compmasone.ru
 
 ---
 
-> **Note**: Vercel project setup is **already complete** (Root Directory = `.`, Framework = Other, Install/Build commands configured). This guide starts from post-PR-merge state.
+> **Note**: Vercel project setup changed on 2026-09-28. It is now Root Directory `frontend` + Framework Preset `Next.js`, with no `vercel.json`. The earlier configuration in §2 caused 404s on every build — see `DEPLOY.md` §10.3 for the current settings and the reasoning. This guide starts from post-PR-merge state.

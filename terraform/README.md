@@ -121,8 +121,9 @@ The `kompmaster-frontend` S3 bucket is now unused for the storefront
 (media bucket `assets.compmasone.ru` remains for product photos).
 
 Vercel is connected for storefront preview/staging/fallback. Its Root Directory
-is `frontend`; install from the repository root and build with `pnpm` (typically
-`pnpm --filter kompmaster-frontend build`).
+is `frontend` and its Framework Preset is `Next.js`; Vercel installs from the
+repository root and builds the app itself. There is no `vercel.json` — see
+`DEPLOY.md` §10.3.
 
 ## Deploying the API
 
