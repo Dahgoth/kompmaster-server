@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.2](https://github.com/Dahgoth/kompmaster-server/compare/v2.4.1...v2.4.2) (2026-09-30)
+
+
+### Bug Fixes
+
+* **release:** align app versions via extra-files; deploy on the tag ([#115](https://github.com/Dahgoth/kompmaster-server/issues/115)) ([77077e7](https://github.com/Dahgoth/kompmaster-server/commit/77077e7f81e70ff0219b5ae1fbd23fcd4910acf7))
+* **release:** bump app versions in the release PR; deploy on the tag ([89d154c](https://github.com/Dahgoth/kompmaster-server/commit/89d154c25f5be13605763f3041ebf34dd5ace827))
+* **release:** let release-please own the app versions via extra-files ([f85244b](https://github.com/Dahgoth/kompmaster-server/commit/f85244be2d0fab6b3af67031909fda4e0355b7f5))
+
 ## [2.4.1](https://github.com/Dahgoth/kompmaster-server/compare/v2.4.0...v2.4.1) (2026-09-29)
 
 
