@@ -418,49 +418,59 @@ looks like a runner or VPS fault and is neither.
 ```yaml
 on:
   push:
-    tags: ['v*.*.*', 'kompmaster-v*.*.*']
+    tags: ['v*.*.*']
 ```
 
 **Only `v*.*.*` actually works, and the second pattern is a known wart.**
-`kompmaster-v*.*.*` starts with a `k`, so it cannot match the environment's
-`v*.*.*` policy. It survives in the file for tags cut before v2.3.0;
-`include-component-in-tag: false` means release-please has not produced one
-since. It is inert and should be removed from `deploy.yml` and from
-`extract-tag`'s regex in a separate change — it is a behaviour edit, not a
-documentation one.
+`kompmaster-v*.*.*` has been **removed** from both `deploy.yml` and
+`extract-tag`'s validator. It was a fossil from before
+`include-component-in-tag: false` — release-please has not cut one since
+v2.2.0, and the `v*.*.*` environment policy never accepted it. Removing it
+mattered more once the dispatch existed: a dispatch carries an arbitrary ref,
+so the validator is now the thing standing between a stray release and a
+production deploy.
 
-The other trigger types were all removed because each provably cannot deploy:
+**`workflow_dispatch` is the trigger that works**, and it is how every release
+deploys. `release.yml` dispatches it after release-please cuts the tag:
 
-- **`workflow_call`** was called by `release.yml`, but a reusable workflow
-  inherits the *caller's* ref — `main` — and was rejected. This is the change
-  that broke the deploy: it looked wired up and produced a job with zero steps
-  and no logs.
-- **`workflow_dispatch`** was a manual re-deploy. It resolves to `main` and is
-  rejected the same way. Verified with a live dispatch:
+```bash
+gh workflow run deploy.yml --ref "$TAG"
+```
 
-  ```
-  Branch "main" is not allowed to deploy to production-vps due to
-  environment protection rules.
-  ```
+`--ref` is what makes it work: the run's ref becomes the tag, which is what the
+`production-vps` policy (`type: tag`, `v*.*.*`) accepts. Dispatching without
+`--ref` runs on the default branch and carries `ref=main`, which the policy
+rejects — that is the observed behaviour of the only dispatch this repository
+has run:
 
-  A trigger that cannot work is worse than no trigger, so it was removed rather
-  than left as a documented no-op.
-- **`release: published`** fired alongside the tag push, because release-please
-  publishes a Release on every release. Two concurrent production deploys would
-  race on the same colour directory, and the idempotency guard cannot prevent it:
-  both would query the Deployments API before either recorded a result.
+```
+Branch "main" is not allowed to deploy to production-vps due to
+environment protection rules.
+```
 
-**To deploy, cut a tag. There is no manual override.** See `RUNBOOK.md` §4.
+The other triggers, and why they are not the primary path:
+
+- **`push: tags`** is kept so a manual `git push origin vX.Y.Z` still deploys,
+  but it **cannot catch a release**: release-please creates the tag through the
+  GitHub API, and an API-created tag ref emits no `push` event. Verified on
+  v2.4.2 and v2.4.3 — both tagged and released, **zero deploy runs created**.
+- **`workflow_call`** was removed in #115. A reusable workflow inherits the
+  *caller's* ref — `main` — and the environment rejected it. That is why the
+  deploy produced a job with zero steps and no logs.
+- **`release: published`** was removed: no run with `event=release` has ever
+  been created here, so it contributed nothing, and a second initiator for the
+  same commit is exactly the overlap the concurrency group can only serialise.
+
+**To deploy, let a release run, or dispatch `deploy.yml --ref <tag>`.** See
+`RUNBOOK.md` §4.
 
 ```yaml
 name: Deploy Production
 
 on:
   # Only 'v*.*.*' is accepted by the production-vps environment;
-  # 'kompmaster-v*.*.*' is retained for tags cut before v2.3.0 and is
-  # rejected by the environment if it is ever used.
   push:
-    tags: ['v*.*.*', 'kompmaster-v*.*.*']
+    tags: ['v*.*.*']
 
 permissions:
   contents: write

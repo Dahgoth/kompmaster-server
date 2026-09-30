@@ -70,11 +70,3 @@ jobs:
           echo "dispatched deploy.yml on ${TAG} — watch that run for the outcome"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # release-please creates the tag through the GitHub API, and an API-created
-      # tag ref emits no `push` event — so `deploy.yml`'s `push: tags` trigger
-      # never fired. Verified on v2.4.2 and v2.4.3: both were tagged and
-      # released, and ZERO deploy runs were created. A `release: published`
-      # trigger does not fix it either; no run with `event=release` has ever
-      # been created in this repository.
-      #

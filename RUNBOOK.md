@@ -254,10 +254,14 @@ resembles a runner or VPS fault and is neither.
 
 Consequences:
 
-- **A `v*.*.*` tag push is the only way to deploy.** `deploy.yml` declares one
-  trigger, `push: tags`. There is no `workflow_dispatch`, so
-  `gh workflow run deploy.yml` is rejected by `gh` itself — the workflow is not
-  dispatchable.
+- **`workflow_dispatch` on the tag is how a release deploys.** `release.yml`
+  runs `gh workflow run deploy.yml --ref <tag>` after release-please cuts the
+  tag. The `--ref` matters: a dispatch without it runs on the default branch and
+  carries `ref=main`, which the environment policy rejects.
+- **A tag push alone does not deploy.** release-please creates the tag through
+  the GitHub API and an API-created tag ref emits no `push` event — verified on
+  v2.4.2 and v2.4.3, both tagged and released with zero deploy runs. `push: tags`
+  remains so a manual `git push origin vX.Y.Z` still deploys.
 
   (While a `workflow_dispatch` trigger still existed, dispatching produced
   `Branch "main" is not allowed to deploy to production-vps due to environment

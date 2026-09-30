@@ -6,14 +6,18 @@ on:
   # event. Verified on v2.4.2 and v2.4.3 — both tagged and released, zero
   # deploy runs created. The tag is therefore not a usable trigger here.
   #
-  # `workflow_dispatch` is the working trigger, dispatched by release.yml with
-  # `--ref <tag>` so the job's ref IS the tag, which is what the production-vps
+  # `workflow_dispatch` is the trigger release.yml uses, dispatched with
+  # `--ref <tag>` so the run's ref is the tag, which is what the production-vps
   # environment policy (type: tag, v*.*.*) requires. Dispatching on the default
-  # branch instead would carry ref=main and be rejected by the gate.
+  # branch instead would carry ref=main and be rejected by the gate - that is
+  # the observed behaviour of the only dispatch run this repo has.
+  #
+  # `release: published` was removed deliberately. No run with `event=release`
+  # has ever been created in this repository, so it contributed nothing, and
+  # keeping it would mean a second initiator for the same commit - the overlap
+  # the concurrency group below can only serialise, not prevent.
   push:
     tags: ['v*.*.*']
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -30,9 +34,16 @@ jobs:
     # deploy, racing on the same colour directory. The guard prevents a
     # *sequential* double deploy; this prevents a *concurrent* one.
     #
-    # Keyed on the head SHA, so different releases still deploy in parallel;
-    # only runs for the same commit serialise. cancel-in-progress: false, so a
-    # queued deploy waits rather than being dropped.
+    # Keyed on the head SHA, so different releases still deploy in parallel and
+    # only runs for the same commit serialise.
+    #
+    # Scope of the guarantee: GitHub keeps ONE running plus ONE pending job per
+    # group, and a third concurrent run cancels the pending one regardless of
+    # cancel-in-progress. So this bounds a same-commit overlap to two runs -
+    # the second then hits the idempotency guard after the first has recorded
+    # success, which is the one behaviour that guard is actually good for. It
+    # does not eliminate the overlap outright; `release: published` was removed
+    # so that in practice only one initiator exists per release.
     concurrency:
       group: deploy-production-${{ github.sha }}
       cancel-in-progress: false
