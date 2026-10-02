@@ -242,6 +242,42 @@ openssl s_client -connect www.compmasone.ru:443 -servername www.compmasone.ru \
 
 ---
 
+## 3.5 Self-hosted Runner Contract
+
+The deploy job runs on the VPS (`deploy-prod`), not on GitHub's runners. This
+matters because **the runner's installed tooling is part of the deploy
+contract**, and the workflow cannot detect a missing tool until a step runs.
+
+Verified present on `api.compmasone.ru` (2026-10-02):
+
+| Tool | Status | Used for |
+|---|---|---|
+| `node` (v24, global `fetch`) | ✅ | storefront runtime **and** `.github/scripts/gh-api.mjs` |
+| `curl` | ✅ | health gate |
+| `rsync` | ✅ | release upload |
+| `pm2` | ✅ | process supervision |
+| `gh` | ✅ 2.4.0 | all GitHub REST calls in `deploy.yml` |
+| `jq` | ✅ 1.6 | JSON parsing in the idempotency guard |
+
+`gh` and `jq` were assumed by `deploy.yml` from the start and were **never
+installed** on the runner. The first release that actually reached a deploy job
+(v2.4.4) failed at the first `gh api` call, after eight months of releases that
+never got far enough to notice. Both are now installed via apt:
+
+```bash
+apt-get install -y gh jq
+```
+
+**If you extend `deploy.yml`, check the tool is on the list above.** A missing
+tool is invisible until a step runs, which is after a release is cut — the worst
+place to discover it. Add a row here when a new tool is introduced, and install
+it on the runner in the same change.
+
+One trap worth knowing, because it is easy to reintroduce: piping a large API
+response through `$(...)` truncates at exactly 64 KiB, and the deployments list
+is ~175 KB. Stream to a file and read that. `jq` does not hit this because it
+reads a file, not a pipe.
+
 ## 4. Deploy Pipeline Troubleshooting
 
 ### 4.0 The constraint

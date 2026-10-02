@@ -77,7 +77,15 @@ jobs:
         run: |
           # Check for successful deployment instead of just release existence
           # Resolve tag to commit SHA for consistent deployment lookup across all triggers
-          TAG_COMMIT=$(gh api repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }} --jq '.object.sha' 2>&1) || { echo "::error::Failed to resolve tag commit SHA"; exit 1; }
+            # Do NOT fold stderr into the substitution: `2>&1` inside $(...)
+            # captures the message into TAG_COMMIT, which is then overwritten,
+            # leaving only a generic error. That is what hid the v2.4.4 failure -
+            # gh was not installed and the only clue was a generic message.
+            if ! TAG_COMMIT=$(gh api "repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }}" --jq '.object.sha' 2>tag_err.txt); then
+              echo "::error::Failed to resolve tag commit SHA for ${{ steps.extract.outputs.tag }}:" >&2
+              cat tag_err.txt >&2
+              exit 1
+            fi
           # Query GitHub Deployments API for successful deployment in production-vps
           DEPLOYMENTS=$(gh api repos/${{ github.repository }}/deployments --jq '.[] | select(.environment=="production-vps" and .ref=="'"$TAG_COMMIT"'")' 2>/dev/null)
           if [ -n "$DEPLOYMENTS" ]; then
