@@ -54,13 +54,6 @@ jobs:
     environment: production-vps
     runs-on: self-hosted
     timeout-minutes: 30
-    # The self-hosted runner has node, curl, rsync and pm2 but NOT gh or jq —
-    # verified 2026-10-02 after v2.4.4 failed at the idempotency guard with
-    # "Failed to resolve tag commit SHA", which was gh not existing. This
-    # wrapper uses node 18+'s global fetch, which the deploy needs anyway to
-    # run the storefront, so it adds no host dependency.
-    env:
-      GH_API: ${{ github.workspace }}/.github/scripts/gh-api.mjs
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -84,21 +77,23 @@ jobs:
         run: |
           # Check for successful deployment instead of just release existence
           # Resolve tag to commit SHA for consistent deployment lookup across all triggers
-            TAG_COMMIT=$(node "$GH_API" GET "/repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }}" --jq '.object.sha')
+            # Do NOT fold stderr into the substitution: `2>&1` inside $(...)
+            # captures the message into TAG_COMMIT, which is then overwritten,
+            # leaving only a generic error. That is what hid the v2.4.4 failure -
+            # gh was not installed and the only clue was a generic message.
+            if ! TAG_COMMIT=$(gh api "repos/${{ github.repository }}/git/ref/tags/${{ steps.extract.outputs.tag }}" --jq '.object.sha' 2>tag_err.txt); then
+              echo "::error::Failed to resolve tag commit SHA for ${{ steps.extract.outputs.tag }}:" >&2
+              cat tag_err.txt >&2
+              exit 1
+            fi
           # Query GitHub Deployments API for successful deployment in production-vps
-            # Streamed to a file, not command-substituted: a pipe buffer
-            # truncates at 64 KiB and the deployments list exceeds that, so
-            # `$(...)` would hand JSON.parse a truncated body and report a
-            # parse error for a response that is not malformed.
-            node "$GH_API" GET "/repos/${{ github.repository }}/deployments?per_page=100" > "$RUNNER_TEMP/deployments.json"
-            DEPLOYMENTS=$(node -e 'const s=process.argv[1];const d=JSON.parse(require("fs").readFileSync(process.argv[2],"utf8"));console.log(JSON.stringify(d.filter(x=>x.environment==="production-vps"&&x.ref===s)))' "$TAG_COMMIT" "$RUNNER_TEMP/deployments.json")
+          DEPLOYMENTS=$(gh api repos/${{ github.repository }}/deployments --jq '.[] | select(.environment=="production-vps" and .ref=="'"$TAG_COMMIT"'")' 2>/dev/null)
           if [ -n "$DEPLOYMENTS" ]; then
             # Get the latest deployment ID (most recent first)
-              DEPLOYMENT_ID=$(node -e 'const d=JSON.parse(process.argv[1]);console.log(d[0]?d[0].id:"")' "$DEPLOYMENTS")
+            DEPLOYMENT_ID=$(echo "$DEPLOYMENTS" | jq -r '.id' | head -1)
             if [ -n "$DEPLOYMENT_ID" ] && [ "$DEPLOYMENT_ID" != "null" ]; then
               # Get latest status (sort by created_at, take last)
-              node "$GH_API" GET "/repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses?per_page=100" > "$RUNNER_TEMP/statuses.json"
-              STATUS=$(node -e 'const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).map(x=>x.state).filter(Boolean);console.log(s[s.length-1]||"")' "$RUNNER_TEMP/statuses.json")
+              STATUS=$(gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses --jq 'sort_by(.created_at) | last | .state' 2>/dev/null)
               if [ "$STATUS" = "success" ]; then
                 echo "already_deployed=true" >> $GITHUB_OUTPUT
                 echo "Deployment already successful — skipping"
@@ -167,21 +162,19 @@ jobs:
         if: steps.idempotency.outputs.already_deployed != 'true'
         run: |
           # Distinguish "release does not exist" (create it) from a real failure
-          # such as auth, rate limiting or a network blip. The API call below
+          # such as auth, rate limiting or a network blip. `gh release view`
           # exits non-zero for both, so the message is what separates them —
           # without this, an auth failure would be reported as "release missing"
           # and then fail again on create with the original error buried.
-          if node "$GH_API" GET "/repos/${{ github.repository }}/releases/tags/$TAG" >/dev/null 2>view_err.txt; then
+          if gh release view "$TAG" >/dev/null 2>view_err.txt; then
             echo "Release $TAG already exists — leaving it untouched"
           elif grep -qi "not found" view_err.txt; then
             # No --title: --generate-notes auto-generates BOTH the release name
             # and body from the commits, matching the previous
             # generate_release_notes: true behaviour.
-            node "$GH_API" POST "/repos/${{ github.repository }}/releases" --input - <<RELEASE
-            { "tag_name": "${TAG}", "generate_release_notes": true, "draft": false, "prerelease": false }
-            RELEASE
+            gh release create "$TAG" --verify-tag --generate-notes
           else
-            echo "::error::the release lookup failed for $TAG — not a missing release:"
+            echo "::error::gh release view failed for $TAG — not a missing release:"
             cat view_err.txt
             exit 1
           fi
@@ -203,8 +196,8 @@ jobs:
             echo "::error::TAG_COMMIT is empty; cannot create deployment" >&2
             exit 1
           fi
-          DEPLOYMENT_ID=$(node "$GH_API" POST "/repos/${{ github.repository }}/deployments" \
-            --input - --jq .id <<JSON
+          DEPLOYMENT_ID=$(gh api --method POST "repos/${{ github.repository }}/deployments" \
+            --input - --jq '.id' <<JSON
           {
             "ref": "$TAG_COMMIT",
             "environment": "production-vps",
@@ -225,13 +218,13 @@ jobs:
           steps.idempotency.outputs.already_deployed != 'true' &&
           steps.deployment.outputs.id != ''
         run: |
-          node "$GH_API" POST \
+          gh api --method POST \
             "repos/${{ github.repository }}/deployments/${{ steps.deployment.outputs.id }}/statuses" \
             -f state=success \
             -f environment=production-vps \
             -f log_url=https://www.compmasone.ru \
             -f description="Storefront deployed" \
-            --jq .state
+            --jq '.state'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -241,13 +234,13 @@ jobs:
           steps.idempotency.outputs.already_deployed != 'true' &&
           steps.deployment.outputs.id != ''
         run: |
-          node "$GH_API" POST \
+          gh api --method POST \
             "repos/${{ github.repository }}/deployments/${{ steps.deployment.outputs.id }}/statuses" \
             -f state=failure \
             -f environment=production-vps \
             -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             -f description="Storefront deploy failed" \
-            --jq .state
+            --jq '.state'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

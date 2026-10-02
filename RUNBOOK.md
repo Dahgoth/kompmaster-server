@@ -256,22 +256,27 @@ Verified present on `api.compmasone.ru` (2026-10-02):
 | `curl` | ✅ | health gate |
 | `rsync` | ✅ | release upload |
 | `pm2` | ✅ | process supervision |
-| `gh` | ❌ **absent** | — use `gh-api.mjs` instead |
-| `jq` | ❌ **absent** | — parse with `node -e` |
+| `gh` | ✅ 2.4.0 | all GitHub REST calls in `deploy.yml` |
+| `jq` | ✅ 1.6 | JSON parsing in the idempotency guard |
 
 `gh` and `jq` were assumed by `deploy.yml` from the start and were **never
-installed**. The first release that reached the deploy job (v2.4.4) failed at
-the first `gh api` call after 8 months of releases that never got that far. All
-GitHub API calls now go through `.github/scripts/gh-api.mjs`, which uses
-`fetch` and adds no new host dependency.
+installed** on the runner. The first release that actually reached a deploy job
+(v2.4.4) failed at the first `gh api` call, after eight months of releases that
+never got far enough to notice. Both are now installed via apt:
 
-**If you extend `deploy.yml`, check the tool exists on the runner first**, or use
-something already listed above. A missing tool fails at run time, after a
-release is cut, which is the worst place to find out.
+```bash
+apt-get install -y gh jq
+```
 
-One trap worth knowing: piping a large API response through `$(...)` truncates
-at exactly 64 KiB, and the deployments list is ~175 KB. Stream to a file and
-parse that. `jq` never showed this because it reads a file, not a pipe.
+**If you extend `deploy.yml`, check the tool is on the list above.** A missing
+tool is invisible until a step runs, which is after a release is cut — the worst
+place to discover it. Add a row here when a new tool is introduced, and install
+it on the runner in the same change.
+
+One trap worth knowing, because it is easy to reintroduce: piping a large API
+response through `$(...)` truncates at exactly 64 KiB, and the deployments list
+is ~175 KB. Stream to a file and read that. `jq` does not hit this because it
+reads a file, not a pipe.
 
 ## 4. Deploy Pipeline Troubleshooting
 
